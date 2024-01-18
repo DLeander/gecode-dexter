@@ -1,4 +1,4 @@
-# Gecode-dexter - Generic Constraint Development Environment
+# Gecode-dexter
 
 A possible improvement of the Gecode solver, done for my master thesis.
 
