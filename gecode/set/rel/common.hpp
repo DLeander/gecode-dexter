@@ -38,15 +38,15 @@
  */
 
 #define GECODE_SET_ME_CHECK_VAL(p,f) {                   \
-    ModEvent __me__ ## __LINE__ = (p);                   \
-    if (me_failed(__me__ ## __LINE__)) return ES_FAILED; \
-    if (ME_GEN_ASSIGNED==(__me__ ## __LINE__))f=true; }
+    ModEvent gecode_me_ ## __LINE__ = (p);                   \
+    if (me_failed(gecode_me_ ## __LINE__)) return ES_FAILED; \
+    if (ME_GEN_ASSIGNED==(gecode_me_ ## __LINE__))f=true; }
 
 #define GECODE_SET_ME_CHECK_VAL_B(modified, tell, f) \
   {                                                  \
     ModEvent me = (tell);                            \
     modified |= me_modified(me);                     \
-    if (ME_GEN_ASSIGNED==(me))f=true;                \
+    if (ME_GEN_ASSIGNED==(me)) f=true;               \
     GECODE_ME_CHECK(me);                             \
   }
 
@@ -63,7 +63,7 @@ namespace Gecode { namespace Set { namespace Rel {
   same(SetView x, SetView y) {
     return x == y;
   }
-  
+
   forceinline bool
   subsumesME(ModEvent me0, ModEvent me1, ModEvent me2, ModEvent me) {
     ModEvent cme = SetVarImp::me_combine(me0,SetVarImp::me_combine(me1, me2));

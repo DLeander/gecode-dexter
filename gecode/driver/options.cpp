@@ -50,26 +50,28 @@ namespace Gecode {
      */
     char*
     BaseOption::strdup(const char* s) {
-      if (s == NULL)
-        return NULL;
-      char* d = heap.alloc<char>(static_cast<unsigned long int>(strlen(s)+1));
-      (void) strcpy(d,s);
+      if (s == nullptr)
+        return nullptr;
+      size_t l = strlen(s) + 1;
+      char* d = static_cast<char*>(heap.ralloc(l));
+      (void) memcpy(d,s,l);
       return d;
     }
 
     char*
     BaseOption::stredup(const char* s) {
-      if (s == NULL)
-        return NULL;
-      char* d = heap.alloc<char>(static_cast<unsigned long int>(strlen(s)+2));
+      if (s == nullptr)
+        return nullptr;
+      size_t l = strlen(s) + 1;
+      char* d = static_cast<char*>(heap.ralloc(l+1));
       d[0] = '-';
-      (void) strcpy(d+1,s);
+      (void) memcpy(d+1,s,l);
       return d;
     }
 
     void
     BaseOption::strdel(const char* s) {
-      if (s == NULL)
+      if (s == nullptr)
         return;
       heap.rfree(const_cast<char*>(s));
     }
@@ -77,17 +79,17 @@ namespace Gecode {
     char*
     BaseOption::argument(int argc, char* argv[]) const {
       if (argc < 2)
-        return NULL;
+        return nullptr;
       const char* s = argv[1];
       if (s[0] == '-') {
         s++;
         if (s[0] == '-')
           s++;
       } else {
-        return NULL;
+        return nullptr;
       }
       if (strcmp(s,eopt))
-        return NULL;
+        return nullptr;
       if (argc == 2) {
         std::cerr << "Missing argument for option \"" << iopt << "\""
                   << std::endl;
@@ -125,7 +127,7 @@ namespace Gecode {
     void
     StringValueOption::help(void) {
       std::cerr << '\t' << iopt << " (string) default: "
-                << ((cur == NULL) ? "NONE" : cur) << std::endl
+                << ((cur == nullptr) ? "NONE" : cur) << std::endl
                 << "\t\t" << exp << std::endl;
     }
     StringValueOption::~StringValueOption(void) {
@@ -140,8 +142,8 @@ namespace Gecode {
       n->val  = v;
       n->opt  = strdup(o);
       n->help = strdup(h);
-      n->next = NULL;
-      if (fst == NULL) {
+      n->next = nullptr;
+      if (fst == nullptr) {
         fst = n;
       } else {
         lst->next = n;
@@ -151,7 +153,7 @@ namespace Gecode {
     int
     StringOption::parse(int argc, char* argv[]) {
       if (char* a = argument(argc,argv)) {
-        for (Value* v = fst; v != NULL; v = v->next)
+        for (Value* v = fst; v != nullptr; v = v->next)
           if (!strcmp(a,v->opt)) {
             cur = v->val;
             return 2;
@@ -165,27 +167,27 @@ namespace Gecode {
     }
     void
     StringOption::help(void) {
-      if (fst == NULL)
+      if (fst == nullptr)
         return;
       std::cerr << '\t' << iopt << " (";
-      const char* d = NULL;
-      for (Value* v = fst; v != NULL; v = v->next) {
-        std::cerr << v->opt << ((v->next != NULL) ? ", " : "");
+      const char* d = nullptr;
+      for (Value* v = fst; v != nullptr; v = v->next) {
+        std::cerr << v->opt << ((v->next != nullptr) ? ", " : "");
         if (v->val == cur)
           d = v->opt;
       }
       std::cerr << ")";
-      if (d != NULL)
+      if (d != nullptr)
         std::cerr << " default: " << d;
       std::cerr << std::endl << "\t\t" << exp << std::endl;
-      for (Value* v = fst; v != NULL; v = v->next)
-        if (v->help != NULL)
+      for (Value* v = fst; v != nullptr; v = v->next)
+        if (v->help != nullptr)
           std::cerr << "\t\t  " << v->opt << ": " << v->help << std::endl;
     }
 
     StringOption::~StringOption(void) {
       Value* v = fst;
-      while (v != NULL) {
+      while (v != nullptr) {
         strdel(v->opt);
         strdel(v->help);
         Value* n = v->next;
@@ -223,6 +225,23 @@ namespace Gecode {
     void
     UnsignedIntOption::help(void) {
       std::cerr << '\t' << iopt << " (unsigned int) default: "
+                << cur << std::endl
+                << "\t\t" << exp << std::endl;
+    }
+
+
+    int
+    UnsignedLongLongIntOption::parse(int argc, char* argv[]) {
+      if (char* a = argument(argc,argv)) {
+        cur = static_cast<unsigned int>(atoll(a));
+        return 2;
+      }
+      return 0;
+    }
+
+    void
+    UnsignedLongLongIntOption::help(void) {
+      std::cerr << '\t' << iopt << " (unsigned long long int) default: "
                 << cur << std::endl
                 << "\t\t" << exp << std::endl;
     }
@@ -467,13 +486,30 @@ namespace Gecode {
       cerr << endl << "\t\t" << exp << endl;
     }
 
+    
+    int ProfilerOption::parse(int argc, char* argv[]) {
+      if (char* a = argument(argc, argv)) {
+        char* sep = strchr(a, ',');
+        if (!sep) {
+          std::cerr << "Wrong argument \"" << a << "\" for option \"" << iopt << "\"" << std::endl;
+          exit(EXIT_FAILURE);
+        }
+        cur_execution_id = static_cast<unsigned int>(atoi(a));
+        cur_port = atoi(sep + 1);
+        return 2;
+      }
+      return 0;
+    }
+
+    void ProfilerOption::help(void) { std::cerr << '\t' << iopt << " (unsigned int,int) default: " << cur_port << "," << cur_execution_id << std::endl << "\t\t" << exp << std::endl; }
+
 
   }
 
   void
   BaseOptions::add(Driver::BaseOption& o) {
-    o.next = NULL;
-    if (fst == NULL) {
+    o.next = nullptr;
+    if (fst == nullptr) {
       fst=&o;
     } else {
       lst->next=&o;
@@ -481,7 +517,7 @@ namespace Gecode {
     lst=&o;
   }
   BaseOptions::BaseOptions(const char* n)
-    : fst(NULL), lst(NULL),
+    : fst(nullptr), lst(nullptr),
       _name(Driver::BaseOption::strdup(n)) {}
 
   void
@@ -540,7 +576,7 @@ namespace Gecode {
               << "Options for " << name() << ":" << std::endl
               << "\t-help, --help, -?" << std::endl
               << "\t\tprint this help message" << std::endl;
-    for (Driver::BaseOption* o = fst; o != NULL; o = o->next)
+    for (Driver::BaseOption* o = fst; o != nullptr; o = o->next)
       o->help();
   }
 
@@ -549,7 +585,7 @@ namespace Gecode {
     int c = argc;
     char** v = argv;
   next:
-    for (Driver::BaseOption* o = fst; o != NULL; o = o->next)
+    for (Driver::BaseOption* o = fst; o != nullptr; o = o->next)
       if (int a = o->parse(c,v)) {
         c -= a; v += a;
         goto next;
@@ -601,6 +637,7 @@ namespace Gecode {
               Search::Config::base),
       _r_scale("restart-scale","scale factor for restart sequence",
                Search::Config::slice),
+      _r_limit("restart-limit","restart cutoff (0 = none, solution mode)"),
       _nogoods("nogoods","whether to use no-goods from restarts",false),
       _nogoods_limit("nogoods-limit","depth limit for no-good extraction",
                      Search::Config::nogoods_limit),
@@ -622,10 +659,7 @@ namespace Gecode {
 
 #ifdef GECODE_HAS_CPPROFILER
       ,
-      _profiler_id("cpprofiler-id", "use this execution id with CP-profiler", 0),
-      _profiler_port("cpprofiler-port", "connect to CP-profiler on this port",
-                     Search::Config::cpprofiler_port),
-      _profiler_info("cpprofiler-info", "send solution information to CP-profiler", false) 
+      _profiler("cp-profiler", "use this execution id and port (comma separated) with CP-profiler")
 #endif
   {
 
@@ -633,7 +667,6 @@ namespace Gecode {
     _mode.add(SM_TIME,       "time");
     _mode.add(SM_STAT,       "stat");
     _mode.add(SM_GIST,       "gist");
-    _mode.add(SM_CPPROFILER, "cpprofiler");
 
     _restart.add(RM_NONE,"none");
     _restart.add(RM_CONSTANT,"constant");
@@ -647,15 +680,13 @@ namespace Gecode {
     add(_d_l);
     add(_node); add(_fail); add(_time); add(_interrupt);
     add(_assets); add(_slice);
-    add(_restart); add(_r_base); add(_r_scale);
+    add(_restart); add(_r_base); add(_r_scale); add(_r_limit);
     add(_nogoods); add(_nogoods_limit);
     add(_relax);
     add(_mode); add(_iterations); add(_samples); add(_print_last);
     add(_out_file); add(_log_file); add(_trace);
 #ifdef GECODE_HAS_CPPROFILER
-    add(_profiler_id);
-    add(_profiler_port);
-    add(_profiler_info);
+    add(_profiler);
 #endif
   }
 
@@ -681,7 +712,7 @@ namespace Gecode {
 
 
   InstanceOptions::InstanceOptions(const char* e)
-    : Options(e), _inst(NULL) {}
+    : Options(e), _inst(nullptr) {}
 
   void
   InstanceOptions::instance(const char* s) {

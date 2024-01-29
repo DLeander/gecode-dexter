@@ -106,7 +106,7 @@ namespace Gecode {
     //@}
 
     /**
-     * \brief Construct as not yet intialized
+     * \brief Construct as not yet initialized
      *
      * The only member functions that can be used on a constructed but not
      * yet initialized shared array is init and the assignment operator .
@@ -158,6 +158,9 @@ namespace Gecode {
     /// Return a reverse and read-only iterator past the beginning of the array
     const_reverse_iterator rend(void) const;
     //@}
+
+    /// Assignment operator
+    SharedArray& operator =(const SharedArray&) = default;
   };
 
   /**
@@ -182,7 +185,7 @@ namespace Gecode {
   template<class T>
   forceinline
   SharedArray<T>::SAO::SAO(int n0) : n(n0) {
-    a = (n>0) ? heap.alloc<T>(n) : NULL;
+    a = (n>0) ? heap.alloc<T>(n) : nullptr;
   }
 
   template<class T>
@@ -254,21 +257,21 @@ namespace Gecode {
   template<class T>
   forceinline void
   SharedArray<T>::init(int n) {
-    assert(object() == NULL);
+    assert(object() == nullptr);
     object(new SAO(n));
   }
 
   template<class T>
   forceinline T&
   SharedArray<T>::operator [](int i) {
-    assert(object() != NULL);
+    assert(object() != nullptr);
     return (*static_cast<SAO*>(object()))[i];
   }
 
   template<class T>
   forceinline const T&
   SharedArray<T>::operator [](int i) const {
-    assert(object() != NULL);
+    assert(object() != nullptr);
     return (*static_cast<SAO*>(object()))[i];
   }
 
@@ -297,63 +300,63 @@ namespace Gecode {
   template<class T>
   forceinline int
   SharedArray<T>::size(void) const {
-    assert(object() != NULL);
+    assert(object() != nullptr);
     return static_cast<SAO*>(object())->size();
   }
 
   template<class T>
   forceinline typename SharedArray<T>::iterator
   SharedArray<T>::begin(void) {
-    assert(object() != NULL);
+    assert(object() != nullptr);
     return static_cast<SAO*>(object())->begin();
   }
 
   template<class T>
   forceinline typename SharedArray<T>::const_iterator
   SharedArray<T>::begin(void) const {
-    assert(object() != NULL);
+    assert(object() != nullptr);
     return static_cast<SAO*>(object())->begin();
   }
 
   template<class T>
   forceinline typename SharedArray<T>::iterator
   SharedArray<T>::end(void) {
-    assert(object() != NULL);
+    assert(object() != nullptr);
     return static_cast<SAO*>(object())->end();
   }
 
   template<class T>
   forceinline typename SharedArray<T>::const_iterator
   SharedArray<T>::end(void) const {
-    assert(object() != NULL);
+    assert(object() != nullptr);
     return static_cast<SAO*>(object())->end();
   }
 
   template<class T>
   forceinline typename SharedArray<T>::reverse_iterator
   SharedArray<T>::rbegin(void) {
-    assert(object() != NULL);
+    assert(object() != nullptr);
     return reverse_iterator(static_cast<SAO*>(object())->end());
   }
 
   template<class T>
   forceinline typename SharedArray<T>::const_reverse_iterator
   SharedArray<T>::rbegin(void) const {
-    assert(object() != NULL);
+    assert(object() != nullptr);
     return const_reverse_iterator(static_cast<SAO*>(object())->end());
   }
 
   template<class T>
   forceinline typename SharedArray<T>::reverse_iterator
   SharedArray<T>::rend(void) {
-    assert(object() != NULL);
+    assert(object() != nullptr);
     return reverse_iterator(static_cast<SAO*>(object())->begin());
   }
 
   template<class T>
   forceinline typename SharedArray<T>::const_reverse_iterator
   SharedArray<T>::rend(void) const {
-    assert(object() != NULL);
+    assert(object() != nullptr);
     return const_reverse_iterator(static_cast<SAO*>(object())->begin());
   }
 

@@ -305,18 +305,10 @@ namespace Gecode {
     /// Change memory block starting at \a p to size \a s
     void* rrealloc(void* p, size_t s);
     //@}
-  private:
-    /// Allocate memory from heap (disabled)
-    static void* operator new(size_t s) throw() { (void) s; return NULL; }
-    /// Free memory allocated from heap (disabled)
-    static void  operator delete(void* p) { (void) p; };
-    /// Copy constructor (disabled)
-    Heap(const Heap&) {}
-    /// Assignment operator (disabled)
-    const Heap& operator =(const Heap&) { return *this; }
 #ifdef GECODE_PEAKHEAP
+  private:
     /// Mutex for accessing heap size
-    Support::FastMutex _m;
+    Support::Mutex _m;
     /// Peak heap size
     size_t _peak;
     /// Current heap size
@@ -324,6 +316,14 @@ namespace Gecode {
 public:
     size_t peak(void);
 #endif
+    /// Allocate memory from heap (disabled)
+    static void* operator new(size_t s) = delete;
+    /// Free memory allocated from heap (disabled)
+    static void  operator delete(void* p) = delete;
+    /// Copy constructor (disabled)
+    Heap(const Heap&) = delete;
+    /// Assignment operator (disabled)
+    const Heap& operator =(const Heap&) = delete;
   };
 
   /**
@@ -362,7 +362,7 @@ public:
     _peak = std::max(_peak,_cur);
     _m.release();
 #endif
-    if (p != NULL)
+    if (p != nullptr)
       return p;
     throw MemoryExhausted();
   }
@@ -401,7 +401,7 @@ public:
     _peak = std::max(_peak,_cur);
     _m.release();
 #endif
-    if (p != NULL || s == 0)
+    if (p != nullptr || s == 0)
       return p;
     throw MemoryExhausted();
   }

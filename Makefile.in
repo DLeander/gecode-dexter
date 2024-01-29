@@ -4,9 +4,13 @@
 #     Christian Schulte <schulte@gecode.org>
 #     Guido Tack <tack@gecode.org>
 #
+#  Contributing authors:
+#     Mikael Lagerkvist <lagerkvist@gecode.org>
+#
 #  Copyright:
 #     Christian Schulte, 2005
 #     Guido Tack, 2005
+#     Mikael Lagerkvist, 2020
 #
 #  This file is part of Gecode, the generic constraint
 #  development environment:
@@ -91,6 +95,8 @@ export DLLPATH = @DLLPATH@
 export RANLIB = @RANLIB@
 export TAR = tar
 
+export RUNENVIRONMENT = @RUNENVIRONMENT@
+
 #
 # Use suffixes to get consistent treatment of dots
 #
@@ -131,7 +137,7 @@ endif
 
 ifeq "@enable_resource@" "yes"
 %.res: %.rc
-	$(RESCOMP) -fo $@ $< 
+	$(RESCOMP) -fo $@ $<
 .PRECIOUS: %.res %.rc
 endif
 
@@ -140,14 +146,14 @@ endif
 #
 SUPPORTSRC0 = \
 	exception allocator heap \
-	thread/thread thread/windows thread/pthreads \
+	thread/thread \
 	hw-rnd
 SUPPORTHDR0 = \
 	block-allocator cast hash dynamic-array \
 	dynamic-stack exception allocator heap \
 	macros random sort static-stack \
 	marked-pointer int-type auto-link \
-	thread thread/thread thread/windows thread/pthreads thread/none timer \
+	thread thread/thread timer \
 	dynamic-queue bitset-base bitset bitset-offset \
 	hw-rnd run-jobs ref-count
 
@@ -163,7 +169,7 @@ ifeq "@need_soname@" "yes"
 export SUPPORTSONAME     = \
 	@WLSONAME@$(LIBPREFIX)@SUPPORT@$(SOSUFFIX)
 else
-export SUPPORTSONAME     = 
+export SUPPORTSONAME     =
 endif
 export SUPPORTSTATICLIB	= $(LIBPREFIX)@SUPPORT@$(STATICLIBSUFFIX)
 export LINKSUPPORT      = \
@@ -226,7 +232,7 @@ ifeq "@need_soname@" "yes"
 export KERNELSONAME     = \
 	@WLSONAME@$(LIBPREFIX)@KERNEL@$(SOSUFFIX)
 else
-export KERNELSONAME     = 
+export KERNELSONAME     =
 endif
 export KERNELSTATICLIB	= $(LIBPREFIX)@KERNEL@$(STATICLIBSUFFIX)
 export LINKKERNEL      	= $(LINKPREFIX)@KERNEL@$(LINKSUFFIX)
@@ -242,7 +248,7 @@ KERNELBUILDDIRS = kernel \
 	kernel/data kernel/propagator kernel/branch kernel/memory kernel/trace
 
 ifeq "@enable_flatzinc@" "yes"
-EXTRA_HEADERS   = gecode/support/config.hpp gecode/flatzinc/parser.tab.hh
+EXTRA_HEADERS   = gecode/support/config.hpp gecode/flatzinc/parser.tab.hpp
 else
 EXTRA_HEADERS   = gecode/support/config.hpp
 endif
@@ -285,7 +291,7 @@ ifeq "@need_soname@" "yes"
 export SEARCHSONAME     = \
 	@WLSONAME@$(LIBPREFIX)@SEARCH@$(SOSUFFIX)
 else
-export SEARCHSONAME     = 
+export SEARCHSONAME     =
 ifeq "@enable_resource@" "yes"
 export SEARCHRC		= $(LIBPREFIX)@SEARCH@$(RCSUFFIX)
 export SEARCHRES	= $(LIBPREFIX)@SEARCH@$(RESSUFFIX)
@@ -442,7 +448,7 @@ ifeq "@need_soname@" "yes"
 export INTSONAME     = \
 	@WLSONAME@$(LIBPREFIX)@INT@$(SOSUFFIX)
 else
-export INTSONAME     = 
+export INTSONAME     =
 endif
 ifeq "@enable_resource@" "yes"
 export INTRC		= $(LIBPREFIX)@INT@$(RCSUFFIX)
@@ -516,7 +522,7 @@ ifeq "@need_soname@" "yes"
 export FLOATSONAME     = \
 	@WLSONAME@$(LIBPREFIX)@FLOAT@$(SOSUFFIX)
 else
-export FLOATSONAME     = 
+export FLOATSONAME     =
 endif
 ifeq "@enable_resource@" "yes"
 export FLOATRC		= $(LIBPREFIX)@FLOAT@$(RCSUFFIX)
@@ -612,7 +618,7 @@ ifeq "@need_soname@" "yes"
 export SETSONAME     = \
 	@WLSONAME@$(LIBPREFIX)@SET@$(SOSUFFIX)
 else
-export SETSONAME     = 
+export SETSONAME     =
 endif
 ifeq "@enable_resource@" "yes"
 export SETRC		= $(LIBPREFIX)@SET@$(RCSUFFIX)
@@ -665,7 +671,7 @@ ifeq "@need_soname@" "yes"
 export MMSONAME     = \
 	@WLSONAME@$(LIBPREFIX)@MM@$(SOSUFFIX)
 else
-export MMSONAME     = 
+export MMSONAME     =
 endif
 ifeq "@enable_resource@" "yes"
 export MMRC		= $(LIBPREFIX)@MM@$(RCSUFFIX)
@@ -705,7 +711,7 @@ ifeq "@need_soname@" "yes"
 export DRIVERSONAME     = \
 	@WLSONAME@$(LIBPREFIX)@DRIVER@$(SOSUFFIX)
 else
-export DRIVERSONAME     = 
+export DRIVERSONAME     =
 endif
 ifeq "@enable_resource@" "yes"
 export DRIVERRC		= $(LIBPREFIX)@DRIVER@$(RCSUFFIX)
@@ -788,7 +794,7 @@ ifeq "@need_soname@" "yes"
 export GISTSONAME     = \
 	@WLSONAME@$(LIBPREFIX)@GIST@$(SOSUFFIX)
 else
-export GISTSONAME     = 
+export GISTSONAME     =
 endif
 ifeq "@enable_resource@" "yes"
 export GISTRC		= $(LIBPREFIX)@GIST@$(RCSUFFIX)
@@ -802,7 +808,7 @@ export GISTDLL		=
 export GISTSTATICLIB	=
 export GISTLIB		=
 export LINKGIST      	=
-export GISTSONAME	= 
+export GISTSONAME	=
 export GISTRES		=
 export GISTRC		=
 endif
@@ -815,7 +821,7 @@ FLATZINCSRC0 = flatzinc.cpp registry.cpp branch.cpp
 FLATZINC_GENSRC0 = parser.tab.cpp lexer.yy.cpp
 FLATZINCHDR0 = ast.hh conexpr.hh option.hh parser.hh \
 	plugin.hh registry.hh symboltable.hh varspec.hh \
-	branch.hh branch.hpp
+	branch.hh branch.hpp lastval.hh complete.hh
 
 FLATZINCSRC = $(FLATZINCSRC0:%=gecode/flatzinc/%)
 FLATZINC_GENSRC = $(FLATZINC_GENSRC0:%=gecode/flatzinc/%)
@@ -839,6 +845,11 @@ export FLATZINCSTATICLIB	= $(LIBPREFIX)@FLATZINC@$(STATICLIBSUFFIX)
 export FLATZINCLIB		= $(LIBPREFIX)@FLATZINC@$(LIBSUFFIX)
 export LINKFLATZINC		= $(LINKPREFIX)@FLATZINC@$(LINKSUFFIX)
 export FLATZINCMZNLIB		= gecode/flatzinc/mznlib
+ifeq "@enable_gist@" "yes"
+export FLATZINCCONFIG		= tools/flatzinc/gecode.msc tools/flatzinc/gecode-gist.msc
+else
+export FLATZINCCONFIG		= tools/flatzinc/gecode.msc
+endif
 FLATZINCEXE	= tools/flatzinc/fzn-gecode$(EXESUFFIX)
 ifeq "@need_soname@" "yes"
 export FLATZINCSONAME = @WLSONAME@$(LIBPREFIX)@FLATZINC@$(SOSUFFIX)
@@ -858,7 +869,7 @@ export FLATZINCSTATICLIB	=
 export FLATZINCLIB		=
 export LINKFLATZINC		=
 export FLATZINCSONAME		=
-export FLATZINCMZNLIB		= 
+export FLATZINCMZNLIB		=
 export FLATZINCRES		=
 export FLATZINCRC		=
 FLATZINCEXE	=
@@ -870,7 +881,7 @@ endif
 
 
 INTEXAMPLEHDR0 =						\
-	scowl
+	scowl job-shop-instances
 INTEXAMPLESRC0 =						\
 	alpha bacp bibd donald efpa eq20 golomb-ruler		\
 	graph-color grocery ind-set magic-sequence magic-square	\
@@ -899,7 +910,7 @@ ifeq "@enable_float_vars@" "yes"
   ifeq "@enable_mpfr@" "yes"
   MPFRFLOATEXAMPLEEXE  = $(MPFRFLOATEXAMPLESRC:%.cpp=%$(EXESUFFIX))
   else
-  MPFRFLOATEXAMPLEEXE  = 
+  MPFRFLOATEXAMPLEEXE  =
   endif
 endif
 
@@ -909,7 +920,7 @@ FLOATEXAMPLESRC  = $(FLOATEXAMPLESRC0:%=examples/%.cpp)
 ifeq "@enable_float_vars@" "yes"
 FLOATEXAMPLEEXE  = $(FLOATEXAMPLESRC:%.cpp=%$(EXESUFFIX))
 else
-FLOATEXAMPLEEXE  = 
+FLOATEXAMPLEEXE  =
 endif
 
 SETEXAMPLESRC0 = \
@@ -918,7 +929,7 @@ SETEXAMPLESRC  = $(SETEXAMPLESRC0:%=examples/%.cpp)
 ifeq "@enable_set_vars@" "yes"
 SETEXAMPLEEXE  = $(SETEXAMPLESRC:%.cpp=%$(EXESUFFIX))
 else
-SETEXAMPLEEXE  = 
+SETEXAMPLEEXE  =
 endif
 
 EXAMPLEBUILDDIRS = examples
@@ -1157,6 +1168,14 @@ FLATZINCTESTSRC0 = \
   test/flatzinc/blocksworld_instance_1.cpp \
   test/flatzinc/blocksworld_instance_2.cpp \
   test/flatzinc/cumulatives.cpp \
+  test/flatzinc/cumulatives_full_1.cpp \
+  test/flatzinc/cumulatives_full_2.cpp \
+  test/flatzinc/cumulatives_full_3.cpp \
+  test/flatzinc/cumulatives_full_4.cpp \
+  test/flatzinc/cumulatives_full_5.cpp \
+  test/flatzinc/cumulatives_full_6.cpp \
+  test/flatzinc/cumulatives_full_7.cpp \
+  test/flatzinc/cumulatives_full_8.cpp \
   test/flatzinc/cutstock.cpp \
   test/flatzinc/eq20.cpp \
   test/flatzinc/factory_planning_instance.cpp \
@@ -1196,8 +1215,18 @@ FLATZINCTESTSRC0 = \
   test/flatzinc/magicsq_5.cpp \
   test/flatzinc/oss.cpp \
   test/flatzinc/steiner_triples.cpp \
+  test/flatzinc/subtyping.cpp \
   test/flatzinc/timetabling.cpp \
-  test/flatzinc/trucking.cpp
+  test/flatzinc/trucking.cpp \
+	test/flatzinc/on_restart_complete.cpp \
+	test/flatzinc/on_restart_last_val_bool.cpp \
+	test/flatzinc/on_restart_last_val_float.cpp \
+	test/flatzinc/on_restart_last_val_int.cpp \
+	test/flatzinc/on_restart_last_val_set.cpp \
+	test/flatzinc/on_restart_sol_bool.cpp \
+	test/flatzinc/on_restart_sol_float.cpp \
+	test/flatzinc/on_restart_sol_int.cpp \
+	test/flatzinc/on_restart_sol_set.cpp
 
 ifeq "@enable_flatzinc@" "yes"
 FLATZINCTESTOBJ = $(FLATZINCTESTSRC0:%.cpp=%$(OBJSUFFIX))
@@ -1217,7 +1246,8 @@ SEARCHTESTSRC0 = \
 ARRAYTESTSRC0 = \
 	test/array.cpp
 
-TESTSRC0 = test/test.cpp test/afc.cpp test/ldsb.cpp test/region.cpp
+TESTSRC0 = test/test.cpp test/afc.cpp test/ldsb.cpp test/region.cpp \
+	test/groups.cpp
 
 TESTSRC = \
 	$(TESTSRC0) $(INTTESTSRC0) $(SETTESTSRC0) $(FLOATTESTSRC0) \
@@ -1273,7 +1303,7 @@ test: mkcompiledirs
 
 # A basic integrity test
 check: test
-	$(TESTEXE) -iter 2 -test Branch::Int::Dense::3 \
+	$(RUNENVIRONMENT) $(TESTEXE) -iter 2 -threads 0 -test Branch::Int::Dense::3 \
 			   -test FlatZinc::magic_square \
 			   -test Int::Arithmetic::Abs \
 			   -test Int::Arithmetic::ArgMax \
@@ -1459,19 +1489,18 @@ gecode/gist/moc_%.cpp: $(top_srcdir)/gecode/gist/%.hh
 ifeq "@HAVE_FLEXBISON@" "yes"
 gecode/flatzinc/lexer.yy.cpp: \
 	$(top_srcdir)/gecode/flatzinc/lexer.lxx \
-	$(top_srcdir)/gecode/flatzinc/parser.tab.hh
+	$(top_srcdir)/gecode/flatzinc/parser.tab.hpp
 	flex -ogecode/flatzinc/lexer.yy.cpp \
 		$(top_srcdir)/gecode/flatzinc/lexer.lxx
 
-gecode/flatzinc/parser.tab.hh gecode/flatzinc/parser.tab.cpp: \
+gecode/flatzinc/parser.tab.hpp gecode/flatzinc/parser.tab.cpp: \
 	$(top_srcdir)/gecode/flatzinc/parser.yxx
 	bison -t -o gecode/flatzinc/parser.tab.cpp -d $<
-	mv gecode/flatzinc/parser.tab.hpp gecode/flatzinc/parser.tab.hh
 else
 ifneq "$(top_srcdir)" "."
 gecode/flatzinc/lexer.yy.cpp: $(top_srcdir)/gecode/flatzinc/lexer.yy.cpp
 	cp $(@:%=$(top_srcdir)/%) $@
-gecode/flatzinc/parser.tab.hh: $(top_srcdir)/gecode/flatzinc/parser.tab.hh
+gecode/flatzinc/parser.tab.hpp: $(top_srcdir)/gecode/flatzinc/parser.tab.hpp
 	cp $(@:%=$(top_srcdir)/%) $@
 gecode/flatzinc/parser.tab.cpp: $(top_srcdir)/gecode/flatzinc/parser.tab.cpp
 	cp $(@:%=$(top_srcdir)/%) $@
@@ -1762,7 +1791,7 @@ examples/%$(EXESUFFIX): examples/%$(OBJSUFFIX) examples/%$(EXESUFFIX).res \
 	$(ALLLIB)
 	$(CXX) @EXEOUTPUT@$@ $< $@.res \
 		$(DLLPATH) $(CXXFLAGS) \
-		$(LINKALL) $(GLDFLAGS) $(LINKQT) 
+		$(LINKALL) $(GLDFLAGS) $(LINKQT)
 	$(FIXMANIFEST) $@.manifest
 	$(MANIFEST) -manifest $@.manifest -outputresource:$@\;1
 else
@@ -1803,7 +1832,7 @@ endif
 $(FLATZINCEXE): $(FLATZINCEXEOBJ) $(FLATZINCEXERES) $(ALLLIB)
 	$(CXX) @EXEOUTPUT@$@ $(FLATZINCEXEOBJ) $(FLATZINCEXERES) \
 	$(DLLPATH) $(CXXFLAGS) \
-	$(LINKALL) $(GLDFLAGS) $(LINKSTATICQT) 
+	$(LINKALL) $(GLDFLAGS) $(LINKSTATICQT)
 	$(FIXMANIFEST) $@.manifest
 	$(MANIFEST) -manifest $@.manifest -outputresource:$@\;1
 
@@ -1965,7 +1994,7 @@ endif
 
 endif
 
-doinstallheaders: $(ALLHDR:%=$(top_srcdir)/%) $(EXTRA_HEADERS) $(VARIMPHDR)
+doinstallheaders: $(ALLHDR:%=$(top_srcdir)/%) $(EXTRA_HEADERS) $(VARIMPHDR) $(FLATZINCCONFIG)
 	mkdir -p $(DESTDIR)$(includedir) && \
 	(cd $(top_srcdir) && tar cf - $(ALLHDR)) | \
 	  (cd $(DESTDIR)$(includedir) && tar xf -) && \
@@ -1975,11 +2004,15 @@ doinstallheaders: $(ALLHDR:%=$(top_srcdir)/%) $(EXTRA_HEADERS) $(VARIMPHDR)
 	for_extraheaders="$(EXTRA_HEADERS)" && \
 	  for f in $$for_extraheaders; do \
 	    cp $$f $(DESTDIR)$(includedir)/$$f; done && \
+	mkdir -p $(DESTDIR)$(datadir)/minizinc/solvers && \
+	for_flatconf="$(FLATZINCCONFIG)" && \
+	  for f in $$for_flatconf; do \
+			cp $$f $(DESTDIR)$(datadir)/minizinc/solvers; done && \
 	for_mznlib="$(FLATZINCMZNLIB)" && \
+	  mkdir -p $(DESTDIR)$(datadir)/minizinc/gecode; \
 	  for f in $$for_mznlib; do \
-		mkdir -p $(DESTDIR)$(datadir)/gecode/mznlib; \
 		cp $(top_srcdir)/$$f/*.mzn \
-		  $(DESTDIR)$(datadir)/gecode/mznlib; done
+		  $(DESTDIR)$(datadir)/minizinc/gecode; done
 
 doinstalllib:
 	mkdir -p $(DESTDIR)$(sharedlibdir) && \
@@ -2104,7 +2137,7 @@ distclean: veryclean
 	$(RMF) config.log config.status Makefile.dep
 
 depend: mkcompiledirs
-	@$(MAKE) $(VARIMP) gecode/flatzinc/parser.tab.hh
+	@$(MAKE) $(VARIMP) gecode/flatzinc/parser.tab.hpp
 	perl $(top_srcdir)/misc/makedepend.perl \
 	$(top_srcdir) \
 	$(ALLSRC) \

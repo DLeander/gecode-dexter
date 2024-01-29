@@ -33,8 +33,8 @@
  *
  */
 
-#ifndef __GECODE_TEST_INT_HH__
-#define __GECODE_TEST_INT_HH__
+#ifndef GECODE_TEST_INT_HH
+#define GECODE_TEST_INT_HH
 
 #include "test/test.hh"
 
@@ -64,9 +64,9 @@ namespace Test {
       /// Initialize assignments for \a n0 variables and values \a d0
       Assignment(int n0, const Gecode::IntSet& d0);
       /// Test whether all assignments have been iterated
-      virtual bool operator()(void) const = 0;
+      virtual bool has_more(void) const = 0;
       /// Move to next assignment
-      virtual void operator++(void) = 0;
+      virtual void next(Gecode::Support::RandomGenerator& rand) = 0;
       /// Return value for variable \a i
       virtual int operator[](int i) const = 0;
       /// Return number of variables
@@ -83,9 +83,9 @@ namespace Test {
       /// Initialize assignments for \a n0 variables and values \a d0
       CpltAssignment(int n, const Gecode::IntSet& d);
       /// Test whether all assignments have been iterated
-      virtual bool operator()(void) const;
+      virtual bool has_more(void) const;
       /// Move to next assignment
-      virtual void operator++(void);
+      virtual void next(Gecode::Support::RandomGenerator& rand);
       /// Return value for variable \a i
       virtual int operator[](int i) const;
       /// Destructor
@@ -96,16 +96,16 @@ namespace Test {
     class RandomAssignment : public Assignment {
     protected:
       int* vals; ///< The current values for the variables
-      int  a;    ///< How many assigments still to be generated
+      int  a;    ///< How many assignments still to be generated
       /// Generate new value according to domain
-      int randval(void);
+      int randval(Gecode::Support::RandomGenerator& rand);
     public:
       /// Initialize for \a a assignments for \a n0 variables and values \a d0
-      RandomAssignment(int n, const Gecode::IntSet& d, int a);
+      RandomAssignment(int n, const Gecode::IntSet& d, int a0, Gecode::Support::RandomGenerator& rand);
       /// Test whether all assignments have been iterated
-      virtual bool operator()(void) const;
+      virtual bool has_more(void) const;
       /// Move to next assignment
-      virtual void operator++(void);
+      virtual void next(Gecode::Support::RandomGenerator& rand);
       /// Return value for variable \a i
       virtual int operator[](int i) const;
       /// Destructor
@@ -116,19 +116,19 @@ namespace Test {
     class RandomMixAssignment : public Assignment {
     protected:
       int* vals; ///< The current values for the variables
-      int  a;    ///< How many assigments still to be generated
+      int  a;    ///< How many assignments still to be generated
       int _n1;   ///< How many variables in the second set
       Gecode::IntSet _d1; ///< Domain for second set of variables
       /// Generate new value according to domain \a d
-      int randval(const Gecode::IntSet& d);
+      int randval(const Gecode::IntSet& d, Gecode::Support::RandomGenerator& rand);
     public:
       /// Initialize for \a a assignments for \a n0 variables and values \a d0
-      RandomMixAssignment(int n0, const Gecode::IntSet& d0,
-                          int n1, const Gecode::IntSet& d1, int a0);
+      RandomMixAssignment(int n0, const Gecode::IntSet& d0, int n1, const Gecode::IntSet& d1, int a0,
+                          Gecode::Support::RandomGenerator& rand);
       /// Test whether all assignments have been iterated
-      virtual bool operator()(void) const;
+      virtual bool has_more(void) const;
       /// Move to next assignment
-      virtual void operator++(void);
+      virtual void next(Gecode::Support::RandomGenerator& rand);
       /// Return value for variable \a i
       virtual int operator[](int i) const;
       /// Destructor
@@ -185,33 +185,33 @@ namespace Test {
       /// Compute a fixpoint and check for failure
       bool failed(void);
       /// Randomly select an unassigned variable
-      int rndvar(void);
+      int rndvar(Gecode::Support::RandomGenerator& rand);
       /// Randomly select a pruning rel for variable \a i
-      void rndrel(const Assignment& a, int i, Gecode::IntRelType& irt, int& v);
+      void rndrel(const Assignment& a, int i, Gecode::IntRelType& irt, int& v, Gecode::Support::RandomGenerator& rand);
       /// Perform integer tell operation on \a x[i]
       void rel(int i, Gecode::IntRelType irt, int n);
       /// Perform Boolean tell on \a b
       void rel(bool sol);
       /// Assign all (or all but one, if \a skip is true) variables to values in \a a
-      void assign(const Assignment& a, bool skip=false);
-      /// Assing a random variable to a random bound
-      void bound(void);
+      void assign(const Assignment& a, bool skip, Gecode::Support::RandomGenerator& rand);
+      /// Assign a random variable to a random bound
+      void bound(Gecode::Support::RandomGenerator& rand);
       /** \brief Prune some random values from variable \a i
        *
        * If \a bounds_only is true, then the pruning is only done on the
        * bounds of the variable.
        */
-      void prune(int i, bool bounds_only);
+      void prune(int i, bool bounds_only, Gecode::Support::RandomGenerator& rand);
       /// Prune some random values for some random variable
-      void prune(void);
+      void prune(Gecode::Support::RandomGenerator& rand);
       /// Prune values but not those in assignment \a a
-      bool prune(const Assignment& a, bool testfix);
+      bool prune(const Assignment& a, bool testfix, Gecode::Support::RandomGenerator& rand);
       /// Disable propagators in space and compute fixpoint (make all idle)
       void disable(void);
       /// Enable propagators in space
       void enable(void);
       /// Prune values also in a space \a c with disabled propagators, but not those in assignment \a a
-      bool disabled(const Assignment& a, TestSpace& c, bool testfix);
+      bool disabled(const Assignment& a, TestSpace& c, bool testfix, Gecode::Support::RandomGenerator& rand);
       /// Return the number of propagators
       unsigned int propagators(void);
     };
@@ -307,18 +307,18 @@ namespace Test {
       virtual bool run(void);
       /// \name Mapping scalar values to strings
       //@{
-      /// Map integer propagation level to string
-      static std::string str(Gecode::IntPropLevel ipl);
-      /// Map integer relation to string
-      static std::string str(Gecode::IntRelType irl);
-      /// Map Boolean operation to string
-      static std::string str(Gecode::BoolOpType bot);
       /// Map bool to string
       static std::string str(bool b);
       /// Map integer to string
       static std::string str(int i);
       /// Map integer array to string
       static std::string str(const Gecode::IntArgs& i);
+      /// Map integer propagation level to string
+      static std::string str(Gecode::IntPropLevel ipl);
+      /// Map integer relation to string
+      static std::string str(Gecode::IntRelType irl);
+      /// Map Boolean operation to string
+      static std::string str(Gecode::BoolOpType bot);
       //@}
       /// \name General support
       //@{

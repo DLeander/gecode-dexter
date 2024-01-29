@@ -31,8 +31,8 @@
  *
  */
 
-#ifndef __GECODE_SEARCH_SEQ_RBS_HH__
-#define __GECODE_SEARCH_SEQ_RBS_HH__
+#ifndef GECODE_SEARCH_SEQ_RBS_HH
+#define GECODE_SEARCH_SEQ_RBS_HH
 
 #include <gecode/search.hh>
 
@@ -46,7 +46,7 @@ namespace Gecode { namespace Search { namespace Seq {
     friend class ::Gecode::Search::Seq::RBS;
   private:
     /// The failure limit for the engine
-    unsigned long int l;
+    unsigned long long int l;
     /// The stop object for the meta engine
     Stop* m_stop;
     /// Whether the engine was stopped
@@ -59,7 +59,7 @@ namespace Gecode { namespace Search { namespace Seq {
     /// Return true if meta engine must be stopped
     virtual bool stop(const Statistics& s, const Options& o);
     /// Set current limit for the engine to \a l fails
-    void limit(const Statistics& s, unsigned long int l);
+    void limit(const Statistics& s, unsigned long long int l);
     /// Update statistics
     void update(const Search::Statistics& s);
     /// Return whether the engine has been stopped
@@ -75,7 +75,7 @@ namespace Gecode { namespace Search { namespace Seq {
     Engine* e;
     /// The master space to restart from
     Space* master;
-    /// The last solution space (possibly NULL)
+    /// The last solution space (possibly nullptr)
     Space* last;
     /// The cutoff object
     Cutoff* co;
@@ -83,8 +83,6 @@ namespace Gecode { namespace Search { namespace Seq {
     RestartStop* stop;
     /// How many solutions since the last restart
     unsigned long int sslr;
-    /// Whether the slave can share info (AFC) with the master
-    bool shared_info;
     /// Whether search for the next solution will be complete
     bool complete;
     /// Whether a restart must be performed when next is called
@@ -95,7 +93,7 @@ namespace Gecode { namespace Search { namespace Seq {
     /// Constructor
     RBS(Space* s, RestartStop* stop0, Engine* e0,
         const Search::Statistics& stat, const Options& o, bool best);
-    /// Return next solution (NULL, if none exists or search has been stopped)
+    /// Return next solution (nullptr, if none exists or search has been stopped)
     virtual Space* next(void);
     /// Return statistics
     virtual Statistics statistics(void) const;

@@ -43,8 +43,8 @@
  *
  */
 
-#ifndef __GECODE_INT_HH__
-#define __GECODE_INT_HH__
+#ifndef GECODE_INT_HH
+#define GECODE_INT_HH
 
 #include <climits>
 #include <cfloat>
@@ -193,7 +193,7 @@ namespace Gecode {
       /// Check whether \a n is included in the set
       GECODE_INT_EXPORT bool in(int n) const;
       /// Perform equality test on ranges
-      GECODE_INT_EXPORT bool equal(const IntSetObject& so) const; 
+      GECODE_INT_EXPORT bool equal(const IntSetObject& so) const;
       /// Delete object
       GECODE_INT_EXPORT virtual ~IntSetObject(void);
     };
@@ -232,7 +232,7 @@ namespace Gecode {
     template<class I>
     explicit IntSet(const I& i);
     /// Initialize with integers from list \a r
-    GECODE_INT_EXPORT 
+    GECODE_INT_EXPORT
     explicit IntSet(std::initializer_list<int> r);
     /** \brief Initialize with ranges from vector \a r
      *
@@ -456,6 +456,9 @@ namespace Gecode {
     /// Test whether \a n is contained in domain
     bool in(int n) const;
     //@}
+
+    /// Assignment operator
+    IntVar& operator =(const IntVar&) = default;
   };
 
   /**
@@ -588,6 +591,9 @@ namespace Gecode {
     /// Test whether domain is neither zero nor one
     bool none(void) const;
     //@}
+
+    /// Assignment operator
+    BoolVar& operator =(const BoolVar&) = default;
   };
 
   /**
@@ -698,6 +704,8 @@ namespace Gecode {
      */
     GECODE_INT_EXPORT
     IntVarArgs(Space& home, int n, const IntSet& s);
+    /// Assignment operator
+    IntVarArgs& operator =(const IntVarArgs&) = default;
     //@}
   };
 
@@ -741,6 +749,8 @@ namespace Gecode {
      */
     GECODE_INT_EXPORT
     BoolVarArgs(Space& home, int n, int min, int max);
+    /// Assignment operator
+    BoolVarArgs& operator =(const BoolVarArgs&) = default;
     //@}
   };
   //@}
@@ -799,6 +809,9 @@ namespace Gecode {
     GECODE_INT_EXPORT
     IntVarArray(Space& home, int n, const IntSet& s);
     //@}
+
+    /// Assignment operator
+    IntVarArray& operator =(const IntVarArray&) = default;
   };
 
   /**
@@ -831,6 +844,9 @@ namespace Gecode {
     GECODE_INT_EXPORT
     BoolVarArray(Space& home, int n, int min, int max);
     //@}
+
+    /// Assignment operator
+    BoolVarArray& operator =(const BoolVarArray&) = default;
   };
 
 }
@@ -857,14 +873,14 @@ namespace Gecode {
      * \brief Implication for reification
      *
      * For a constraint \f$c\f$ and a Boolean control variable \f$b\f$
-     * defines that \f$b=1\Leftarrow c\f$ is propagated.
+     * defines that \f$b=1\Rightarrow c\f$ is propagated.
      */
     RM_IMP,
     /**
      * \brief Inverse implication for reification
      *
      * For a constraint \f$c\f$ and a Boolean control variable \f$b\f$
-     * defines that \f$b=1\Rightarrow c\f$ is propagated.
+     * defines that \f$c\Rightarrow b=1\f$ is propagated.
      */
     RM_PMI
   };
@@ -981,7 +997,7 @@ namespace Gecode {
     IPL_BASIC = 4,    ///< Use basic propagation algorithm
     IPL_ADVANCED = 8, ///< Use advanced propagation algorithm
     IPL_BASIC_ADVANCED = IPL_BASIC | IPL_ADVANCED, ///< Use both
-    _IPL_BITS = 4 ///< Number of bits required (internal)
+    IPL_BITS_ = 4 ///< Number of bits required (internal)
   };
 
   /// Extract value, bounds, or domain propagation from propagation level
@@ -1483,6 +1499,14 @@ namespace Gecode {
   GECODE_INT_EXPORT void
   element(Home home, IntSharedArray n, IntVar x0, IntVar x1,
           IntPropLevel ipl=IPL_DEF);
+  /** \brief Post domain consistent propagator for \f$ n_{x_0+offset}=x_1\f$
+   *
+   *  Throws an exception of type Int::OutOfLimits, if
+   *  the integers in \a n exceed the limits in Int::Limits.
+   */
+  GECODE_INT_EXPORT void
+  element(Home home, IntSharedArray n, IntVar x0, int offset, IntVar x1,
+          IntPropLevel ipl=IPL_DEF);
   /** \brief Post domain consistent propagator for \f$ n_{x_0}=x_1\f$
    *
    *  Throws an exception of type Int::OutOfLimits, if
@@ -1490,6 +1514,14 @@ namespace Gecode {
    */
   GECODE_INT_EXPORT void
   element(Home home, IntSharedArray n, IntVar x0, BoolVar x1,
+          IntPropLevel ipl=IPL_DEF);
+  /** \brief Post domain consistent propagator for \f$ n_{x_0+offset}=x_1\f$
+   *
+   *  Throws an exception of type Int::OutOfLimits, if
+   *  the integers in \a n exceed the limits in Int::Limits.
+   */
+  GECODE_INT_EXPORT void
+  element(Home home, IntSharedArray n, IntVar x0, int offset, BoolVar x1,
           IntPropLevel ipl=IPL_DEF);
   /** \brief Post domain consistent propagator for \f$ n_{x_0}=x_1\f$
    *
@@ -1499,6 +1531,14 @@ namespace Gecode {
   GECODE_INT_EXPORT void
   element(Home home, IntSharedArray n, IntVar x0, int x1,
           IntPropLevel ipl=IPL_DEF);
+  /** \brief Post domain consistent propagator for \f$ n_{x_0+offset}=x_1\f$
+   *
+   *  Throws an exception of type Int::OutOfLimits, if
+   *  the integers in \a n exceed the limits in Int::Limits.
+   */
+  GECODE_INT_EXPORT void
+  element(Home home, IntSharedArray n, IntVar x0, int offset, int x1,
+          IntPropLevel ipl=IPL_DEF);
   /** \brief Post propagator for \f$ x_{y_0}=y_1\f$
    *
    * Supports both bounds (\a ipl = IPL_BND) and
@@ -1506,6 +1546,14 @@ namespace Gecode {
    */
   GECODE_INT_EXPORT void
   element(Home home, const IntVarArgs& x, IntVar y0, IntVar y1,
+          IntPropLevel ipl=IPL_DEF);
+  /** \brief Post propagator for \f$ x_{y_0+offset}=y_1\f$
+   *
+   * Supports both bounds (\a ipl = IPL_BND) and
+   * domain consistency (\a ipl = IPL_DOM, default).
+   */
+  GECODE_INT_EXPORT void
+  element(Home home, const IntVarArgs& x, IntVar y0, int offset, IntVar y1,
           IntPropLevel ipl=IPL_DEF);
   /** \brief Post propagator for \f$ x_{y_0}=y_1\f$
    *
@@ -1515,13 +1563,29 @@ namespace Gecode {
   GECODE_INT_EXPORT void
   element(Home home, const IntVarArgs& x, IntVar y0, int y1,
           IntPropLevel ipl=IPL_DEF);
+  /** \brief Post propagator for \f$ x_{y_0+offset}=y_1\f$
+   *
+   * Supports both bounds (\a ipl = IPL_BND) and
+   * domain consistency (\a ipl = IPL_DOM, default).
+   */
+  GECODE_INT_EXPORT void
+  element(Home home, const IntVarArgs& x, IntVar y0, int offset, int y1,
+          IntPropLevel ipl=IPL_DEF);
   /// Post domain consistent propagator for \f$ x_{y_0}=y_1\f$
   GECODE_INT_EXPORT void
   element(Home home, const BoolVarArgs& x, IntVar y0, BoolVar y1,
           IntPropLevel ipl=IPL_DEF);
+  /// Post domain consistent propagator for \f$ x_{y_0+offset}=y_1\f$
+  GECODE_INT_EXPORT void
+  element(Home home, const BoolVarArgs& x, IntVar y0, int offset, BoolVar y1,
+          IntPropLevel ipl=IPL_DEF);
   /// Post domain consistent propagator for \f$ x_{y_0}=y_1\f$
   GECODE_INT_EXPORT void
   element(Home home, const BoolVarArgs& x, IntVar y0, int y1,
+          IntPropLevel ipl=IPL_DEF);
+  /// Post domain consistent propagator for \f$ x_{y_0+offset}=y_1\f$
+  GECODE_INT_EXPORT void
+  element(Home home, const BoolVarArgs& x, IntVar y0, int offset, int y1,
           IntPropLevel ipl=IPL_DEF);
 
   /** \brief Post domain consistent propagator for \f$ a_{x+w\cdot y}=z\f$
@@ -1540,6 +1604,23 @@ namespace Gecode {
   element(Home home, IntSharedArray a,
           IntVar x, int w, IntVar y, int h, IntVar z,
           IntPropLevel ipl=IPL_DEF);
+  /** \brief Post domain consistent propagator for \f$ a_{x+xoff+w\cdot (y+yoff)}=z\f$
+   *
+   * If \a a is regarded as a two-dimensional array in row-major
+   * order of width \a w and height \a h, then \a z is constrained
+   * to be the element in column \a x and row \a y, offset by
+   * xoff and yoff.
+   *
+   * Throws an exception of type Int::OutOfLimits, if
+   * the integers in \a n exceed the limits in Int::Limits.
+   *
+   * Throws an exception of type Int::ArgumentSizeMismatch, if
+   * \f$ w\cdot h\neq|a|\f$.
+   */
+  GECODE_INT_EXPORT void
+  element(Home home, IntSharedArray a,
+          IntVar x, int xoff, int w, IntVar y, int yoff, int h, IntVar z,
+          IntPropLevel ipl=IPL_DEF);
   /** \brief Post domain consistent propagator for \f$ a_{x+w\cdot y}=z\f$
    *
    * If \a a is regarded as a two-dimensional array in row-major
@@ -1555,6 +1636,23 @@ namespace Gecode {
   GECODE_INT_EXPORT void
   element(Home home, IntSharedArray a,
           IntVar x, int w, IntVar y, int h, BoolVar z,
+          IntPropLevel ipl=IPL_DEF);
+  /** \brief Post domain consistent propagator for \f$ a_{x+xoff+w\cdot (y+yoff)}=z\f$
+   *
+   * If \a a is regarded as a two-dimensional array in row-major
+   * order of width \a w and height \a h, then \a z is constrained
+   * to be the element in column \a x and row \a y, offset by
+   * xoff and yoff.
+   *
+   * Throws an exception of type Int::OutOfLimits, if
+   * the integers in \a n exceed the limits in Int::Limits.
+   *
+   * Throws an exception of type Int::ArgumentSizeMismatch, if
+   * \f$ w\cdot h\neq|a|\f$.
+   */
+  GECODE_INT_EXPORT void
+  element(Home home, IntSharedArray a,
+          IntVar x, int xoff, int w, IntVar y, int yoff, int h, BoolVar z,
           IntPropLevel ipl=IPL_DEF);
   /** \brief Post propagator for \f$ a_{x+w\cdot y}=z\f$
    *
@@ -1575,6 +1673,26 @@ namespace Gecode {
   element(Home home, const IntVarArgs& a,
           IntVar x, int w, IntVar y, int h, IntVar z,
           IntPropLevel ipl=IPL_DEF);
+  /** \brief Post propagator for \f$ a_{x+xoff+w\cdot (y+yoff)}=z\f$
+   *
+   * If \a a is regarded as a two-dimensional array in row-major
+   * order of width \a w and height \a h, then \a z is constrained
+   * to be the element in column \a x and row \a y, offset by
+   * xoff and yoff.
+   *
+   * Supports both bounds (\a ipl = IPL_BND) and
+   * domain consistency (\a ipl = IPL_DOM, default).
+   *
+   * Throws an exception of type Int::OutOfLimits, if
+   * the integers in \a n exceed the limits in Int::Limits.
+   *
+   * Throws an exception of type Int::ArgumentSizeMismatch, if
+   * \f$ w\cdot h\neq|a|\f$.
+   */
+  GECODE_INT_EXPORT void
+  element(Home home, const IntVarArgs& a,
+          IntVar x, int xoff, int w, IntVar y, int yoff, int h, IntVar z,
+          IntPropLevel ipl=IPL_DEF);
   /** \brief Post domain consistent propagator for \f$ a_{x+w\cdot y}=z\f$
    *
    * If \a a is regarded as a two-dimensional array in row-major
@@ -1590,6 +1708,23 @@ namespace Gecode {
   GECODE_INT_EXPORT void
   element(Home home, const BoolVarArgs& a,
           IntVar x, int w, IntVar y, int h, BoolVar z,
+          IntPropLevel ipl=IPL_DEF);
+  /** \brief Post domain consistent propagator for \f$ a_{x+xoff+w\cdot (y+yoff)}=z\f$
+   *
+   * If \a a is regarded as a two-dimensional array in row-major
+   * order of width \a w and height \a h, then \a z is constrained
+   * to be the element in column \a x and row \a y, offset by
+   * xoff and yoff.
+   *
+   * Throws an exception of type Int::OutOfLimits, if
+   * the integers in \a n exceed the limits in Int::Limits.
+   *
+   * Throws an exception of type Int::ArgumentSizeMismatch, if
+   * \f$ w\cdot h\neq|a|\f$.
+   */
+  GECODE_INT_EXPORT void
+  element(Home home, const BoolVarArgs& a,
+          IntVar x, int xoff, int w, IntVar y, int yoff, int h, BoolVar z,
           IntPropLevel ipl=IPL_DEF);
   //@}
 
@@ -3285,7 +3420,7 @@ namespace Gecode {
    *
    * Schedule tasks with start times \a s and processing times \a p
    * on a unary resource. The propagator uses the algorithms from:
-   *   Petr Vilím, Global Constraints in Scheduling, PhD thesis,
+   *   Petr VilÃ­m, Global Constraints in Scheduling, PhD thesis,
    *   Charles University, Prague, Czech Republic, 2007.
    *
    * The propagator performs propagation that depends on the integer
@@ -3317,7 +3452,7 @@ namespace Gecode {
    * and whether a task is mandatory \a m (a task is mandatory if the
    * Boolean variable is 1) on a unary resource. The propagator uses the
    * algorithms from:
-   *   Petr Vilím, Global Constraints in Scheduling, PhD thesis,
+   *   Petr VilÃ­m, Global Constraints in Scheduling, PhD thesis,
    *   Charles University, Prague, Czech Republic, 2007.
    *
    * The propagator performs propagation that depends on the integer
@@ -3359,7 +3494,7 @@ namespace Gecode {
    *    end time.
    *
    * The propagator uses the algorithms from:
-   *   Petr Vilím, Global Constraints in Scheduling, PhD thesis,
+   *   Petr VilÃ­m, Global Constraints in Scheduling, PhD thesis,
    *   Charles University, Prague, Czech Republic, 2007.
    *
    * The propagator performs propagation that depends on the integer
@@ -3401,7 +3536,7 @@ namespace Gecode {
    *
    * The propagator uses the
    * algorithms from:
-   *   Petr Vilím, Global Constraints in Scheduling, PhD thesis,
+   *   Petr VilÃ­m, Global Constraints in Scheduling, PhD thesis,
    *   Charles University, Prague, Czech Republic, 2007.
    *
    * The propagator performs propagation that depends on the integer
@@ -3431,7 +3566,7 @@ namespace Gecode {
    * Schedule tasks with start times \a s, processing times \a p, and
    * end times \a e
    * on a unary resource. The propagator uses the algorithms from:
-   *   Petr Vilím, Global Constraints in Scheduling, PhD thesis,
+   *   Petr VilÃ­m, Global Constraints in Scheduling, PhD thesis,
    *   Charles University, Prague, Czech Republic, 2007.
    *
    * The propagator does not enforce \f$s_i+p_i=e_i\f$, this constraint
@@ -3463,7 +3598,7 @@ namespace Gecode {
    * and whether a task is mandatory \a m (a task is mandatory if the
    * Boolean variable is 1) on a unary resource. The propagator uses the
    * algorithms from:
-   *   Petr Vilím, Global Constraints in Scheduling, PhD thesis,
+   *   Petr VilÃ­m, Global Constraints in Scheduling, PhD thesis,
    *   Charles University, Prague, Czech Republic, 2007.
    *
    * The propagator performs propagation that depends on the integer
@@ -3516,13 +3651,13 @@ namespace Gecode {
    *
    * The propagator uses algorithms taken from:
    *
-   * Petr Vilím, Max Energy Filtering Algorithm for Discrete Cumulative
+   * Petr VilÃ­m, Max Energy Filtering Algorithm for Discrete Cumulative
    * Resources, in W. J. van Hoeve and J. N. Hooker, editors, CPAIOR, volume
    * 5547 of LNCS, pages 294-308. Springer, 2009.
    *
    * and
    *
-   * Petr Vilím, Edge finding filtering algorithm for discrete cumulative
+   * Petr VilÃ­m, Edge finding filtering algorithm for discrete cumulative
    * resources in O(kn log n). In I. P. Gent, editor, CP, volume 5732 of LNCS,
    * pages 802-816. Springer, 2009.
    *
@@ -3575,13 +3710,13 @@ namespace Gecode {
    *
    * The propagator uses algorithms taken from:
    *
-   * Petr Vilím, Max Energy Filtering Algorithm for Discrete Cumulative
+   * Petr VilÃ­m, Max Energy Filtering Algorithm for Discrete Cumulative
    * Resources, in W. J. van Hoeve and J. N. Hooker, editors, CPAIOR, volume
    * 5547 of LNCS, pages 294-308. Springer, 2009.
    *
    * and
    *
-   * Petr Vilím, Edge finding filtering algorithm for discrete cumulative
+   * Petr VilÃ­m, Edge finding filtering algorithm for discrete cumulative
    * resources in O(kn log n). In I. P. Gent, editor, CP, volume 5732 of LNCS,
    * pages 802-816. Springer, 2009.
    *
@@ -3620,13 +3755,13 @@ namespace Gecode {
    *
    * The propagator uses algorithms taken from:
    *
-   * Petr Vilím, Max Energy Filtering Algorithm for Discrete Cumulative
+   * Petr VilÃ­m, Max Energy Filtering Algorithm for Discrete Cumulative
    * Resources, in W. J. van Hoeve and J. N. Hooker, editors, CPAIOR, volume
    * 5547 of LNCS, pages 294-308. Springer, 2009.
    *
    * and
    *
-   * Petr Vilím, Edge finding filtering algorithm for discrete cumulative
+   * Petr VilÃ­m, Edge finding filtering algorithm for discrete cumulative
    * resources in O(kn log n). In I. P. Gent, editor, CP, volume 5732 of LNCS,
    * pages 802-816. Springer, 2009.
    *
@@ -3665,13 +3800,13 @@ namespace Gecode {
    *
    * The propagator uses algorithms taken from:
    *
-   * Petr Vilím, Max Energy Filtering Algorithm for Discrete Cumulative
+   * Petr VilÃ­m, Max Energy Filtering Algorithm for Discrete Cumulative
    * Resources, in W. J. van Hoeve and J. N. Hooker, editors, CPAIOR, volume
    * 5547 of LNCS, pages 294-308. Springer, 2009.
    *
    * and
    *
-   * Petr Vilím, Edge finding filtering algorithm for discrete cumulative
+   * Petr VilÃ­m, Edge finding filtering algorithm for discrete cumulative
    * resources in O(kn log n). In I. P. Gent, editor, CP, volume 5732 of LNCS,
    * pages 802-816. Springer, 2009.
    *
@@ -3712,13 +3847,13 @@ namespace Gecode {
    *
    * The propagator uses algorithms taken from:
    *
-   * Petr Vilím, Max Energy Filtering Algorithm for Discrete Cumulative
+   * Petr VilÃ­m, Max Energy Filtering Algorithm for Discrete Cumulative
    * Resources, in W. J. van Hoeve and J. N. Hooker, editors, CPAIOR, volume
    * 5547 of LNCS, pages 294-308. Springer, 2009.
    *
    * and
    *
-   * Petr Vilím, Edge finding filtering algorithm for discrete cumulative
+   * Petr VilÃ­m, Edge finding filtering algorithm for discrete cumulative
    * resources in O(kn log n). In I. P. Gent, editor, CP, volume 5732 of LNCS,
    * pages 802-816. Springer, 2009.
    *
@@ -3761,13 +3896,13 @@ namespace Gecode {
    *
    * The propagator uses algorithms taken from:
    *
-   * Petr Vilím, Max Energy Filtering Algorithm for Discrete Cumulative
+   * Petr VilÃ­m, Max Energy Filtering Algorithm for Discrete Cumulative
    * Resources, in W. J. van Hoeve and J. N. Hooker, editors, CPAIOR, volume
    * 5547 of LNCS, pages 294-308. Springer, 2009.
    *
    * and
    *
-   * Petr Vilím, Edge finding filtering algorithm for discrete cumulative
+   * Petr VilÃ­m, Edge finding filtering algorithm for discrete cumulative
    * resources in O(kn log n). In I. P. Gent, editor, CP, volume 5732 of LNCS,
    * pages 802-816. Springer, 2009.
    *
@@ -4194,7 +4329,7 @@ namespace Gecode {
    *
    * \ingroup TaskModelIntBranch
    */
-  typedef std::function<double(const Space& home, IntVar x, int i)> 
+  typedef std::function<double(const Space& home, IntVar x, int i)>
     IntBranchMerit;
   /**
    * \brief Branch merit function type for Boolean variables
@@ -4376,15 +4511,20 @@ namespace Gecode {
     /**
      * \brief Initialize for integer variables \a x with decay factor \a d
      *
+     * Counts propagation if \a p is true and failure if \a f is true.
+     *
      * If the branch merit function \a bm is different from nullptr, the
      * action for each variable is initialized with the merit returned
      * by \a bm.
      */
     GECODE_INT_EXPORT
     IntAction(Home home, const IntVarArgs& x, double d=1.0,
+              bool p=true, bool f=true,
               IntBranchMerit bm=nullptr);
     /**
      * \brief Initialize for integer variables \a x with decay factor \a d
+     *
+     * Counts propagation if \a p is true and failure if \a f is true.
      *
      * If the branch merit function \a bm is different from nullptr, the
      * action for each variable is initialized with the merit returned
@@ -4396,6 +4536,7 @@ namespace Gecode {
      */
     GECODE_INT_EXPORT void
     init(Home home, const IntVarArgs& x, double d=1.0,
+         bool p=true, bool f=true,
          IntBranchMerit bm=nullptr);
   };
 
@@ -4421,15 +4562,20 @@ namespace Gecode {
     /**
      * \brief Initialize for Boolean variables \a x with decay factor \a d
      *
+     * Counts propagation if \a p is true and failure if \a f is true.
+     *
      * If the branch merit function \a bm is different from nullptr, the
      * action for each variable is initialized with the merit returned
      * by \a bm.
      */
     GECODE_INT_EXPORT
     BoolAction(Home home, const BoolVarArgs& x, double d=1.0,
+               bool p=true, bool f=true,
                BoolBranchMerit bm=nullptr);
     /**
      * \brief Initialize for Boolean variables \a x with decay factor \a d
+     *
+     * Counts propagation if \a p is true and failure if \a f is true.
      *
      * If the branch merit function \a bm is different from nullptr, the
      * action for each variable is initialized with the merit returned
@@ -4441,6 +4587,7 @@ namespace Gecode {
      */
     GECODE_INT_EXPORT void
     init(Home home, const BoolVarArgs& x, double d=1.0,
+         bool p=true, bool f=true,
          BoolBranchMerit bm=nullptr);
   };
 
@@ -5408,7 +5555,7 @@ namespace Gecode {
   /**
    * \brief Branch over \a x using counting-based search
    *
-   * Branches on the <variable, value> pair that has the the highest solution
+   * Branches on the <variable, value> pair that has the highest solution
    * density across all active propagators. Computing solution density is
    * currently supported for the following propagators:
    *
@@ -5432,7 +5579,7 @@ namespace Gecode {
   /**
    * \brief Branch over \a x using counting-based search
    *
-   * Branches on the <variable, value> pair that has the the highest solution
+   * Branches on the <variable, value> pair that has the highest solution
    * density across all active propagators. Computing solution density is
    * currently supported for the following propagators:
    *
@@ -5463,7 +5610,7 @@ namespace Gecode {
    *
    * The variables in \a x are assigned values from the assigned variables
    * in the solution \a sx with a relaxation probability \a p. That is,
-   * if \$fp=0.1\f$ approximately 10% of the variables in \a x will be
+   * if \f$p=0.1\f$ approximately 10% of the variables in \a x will be
    * assigned a value from \a sx.
    *
    * The random numbers are generated from the generator \a r. At least
@@ -5488,7 +5635,7 @@ namespace Gecode {
    *
    * The variables in \a x are assigned values from the assigned variables
    * in the solution \a sx with a relaxation probability \a p. That is,
-   * if \$fp=0.1\f$ approximately 10% of the variables in \a x will be
+   * if \f$p=0.1\f$ approximately 10% of the variables in \a x will be
    * assigned a value from \a sx.
    *
    * The random numbers are generated from the generator \a r. At least

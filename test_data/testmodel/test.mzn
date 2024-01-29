@@ -1,4 +1,4 @@
-include "alldifferent.mzn";
+include "globals.mzn";
 int: n;
 
 var 1..9: S;

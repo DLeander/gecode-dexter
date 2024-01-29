@@ -72,13 +72,13 @@ namespace Gecode { namespace Search { namespace Par {
   forceinline void
   Engine<Tracer>::block(void) {
     _cmd = C_WAIT;
-    _m_wait.acquire();
+    Support::Thread::acquireGlobalMutex(&_m_wait);
   }
   template<class Tracer>
   forceinline void
   Engine<Tracer>::release(Cmd c) {
     _cmd = c;
-    _m_wait.release();
+    Support::Thread::releaseGlobalMutex(&_m_wait);
   }
   template<class Tracer>
   forceinline void
@@ -94,20 +94,20 @@ namespace Gecode { namespace Search { namespace Par {
   forceinline
   Engine<Tracer>::Worker::Worker(Space* s, Engine& e)
     : tracer(e.opt().tracer), _engine(e),
-      path(s == NULL ? 0 : e.opt().nogoods_limit), d(0),
+      path(s == nullptr ? 0 : e.opt().nogoods_limit), d(0),
       idle(false) {
     tracer.worker();
-    if (s != NULL) {
+    if (s != nullptr) {
       if (s->status(*this) == SS_FAILED) {
         fail++;
-        cur = NULL;
+        cur = nullptr;
         if (!engine().opt().clone)
           delete s;
       } else {
         cur = snapshot(s,engine().opt());
       }
     } else {
-      cur = NULL;
+      cur = nullptr;
     }
   }
 
@@ -271,12 +271,12 @@ namespace Gecode { namespace Search { namespace Par {
      * again eventually.
      */
     if (!path.steal())
-      return NULL;
+      return nullptr;
     m.acquire();
     Space* s = path.steal(*this,d,myt,ot);
     m.release();
     // Tell that there will be one more busy worker
-    if (s != NULL)
+    if (s != nullptr)
       engine().busy();
     return s;
   }
@@ -309,7 +309,7 @@ namespace Gecode { namespace Search { namespace Par {
     // No more solutions?
     if (n_busy == 0) {
       m_search.release();
-      return NULL;
+      return nullptr;
     }
     m_search.release();
     // Okay, now search has to continue, make the guys work
@@ -337,12 +337,12 @@ namespace Gecode { namespace Search { namespace Par {
         m_search.release();
         // Make workers wait again
         block();
-        return NULL;
+        return nullptr;
       }
       m_search.release();
     }
     GECODE_NEVER;
-    return NULL;
+    return nullptr;
   }
 
   template<class Tracer>
@@ -359,6 +359,15 @@ namespace Gecode { namespace Search { namespace Par {
     delete cur;
     path.reset(0);
     tracer.done();
+  }
+
+  /*
+   * Destructor
+   */
+  template<class Tracer>
+  Engine<Tracer>::~Engine(void) {
+    while (!solutions.empty())
+      delete solutions.pop();
   }
 
 }}}

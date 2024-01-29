@@ -35,8 +35,8 @@
  *
  */
 
-#ifndef __GECODE_FLOAT_HH__
-#define __GECODE_FLOAT_HH__
+#ifndef GECODE_FLOAT_HH
+#define GECODE_FLOAT_HH
 
 #include <climits>
 #include <cfloat>
@@ -930,6 +930,9 @@ namespace Gecode {
     /// Test whether \a n is contained in domain
     bool in(const FloatVal& n) const;
     //@}
+
+    /// Assignment operator
+    FloatVar& operator =(const FloatVar&) = default;
   };
 
   /**
@@ -1008,6 +1011,8 @@ namespace Gecode {
      */
     GECODE_FLOAT_EXPORT
     FloatVarArgs(Space& home, int n, FloatNum min, FloatNum max);
+    /// Assignment operator
+    FloatVarArgs& operator =(const FloatVarArgs&) = default;
     //@}
   };
   //@}
@@ -1052,6 +1057,8 @@ namespace Gecode {
      */
     GECODE_FLOAT_EXPORT
     FloatVarArray(Space& home, int n, FloatNum min, FloatNum max);
+    /// Assignment operator
+    FloatVarArray& operator =(const FloatVarArray&) = default;
     //@}
   };
 
@@ -1569,6 +1576,8 @@ namespace Gecode {
     /**
      * \brief Initialize for float variables \a x with decay factor \a d
      *
+     * Counts propagation if \a p is true and failure if \a f is true.
+     *
      * If the branch merit function \a bm is different from nullptr, the
      * action for each variable is initialized with the merit returned
      * by \a bm.
@@ -1576,9 +1585,12 @@ namespace Gecode {
      */
     GECODE_FLOAT_EXPORT
     FloatAction(Home home, const FloatVarArgs& x, double d=1.0,
-                  FloatBranchMerit bm=nullptr);
+                bool p=true, bool f=true,
+                FloatBranchMerit bm=nullptr);
     /**
      * \brief Initialize for float variables \a x with decay factor \a d
+     *
+     * Counts propagation if \a p is true and failure if \a f is true.
      *
      * If the branch merit function \a bm is different from nullptr, the
      * action for each variable is initialized with the merit returned
@@ -1590,6 +1602,7 @@ namespace Gecode {
      */
     GECODE_FLOAT_EXPORT void
     init(Home home, const FloatVarArgs& x, double d=1.0,
+         bool p=true, bool f=true,
          FloatBranchMerit bm=nullptr);
   };
 
@@ -2011,7 +2024,7 @@ namespace Gecode {
    *
    * The variables in \a x are assigned values from the assigned variables
    * in the solution \a sx with a relaxation probability \a p. That is,
-   * if \$fp=0.1\f$ approximately 10% of the variables in \a x will be
+   * if \f$p=0.1\f$ approximately 10% of the variables in \a x will be
    * assigned a value from \a sx.
    *
    * The random numbers are generated from the generator \a r. At least

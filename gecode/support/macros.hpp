@@ -36,7 +36,7 @@
 /// Concatenate macro-expanded \a R and \a LINE
 #define GECODE_CAT(R,LINE) GECODE_CAT2(R,LINE)
 /// Generate fresh name with prefix P
-#define GECODE_FRESH(P) GECODE_CAT(_GECODE_ ## P, __LINE__)
+#define GECODE_FRESH(P) GECODE_CAT(GECODE_ ## P, __LINE__)
 
 /**
  * \def GECODE_NEVER
@@ -49,17 +49,17 @@
 
 #if defined(_MSC_VER) && defined(NDEBUG)
 
-#define GECODE_NEVER __assume(false);
+#define GECODE_NEVER __assume(false)
 
 #else
 
-#define GECODE_NEVER assert(false);
+#define GECODE_NEVER assert(false)
 
 #endif
 
 /**
  * \def GECODE_NOT_NULL
- * \brief Assert that a pointer is never NULL
+ * \brief Assert that a pointer is never nullptr
  *
  * This is preferred over assert as it is used for optimization,
  * if supported by a compiler (for example, Microsoft Visual C++).
@@ -68,11 +68,11 @@
 
 #if defined(_MSC_VER) && defined(NDEBUG)
 
-#define GECODE_NOT_NULL(p) __assume(p != NULL);
+#define GECODE_NOT_NULL(p) __assume(p != nullptr)
 
 #else
 
-#define GECODE_NOT_NULL(p) assert(p != NULL);
+#define GECODE_NOT_NULL(p) assert(p != nullptr)
 
 #endif
 
@@ -87,11 +87,11 @@
 
 #if defined(_MSC_VER) && defined(NDEBUG)
 
-#define GECODE_VALID_FUNCTION(f) __assume(static_cast<bool>(f));
+#define GECODE_VALID_FUNCTION(f) __assume(static_cast<bool>(f))
 
 #else
 
-#define GECODE_VALID_FUNCTION(f) assert(static_cast<bool>(f));
+#define GECODE_VALID_FUNCTION(f) assert(static_cast<bool>(f))
 
 #endif
 
@@ -107,11 +107,11 @@
 
 #if defined(_MSC_VER) && defined(NDEBUG)
 
-#define GECODE_ASSUME(p) __assume((p));
+#define GECODE_ASSUME(p) __assume((p))
 
 #else
 
-#define GECODE_ASSUME(p) assert((p));
+#define GECODE_ASSUME(p) assert((p))
 
 #endif
 

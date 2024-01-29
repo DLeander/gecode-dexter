@@ -63,7 +63,7 @@ namespace Gecode {
       /// Number of chb values
       int n;
       /// Number of failures
-      unsigned long int nf;
+      unsigned long long int nf;
       /// Alpha value
       double alpha;
       /// CHB information
@@ -98,7 +98,7 @@ namespace Gecode {
     /// \name Constructors and initialization
     //@{
     /**
-     * \brief Construct as not yet intialized
+     * \brief Construct as not yet initialized
      *
      * The only member functions that can be used on a constructed but not
      * yet initialized chb storage is init and the assignment operator.

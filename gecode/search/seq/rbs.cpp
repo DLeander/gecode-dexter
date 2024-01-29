@@ -45,7 +45,7 @@ namespace Gecode { namespace Search { namespace Seq {
       return true;
     }
     // Stop if the stop object for the meta engine says so
-    if ((m_stop != NULL) && m_stop->stop(m_stat+s,o)) {
+    if ((m_stop != nullptr) && m_stop->stop(m_stat+s,o)) {
       e_stopped = false;
       return true;
     }
@@ -60,15 +60,15 @@ namespace Gecode { namespace Search { namespace Seq {
       NoGoods& ng = e->nogoods();
       // Reset number of no-goods found
       ng.ng(0);
-      MetaInfo mi(stop->m_stat.restart,sslr,e->statistics().fail,last,ng);
+      MetaInfo mi(stop->m_stat.restart,MetaInfo::RR_SOL,sslr,e->statistics().fail,last,ng);
       bool r = master->master(mi);
       stop->m_stat.nogood += ng.ng();
       if (master->status(stop->m_stat) == SS_FAILED) {
         stop->update(e->statistics());
         delete master;
-        master = NULL;
-        e->reset(NULL);
-        return NULL;
+        master = nullptr;
+        e->reset(nullptr);
+        return nullptr;
       } else if (r) {
         stop->update(e->statistics());
         Space* slave = master;
@@ -81,7 +81,7 @@ namespace Gecode { namespace Search { namespace Seq {
     }
     while (true) {
       Space* n = e->next();
-      if (n != NULL) {
+      if (n != nullptr) {
         // The engine found a solution
         restart = true;
         delete last;
@@ -91,26 +91,28 @@ namespace Gecode { namespace Search { namespace Seq {
                   (e->stopped() && stop->enginestopped()) ) {
         // The engine must perform a true restart
         // The number of the restart has been incremented in the stop object
+        if (!complete && !e->stopped())
+          stop->m_stat.restart++;
         sslr = 0;
         NoGoods& ng = e->nogoods();
         ng.ng(0);
-        MetaInfo mi(stop->m_stat.restart,sslr,e->statistics().fail,last,ng);
+        MetaInfo mi(stop->m_stat.restart,e->stopped() ? MetaInfo::RR_LIM : MetaInfo::RR_CMPL,sslr,e->statistics().fail,last,ng);
         (void) master->master(mi);
         stop->m_stat.nogood += ng.ng();
-        long unsigned int nl = ++(*co);
+        unsigned long long int nl = ++(*co);
         stop->limit(e->statistics(),nl);
         if (master->status(stop->m_stat) == SS_FAILED)
-          return NULL;
+          return nullptr;
         Space* slave = master;
         master = master->clone();
         complete = slave->slave(mi);
         e->reset(slave);
       } else {
-        return NULL;
+        return nullptr;
       }
     }
     GECODE_NEVER;
-    return NULL;
+    return nullptr;
   }
 
   Search::Statistics
@@ -122,7 +124,7 @@ namespace Gecode { namespace Search { namespace Seq {
   RBS::constrain(const Space& b) {
     if (!best)
       throw NoBest("RBS::constrain");
-    if (last != NULL) {
+    if (last != nullptr) {
       last->constrain(b);
       if (last->status() == SS_FAILED) {
         delete last;

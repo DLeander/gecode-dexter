@@ -31,8 +31,8 @@
  *
  */
 
-#ifndef __GECODE_SEARCH_SEQ_LDS_HH__
-#define __GECODE_SEARCH_SEQ_LDS_HH__
+#ifndef GECODE_SEARCH_SEQ_LDS_HH
+#define GECODE_SEARCH_SEQ_LDS_HH
 
 #include <gecode/search.hh>
 #include <gecode/search/support.hh>
@@ -117,7 +117,7 @@ namespace Gecode { namespace Search { namespace Seq {
   public:
     /// Initialize for space \a s with options \a o
     LDS(Space* s, const Options& o);
-    /// Return next solution (NULL, if none exists or search has been stopped)
+    /// Return next solution (nullptr, if none exists or search has been stopped)
     virtual Space* next(void);
     /// Return statistics
     virtual Statistics statistics(void) const;

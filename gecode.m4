@@ -4,10 +4,12 @@ dnl   Guido Tack <tack@gecode.org>
 dnl
 dnl Contributing authors:
 dnl   Samuel Gagnon <samuel.gagnon92@gmail.com>
+dnl   Mikael Lagerkvist <lagerkvist@gecode.org>
 dnl
 dnl Copyright:
 dnl   Guido Tack, 2004, 2005
 dnl   Samuel Gagnon, 2018
+dnl   Mikael Lagerkvist, 2020
 dnl
 dnl This file is part of Gecode, the generic constraint
 dnl development environment:
@@ -216,7 +218,7 @@ dnl Check for the definition of macro MACRO-NAME using the current
 dnl language's compiler.
 dnl
 dnl @category Misc
-dnl @author Ludovic Court�s <ludo@chbouib.org>
+dnl @author Ludovic Courtès <ludo@chbouib.org>
 dnl @version 2004-09-07
 dnl @license AllPermissive
 AC_DEFUN([_AC_C_IFDEF],
@@ -234,7 +236,7 @@ dnl Set VENDOR-NAME to the lower-case name of the compiler vendor or `unknown'
 dnl if the compiler's vendor is unknown.
 dnl
 dnl @version 20040907
-dnl @author  Ludovic Court�s <ludo@chbouib.org>
+dnl @author  Ludovic Courtès <ludo@chbouib.org>
 dnl Modified by G. Tack to recognize only those compilers we need.
 AC_DEFUN([AC_ADD_DLL_ARCH],
   [ac_gecode_library_architecture="-$1${ac_gecode_library_architecture}"])
@@ -380,14 +382,14 @@ AC_DEFUN([AC_GECODE_ENABLE_MODULE],
         enable_$1="no";
         AC_MSG_RESULT(no)
      fi
-        AC_SUBST(enable_$1, ${enable_$1})])    
+        AC_SUBST(enable_$1, ${enable_$1})])
 
 dnl Description:
 dnl   Makes an enable check for a contrib
-dnl   The third argument can be used for dependency checking 
+dnl   The third argument can be used for dependency checking
 dnl
 dnl Authors:
-dnl   Gr�goire Dooms <dooms@info.ucl.ac.be>
+dnl   Grégoire Dooms <dooms@info.ucl.ac.be>
 AC_DEFUN([AC_GECODE_ENABLE_CONTRIB],
 [
    AC_ARG_ENABLE([$1],
@@ -493,7 +495,7 @@ AC_DEFUN([AC_GECODE_LEAK_DEBUG],
               [AC_DEFINE([GECODE_HAS_MTRACE],[],
                        [Whether we have mtrace for memory leak debugging])],
               [AC_MSG_ERROR(mtrace not available.)],
-              [[#include <mcheck.h>]])        
+              [[#include <mcheck.h>]])
      else
         AC_MSG_RESULT(no)
      fi])
@@ -512,7 +514,7 @@ AC_DEFUN([AC_GECODE_PEAKHEAP],
           AC_MSG_RESULT(yes)
         ],
         [
-          AC_CHECK_HEADERS([malloc/malloc.h], 
+          AC_CHECK_HEADERS([malloc/malloc.h],
           [
             AC_CHECK_FUNC(malloc_size,
             [
@@ -528,7 +530,7 @@ AC_DEFUN([AC_GECODE_PEAKHEAP],
             ])
           ],
           [
-            AC_CHECK_HEADERS([malloc.h], 
+            AC_CHECK_HEADERS([malloc.h],
             [
               AC_CHECK_FUNC(malloc_usable_size,
               [
@@ -612,6 +614,27 @@ AC_DEFUN([AC_GECODE_GCOV],
         AC_MSG_RESULT(no)
      fi])
 
+AC_DEFUN([AC_GECODE_FREELIST_32_SIZE],
+  [dnl max size of freelist on 32 bit platforms
+  AC_ARG_WITH([freelist32-size-max],
+    AC_HELP_STRING([--with-freelist32-size-max],
+    [max size of freelist on 32 bit platforms]))
+  if test "${with_freelist32_size_max:-no}" != "no"; then
+    AC_DEFINE_UNQUOTED([GECODE_FREELIST_SIZE_MAX32],[${with_freelist32_size_max}],[max freelist size on 32 bit platforms])
+  fi
+  ]
+)
+
+AC_DEFUN([AC_GECODE_FREELIST_64_SIZE],
+  [dnl max size of freelist on 64 bit platforms
+  AC_ARG_WITH([freelist64-size-max],
+    AC_HELP_STRING([--with-freelist64-size-max],
+    [max size of freelist on 64 bit platforms]))
+  if test "${with_freelist64_size_max:-no}" != "no"; then
+    AC_DEFINE_UNQUOTED([GECODE_FREELIST_SIZE_MAX64],[${with_freelist64_size_max}],[max freelist size on 64 bit platforms])
+  fi
+  ]
+)
 
 # Test for platform specific behaviour of arithmetic
 
@@ -646,17 +669,9 @@ AC_DEFUN([AC_GECODE_GCC_GENERAL_SWITCHES],
  [AC_GECODE_CHECK_COMPILERFLAG([-fPIC])
   AC_GECODE_CHECK_COMPILERFLAG([-Wextra])
   AC_GECODE_CHECK_COMPILERFLAG([-Wall])
+  AC_GECODE_CHECK_COMPILERFLAG([-Wno-unknown-pragmas])
   AC_GECODE_CHECK_COMPILERFLAG([-pipe])
-
-  AC_ARG_ENABLE([cpp11],
-       AC_HELP_STRING([--enable-cpp11],
-         [compile for C++11 standard @<:@default=yes@:>@]))
-  if test "${enable_cpp11:-yes}" = "yes"; then
-    AC_GECODE_CHECK_COMPILERFLAG([-std=c++11])
-  else
-    AC_MSG_CHECKING(whether to compile for C++11 standard)
-    AC_MSG_RESULT(no)
-  fi
+  AC_GECODE_CHECK_COMPILERFLAG([-std=c++17])
 
   AC_GECODE_CHECK_CXXFLAG(-ggdb,
      AC_GECODE_ADD_TO_COMPILERFLAGS(-ggdb),
@@ -842,7 +857,7 @@ AC_DEFUN([AC_GECODE_MSVC_SWITCHES],
   if test "${enable_debug:-no}" = "no"; then
     dnl compiler flags for an optimized build
     AC_GECODE_ADD_TO_COMPILERFLAGS([${ac_gecode_cl_optimize_flag}])
-    AC_GECODE_ADD_TO_COMPILERFLAGS([-MD -GS- -wd4355])
+    AC_GECODE_ADD_TO_COMPILERFLAGS([-MD -GS- -wd4355 -wd4068])
     AC_GECODE_CHECK_COMPILERFLAG([-arch:SSE2])
 
     dnl flags for creating optimized dlls
@@ -851,7 +866,7 @@ AC_DEFUN([AC_GECODE_MSVC_SWITCHES],
     GLDFLAGS="-link -DEBUG -OPT:REF -OPT:ICF -MANIFEST -INCREMENTAL:NO"
   else
     dnl compiler flags for a debug build
-    AC_GECODE_ADD_TO_COMPILERFLAGS([-MDd -Zi -wd4355])  
+    AC_GECODE_ADD_TO_COMPILERFLAGS([-MDd -Zi -wd4355 -wd4068])
 
     dnl flags for creating debug dlls
     AC_GECODE_ADD_TO_DLLFLAGS([${CXXFLAGS} -LDd])
@@ -1258,8 +1273,8 @@ AC_DEFUN([AC_GECODE_MPFR],
         gnu)
           CPPFLAGS="${CPPFLAGS}${CPPFLAGS:+ } ${MPFR_CPPFLAGS} ${GMP_CPPFLAGS}"
           LIBS="${LIBS}${LIBS:+ } ${MPFR_LIB_PATH} ${GMP_LIB_PATH} ${MPFR_LINK} ${GMP_LINK}"
-          AC_CHECK_HEADERS([gmp.h], 
-            AC_CHECK_HEADERS([mpfr.h], 
+          AC_CHECK_HEADERS([gmp.h],
+            AC_CHECK_HEADERS([mpfr.h],
                              AC_CHECK_LIB(mpfr, mpfr_add,
                                           AC_DEFINE([GECODE_HAS_MPFR],[],[Whether MPFR is available])
                                           enable_mpfr=yes;,
@@ -1270,8 +1285,8 @@ AC_DEFUN([AC_GECODE_MPFR],
         microsoft)
           CPPFLAGS="${CPPFLAGS}${CPPFLAGS:+ } ${MPFR_CPPFLAGS} ${GMP_CPPFLAGS}"
           LIBS="${LIBS}${LIBS:+ } /link ${MPFR_LIB_PATH} ${GMP_LIB_PATH} ${MPFR_LINK} ${GMP_LINK}"
-          AC_CHECK_HEADERS([gmp.h], 
-            AC_CHECK_HEADERS([mpfr.h], 
+          AC_CHECK_HEADERS([gmp.h],
+            AC_CHECK_HEADERS([mpfr.h],
                              AC_CHECK_FUNC(mpfr_add,
                                           AC_DEFINE([GECODE_HAS_MPFR],[],[Whether MPFR is available])
                                           enable_mpfr=yes;,
@@ -1332,7 +1347,7 @@ AC_DEFUN([AC_GECODE_QT],
         ac_gecode_qt_tmpdir=`mktemp -d gistqt.XXXXXX` || exit 1
         cd ${ac_gecode_qt_tmpdir}
         echo "CONFIG += release" > a.pro
-        if test ${ac_gecode_qt_major} -eq 5; then
+        if test ${ac_gecode_qt_major} -ge 5; then
           echo "QT += widgets printsupport" >> a.pro
         fi
         ${QMAKE}
@@ -1484,38 +1499,24 @@ AC_DEFUN([AC_GECODE_THREADS],[
   AC_MSG_CHECKING(whether to build with multi-threading support)
   if test "${enable_thread:-yes}" = "yes"; then
     AC_MSG_RESULT(yes)
-    AC_CHECK_HEADER(unistd.h,
-    [AC_DEFINE(GECODE_HAS_UNISTD_H,1,[Whether unistd.h is available])]
-    )
-    AC_CHECK_HEADER(pthread.h,
-    [AC_DEFINE(GECODE_THREADS_PTHREADS,1,[Whether we have posix threads])
-     AC_GECODE_ADD_TO_COMPILERFLAGS([-pthread])
-     AC_GECODE_ADD_TO_DLLFLAGS([-pthread])
-     AC_CHECK_HEADER([os/lock.h],
-       [AC_DEFINE(GECODE_THREADS_OSX_UNFAIR,1,[Whether we have Mac OS threads (new version)])],
-        AC_CHECK_HEADER([libkern/OSAtomic.h],
-        [AC_DEFINE(GECODE_THREADS_OSX,1,[Whether we have Mac OS threads])],
-         AC_MSG_CHECKING([for spin locks])
-          AC_TRY_COMPILE([#include <pthread.h>],
-            [pthread_spinlock_t t;],
-            [AC_MSG_RESULT(yes)
-             AC_DEFINE(GECODE_THREADS_PTHREADS_SPINLOCK,1,Whether we have posix spinlocks)],
-            [AC_MSG_RESULT(no)]
-          )
-        )
-     )],
-    [AC_CHECK_HEADER(windows.h,
-      [AC_DEFINE(GECODE_THREADS_WINDOWS,1,[Whether we have windows threads])])]
-    )
+    AC_DEFINE(GECODE_HAS_THREADS,1,[Whether we have threads])
   else
     AC_MSG_RESULT(no)
   fi
-])
-
-AC_DEFUN([AC_GECODE_TIMER],[
-  AC_CHECK_HEADER(sys/time.h,
-  [AC_DEFINE(GECODE_USE_GETTIMEOFDAY,1,[Use gettimeofday for time-measurement])],
-  [AC_DEFINE(GECODE_USE_CLOCK,1,[Use clock() for time-measurement])])
+  AC_ARG_ENABLE([osx-unfair-mutex],
+    AC_HELP_STRING([--enable-osx-unfair-mutex],
+      [use unfair mutexes on macOS @<:@default=yes@:>@]))
+  AC_MSG_CHECKING(whether to use unfair mutexes on macOS)
+  if test "${enable_osx_unfair_mutex:-yes}" = "yes"; then
+    if test "${host_os}" = "darwin"; then    
+      AC_MSG_RESULT(yes)
+      AC_DEFINE(GECODE_USE_OSX_UNFAIR_MUTEX,1,[Whether to use unfair mutexes on macOS])
+    else
+      AC_MSG_RESULT(no)
+    fi
+  else
+    AC_MSG_RESULT(no)
+  fi
 ])
 
 dnl check whether we have suifficiently recent versions of flex/bison
@@ -1576,3 +1577,26 @@ AC_DEFUN([AC_GECODE_RESOURCE],[
     AC_SUBST(RESCOMP, [@true])
   fi
 ])
+
+dnl Macro:
+dnl   AC_GECODE_RUNENVIRONMENT
+dnl
+dnl Description:
+dnl   Configure appropriate run environment flags for different platforms for running
+dnl   executables from the makefile with compiled but not installed shared libraries
+dnl
+dnl Authors:
+dnl   Mikael Lagerkvist <lagerkvist@gecode.org>
+dnl
+AC_DEFUN([AC_GECODE_RUNENVIRONMENT],
+ [case $host_os in
+     darwin*)
+       AC_SUBST(RUNENVIRONMENT, [DYLD_LIBRARY_PATH=.])
+       ;;
+     windows*)
+       AC_SUBST(RUNENVIRONMENT, [''])
+       ;;
+     *)
+       AC_SUBST(RUNENVIRONMENT, [LD_LIBRARY_PATH=.])
+       ;;
+  esac])

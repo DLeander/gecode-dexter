@@ -31,14 +31,14 @@
  *
  */
 
-#ifndef __GECODE_SEARCH_PAR_PBS_HH__
-#define __GECODE_SEARCH_PAR_PBS_HH__
+#ifndef GECODE_SEARCH_PAR_PBS_HH
+#define GECODE_SEARCH_PAR_PBS_HH
 
 #include <gecode/search.hh>
 
 namespace Gecode { namespace Search { namespace Par {
 
-  /// Stop object used for controling slaves in a portfolio
+  /// Stop object used for controlling slaves in a portfolio
   class GECODE_SEARCH_EXPORT PortfolioStop : public Stop {
   private:
     /// The stop object for the slaves
@@ -114,7 +114,7 @@ namespace Gecode { namespace Search { namespace Par {
   protected:
     /// Currently best solution
     Space* b;
-    /// Who has reported the best solution (NULL if solution has already been reported)
+    /// Who has reported the best solution (nullptr if solution has already been reported)
     Slave<CollectBest>* reporter;
   public:
     /// Whether it collects best solutions
@@ -163,15 +163,15 @@ namespace Gecode { namespace Search { namespace Par {
     /**
      * The key invariant of the engine is as follows:
      *  - n_busy is always zero outside the next() function.
-     *  - that entails, that locking is only needed insided next().
-     *  - the slaves 0..n_active-1 still might not have exausted their
+     *  - that entails, that locking is only needed inside next().
+     *  - the slaves 0..n_active-1 still might not have exhausted their
      *    search space.
      *  - the slaves n_active..n_slaves-1 have exhausted their search space.
      */
   public:
     /// Initialize
     PBS(Engine** s, Stop** so, unsigned int n, const Statistics& stat);
-    /// Return next solution (NULL, if none exists or search has been stopped)
+    /// Return next solution (nullptr, if none exists or search has been stopped)
     virtual Space* next(void);
     /// Return statistics
     virtual Statistics statistics(void) const;

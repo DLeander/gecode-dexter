@@ -31,8 +31,8 @@
  *
  */
 
-#ifndef __FLATZINC_PARSER_HH__
-#define __FLATZINC_PARSER_HH__
+#ifndef FLATZINC_PARSER_HH
+#define FLATZINC_PARSER_HH
 
 #include <gecode/flatzinc.hh>
 
@@ -54,6 +54,7 @@ extern "C" int isatty(int);
 
 #include <string>
 #include <vector>
+#include <array>
 #include <iostream>
 #include <algorithm>
 
@@ -61,7 +62,7 @@ extern "C" int isatty(int);
 #include <gecode/flatzinc/varspec.hh>
 #include <gecode/flatzinc/conexpr.hh>
 #include <gecode/flatzinc/ast.hh>
-#include <gecode/flatzinc/parser.tab.hh>
+#include <gecode/flatzinc/parser.tab.hpp>
 #include <gecode/flatzinc/symboltable.hh>
 
 namespace Gecode { namespace FlatZinc {
@@ -212,6 +213,23 @@ namespace Gecode { namespace FlatZinc {
 
     std::vector<ConExpr*> domainConstraints;
 
+    int status_idx = -1;
+    int complete_idx = -1;
+    std::vector<std::array<int, 2>> last_val_int;
+    std::vector<std::array<int, 2>> sol_int;
+    std::vector<std::array<int, 3>> uniform_int;
+    std::vector<std::array<int, 2>> sol_bool;
+    std::vector<std::array<int, 2>> last_val_bool;
+#ifdef GECODE_HAS_SET_VARS
+    std::vector<std::array<int, 2>> sol_set;
+    std::vector<std::array<int, 2>> last_val_set;
+#endif
+#ifdef GECODE_HAS_FLOAT_VARS
+    std::vector<std::array<int, 2>> last_val_float;
+    std::vector<std::array<int, 2>> sol_float;
+    std::vector<std::tuple<FloatVal, FloatVal, int>> uniform_float;
+#endif
+
     bool hadError;
     std::ostream& err;
 
@@ -238,7 +256,7 @@ namespace Gecode { namespace FlatZinc {
           AST::Array* oa = _output[i].second->getArray();
           for (unsigned int j=0; j<oa->a.size(); j++) {
             a->a.push_back(oa->a[j]);
-            oa->a[j] = NULL;
+            oa->a[j] = nullptr;
           }
           delete _output[i].second;
         } else {

@@ -36,7 +36,7 @@ namespace Gecode { namespace Int { namespace Branch {
   template<class View>
   forceinline
   ValCommitEq<View>::ValCommitEq
-  (Space& home, const ValBranch<ValCommitEq<View>::Var>& vb)
+  (Space& home, const ValBranch<typename ValCommitEq<View>::Var>& vb)
     : ValCommit<View,int>(home,vb) {}
   template<class View>
   forceinline
@@ -53,7 +53,7 @@ namespace Gecode { namespace Int { namespace Branch {
     if (a == 0)
       return new (home) EqNGL<View>(home,x,n);
     else
-      return NULL;
+      return nullptr;
   }
   template<class View>
   forceinline void
@@ -66,7 +66,7 @@ namespace Gecode { namespace Int { namespace Branch {
   template<class View>
   forceinline
   ValCommitLq<View>::ValCommitLq
-  (Space& home, const ValBranch<ValCommitLq<View>::Var>& vb)
+  (Space& home, const ValBranch<typename ValCommitLq<View>::Var>& vb)
     : ValCommit<View,int>(home,vb) {}
   template<class View>
   forceinline
@@ -83,7 +83,7 @@ namespace Gecode { namespace Int { namespace Branch {
     if (a == 0)
       return new (home) LqNGL<View>(home,x,n);
     else
-      return NULL;
+      return nullptr;
   }
   template<class View>
   forceinline void
@@ -96,7 +96,7 @@ namespace Gecode { namespace Int { namespace Branch {
   template<class View>
   forceinline
   ValCommitGq<View>::ValCommitGq
-  (Space& home, const ValBranch<ValCommitGq<View>::Var>& vb)
+  (Space& home, const ValBranch<typename ValCommitGq<View>::Var>& vb)
     : ValCommit<View,int>(home,vb) {}
   template<class View>
   forceinline
@@ -113,7 +113,7 @@ namespace Gecode { namespace Int { namespace Branch {
     if (a == 0)
       return new (home) GqNGL<View>(home,x,n);
     else
-      return NULL;
+      return nullptr;
   }
   template<class View>
   forceinline void
@@ -126,7 +126,7 @@ namespace Gecode { namespace Int { namespace Branch {
   template<class View>
   forceinline
   ValCommitGr<View>::ValCommitGr
-  (Space& home, const ValBranch<ValCommitGr<View>::Var>& vb)
+  (Space& home, const ValBranch<typename ValCommitGr<View>::Var>& vb)
     : ValCommit<View,int>(home,vb) {}
   template<class View>
   forceinline
@@ -143,7 +143,7 @@ namespace Gecode { namespace Int { namespace Branch {
     if (a == 0)
       return new (home) GqNGL<View>(home,x,n+1);
     else
-      return NULL;
+      return nullptr;
   }
   template<class View>
   forceinline void

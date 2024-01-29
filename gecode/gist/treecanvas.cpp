@@ -52,8 +52,10 @@ namespace Gecode { namespace Gist {
   TreeCanvas::TreeCanvas(Space* rootSpace, bool bab,
                          QWidget* parent, const Options& opt)
     : QWidget(parent)
+#if QT_VERSION < 0x060000
     , mutex(QMutex::Recursive)
     , layoutMutex(QMutex::Recursive)
+#endif
     , finishedFlag(false)
     , compareNodes(false), compareNodesBeforeFP(false)
     , autoHideFailed(true), autoZoom(false)
@@ -64,11 +66,11 @@ namespace Gecode { namespace Gist {
     , targetW(0), targetH(0), targetScale(0)
     , layoutDoneTimerId(0) {
       QMutexLocker locker(&mutex);
-      curBest = (bab ? new BestNode(NULL) : NULL);
+      curBest = (bab ? new BestNode(nullptr) : nullptr);
       if (rootSpace->status() == SS_FAILED) {
         if (!opt.clone)
           delete rootSpace;
-        rootSpace = NULL;
+        rootSpace = nullptr;
       } else {
         rootSpace = Gecode::Search::snapshot(rootSpace,opt);
       }
@@ -103,7 +105,11 @@ namespace Gecode { namespace Gist {
 
       connect(&scrollTimeLine, SIGNAL(frameChanged(int)),
               this, SLOT(scroll(int)));
+#if QT_VERSION >= 0x060000
+      scrollTimeLine.setEasingCurve(QEasingCurve::InOutSine);
+#else
       scrollTimeLine.setCurveShape(QTimeLine::EaseInOutCurve);
+#endif
 
       scaleBar = new QSlider(Qt::Vertical, this);
       scaleBar->setObjectName("scaleBar");
@@ -118,7 +124,11 @@ namespace Gecode { namespace Gist {
 
       connect(&zoomTimeLine, SIGNAL(frameChanged(int)),
               scaleBar, SLOT(setValue(int)));
+#if QT_VERSION >= 0x060000
+      zoomTimeLine.setEasingCurve(QEasingCurve::InOutSine);
+#else
       zoomTimeLine.setCurveShape(QTimeLine::EaseInOutCurve);
+#endif
 
       qRegisterMetaType<Statistics>("Statistics");
       update();
@@ -224,7 +234,7 @@ namespace Gecode { namespace Gist {
   TreeCanvas::update(void) {
     QMutexLocker locker(&mutex);
     layoutMutex.lock();
-    if (root != NULL) {
+    if (root != nullptr) {
       root->layout(*na);
       BoundingBox bb = root->getBoundingBox();
 
@@ -283,7 +293,7 @@ namespace Gecode { namespace Gist {
     node = n;
 
     depth = -1;
-    for (VisualNode* p = n; p != NULL; p = p->getParent(*ti->na))
+    for (VisualNode* p = n; p != nullptr; p = p->getParent(*ti->na))
       depth++;
 
     a = all;
@@ -294,13 +304,13 @@ namespace Gecode { namespace Gist {
   void
   SearcherThread::updateCanvas(void) {
     t->layoutMutex.lock();
-    if (t->root == NULL)
+    if (t->root == nullptr)
       return;
 
     if (t->autoHideFailed) {
       t->root->hideFailed(*t->na,true);
     }
-    for (VisualNode* n = t->currentNode; n != NULL; n=n->getParent(*t->na)) {
+    for (VisualNode* n = t->currentNode; n != nullptr; n=n->getParent(*t->na)) {
       if (n->isHidden()) {
         t->currentNode->setMarked(false);
         t->currentNode = n;
@@ -384,7 +394,7 @@ namespace Gecode { namespace Gist {
         std::max(static_cast<long unsigned int>(t->stats.maxDepth),
                  static_cast<long unsigned int>(depth+stck.size()));
 
-      VisualNode* sol = NULL;
+      VisualNode* sol = nullptr;
       int nodeCount = 0;
       t->stopSearchFlag = false;
       while (!stck.empty() && !t->stopSearchFlag) {
@@ -433,7 +443,7 @@ namespace Gecode { namespace Gist {
       node->dirtyUp(*t->na);
       t->stopSearchFlag = false;
       t->mutex.unlock();
-      if (sol != NULL) {
+      if (sol != nullptr) {
         t->setCurrentNode(sol,true,false);
       } else {
         t->setCurrentNode(node,true,false);
@@ -527,7 +537,7 @@ namespace Gecode { namespace Gist {
   void
   TreeCanvas::zoomToFit(void) {
     QMutexLocker locker(&layoutMutex);
-    if (root != NULL) {
+    if (root != nullptr) {
       BoundingBox bb;
       bb = root->getBoundingBox();
       QWidget* p = parentWidget();
@@ -567,7 +577,7 @@ namespace Gecode { namespace Gist {
     int y=0;
 
     VisualNode* c = currentNode;
-    while (c != NULL) {
+    while (c != nullptr) {
       x += c->getOffset();
       y += Layout::dist_y;
       c = c->getParent(*na);
@@ -633,7 +643,7 @@ namespace Gecode { namespace Gist {
             unsigned int kids =
               currentNode->getNumberOfChildNodes(*na,curBest,stats,c_d,a_d);
             int depth = -1;
-            for (VisualNode* p = currentNode; p != NULL; p=p->getParent(*na))
+            for (VisualNode* p = currentNode; p != nullptr; p=p->getParent(*na))
               depth++;
             if (kids > 0) {
               needCentering = true;
@@ -777,10 +787,10 @@ namespace Gecode { namespace Gist {
     int failedInspectorType = -1;
     int failedInspector = -1;
     try {
-      Space* c = NULL;
+      Space* c = nullptr;
       for (int i=0; i<solutionInspectors.size(); i++) {
         if (solutionInspectors[i].second) {
-          if (c == NULL)
+          if (c == nullptr)
             c = s->clone();
           failedInspectorType = 1;
           failedInspector = i;
@@ -816,18 +826,18 @@ namespace Gecode { namespace Gist {
   TreeCanvas::reset(void) {
     QMutexLocker locker(&mutex);
     Space* rootSpace =
-      root->getStatus() == FAILED ? NULL :
+      root->getStatus() == FAILED ? nullptr :
                            root->getSpace(*na,curBest,c_d,a_d);
-    if (curBest != NULL) {
+    if (curBest != nullptr) {
       delete curBest;
-      curBest = new BestNode(NULL);
+      curBest = new BestNode(nullptr);
     }
     if (root) {
       DisposeCursor dc(root,*na);
       PreorderNodeVisitor<DisposeCursor>(dc).run();
     }
     delete na;
-    na = new Node::NodeAllocator(curBest != NULL);
+    na = new Node::NodeAllocator(curBest != nullptr);
     int rootIdx = na->allocate(rootSpace);
     assert(rootIdx == 0); (void) rootIdx;
     root = (*na)[0];
@@ -929,7 +939,7 @@ namespace Gecode { namespace Gist {
 
     setCurrentNode(p);
 
-    if (p != NULL) {
+    if (p != nullptr) {
       centerCurrentNode();
     }
   }
@@ -961,7 +971,7 @@ namespace Gecode { namespace Gist {
   TreeCanvas::navLeft(void) {
     QMutexLocker locker(&mutex);
     VisualNode* p = currentNode->getParent(*na);
-    if (p != NULL) {
+    if (p != nullptr) {
       int alt = currentNode->getAlternative(*na);
       if (alt > 0) {
         VisualNode* n = p->getChild(*na,alt-1);
@@ -975,7 +985,7 @@ namespace Gecode { namespace Gist {
   TreeCanvas::navRight(void) {
     QMutexLocker locker(&mutex);
     VisualNode* p = currentNode->getParent(*na);
-    if (p != NULL) {
+    if (p != nullptr) {
       unsigned int alt = currentNode->getAlternative(*na);
       if (alt + 1 < p->getNumberOfChildren()) {
         VisualNode* n = p->getChild(*na,alt+1);
@@ -1020,15 +1030,24 @@ namespace Gecode { namespace Gist {
 
       BoundingBox bb = n->getBoundingBox();
       printer.setFullPage(true);
+#if QT_VERSION >= 0x060000
+      printer.setPageSize(QPageSize(QSizeF(bb.right-bb.left+Layout::extent,
+                                           n->getShape()->depth() * Layout::dist_y +
+                                           Layout::extent), QPageSize::Point));
+#else
       printer.setPaperSize(QSizeF(bb.right-bb.left+Layout::extent,
                                   n->getShape()->depth() * Layout::dist_y +
                                   Layout::extent), QPrinter::Point);
+#endif
       printer.setOutputFileName(filename);
       QPainter painter(&printer);
 
       painter.setRenderHint(QPainter::Antialiasing);
-
+#if QT_VERSION >= 0x060000
+      QRect pageRect = printer.pageLayout().paintRectPixels(printer.resolution());
+#else
       QRect pageRect = printer.pageRect();
+#endif
       double newXScale =
         static_cast<double>(pageRect.width()) / (bb.right - bb.left +
                                                  Layout::extent);
@@ -1074,7 +1093,11 @@ namespace Gecode { namespace Gist {
       QMutexLocker locker(&mutex);
 
       BoundingBox bb = root->getBoundingBox();
+#if QT_VERSION >= 0x060000
+      QRect pageRect = printer.pageLayout().paintRectPixels(printer.resolution());
+#else
       QRect pageRect = printer.pageRect();
+#endif
       double newXScale =
         static_cast<double>(pageRect.width()) / (bb.right - bb.left +
                                                  Layout::extent);
@@ -1117,8 +1140,13 @@ namespace Gecode { namespace Gist {
     case QEvent::MouseMove:
         {
           QMouseEvent* me = static_cast<QMouseEvent*>(event);
+#if QT_VERSION >= 0x060000
+          x = me->position().x();
+          y = me->position().y();
+#else
           x = me->x();
           y = me->y();
+#endif
           break;
         }
     case QEvent::ContextMenu:
@@ -1129,7 +1157,7 @@ namespace Gecode { namespace Gist {
           break;
         }
     default:
-      return NULL;
+      return nullptr;
     }
     QAbstractScrollArea* sa =
       static_cast<QAbstractScrollArea*>(parentWidget()->parentWidget());
@@ -1154,7 +1182,7 @@ namespace Gecode { namespace Gist {
     if (mutex.tryLock()) {
       if (event->type() == QEvent::ToolTip) {
         VisualNode* n = eventNode(event);
-        if (n != NULL) {
+        if (n != nullptr) {
           QHelpEvent* he = static_cast<QHelpEvent*>(event);
           QToolTip::showText(he->globalPos(),
                              QString(n->toolTip(*na,curBest,
@@ -1234,7 +1262,7 @@ namespace Gecode { namespace Gist {
   TreeCanvas::contextMenuEvent(QContextMenuEvent* event) {
     if (mutex.tryLock()) {
       VisualNode* n = eventNode(event);
-      if (n != NULL) {
+      if (n != nullptr) {
         setCurrentNode(n);
         emit contextMenu(event);
         event->accept();
@@ -1264,9 +1292,15 @@ namespace Gecode { namespace Gist {
   TreeCanvas::wheelEvent(QWheelEvent* event) {
     if (event->modifiers() & Qt::ShiftModifier) {
       event->accept();
+#if QT_VERSION >= 0x060000
+      if (event->angleDelta().y() != 0 && !autoZoom)
+        scaleTree(scale*100+ceil(static_cast<double>(event->angleDelta().y())/4.0),
+                  event->position().x(), event->position().y());
+#else
       if (event->orientation() == Qt::Vertical && !autoZoom)
         scaleTree(scale*100+ceil(static_cast<double>(event->delta())/4.0),
                   event->x(), event->y());
+#endif
     } else {
       event->ignore();
     }
@@ -1293,12 +1327,12 @@ namespace Gecode { namespace Gist {
   TreeCanvas::setCurrentNode(VisualNode* n, bool finished, bool update) {
     if (finished)
       mutex.lock();
-    if (update && n != NULL && n != currentNode &&
+    if (update && n != nullptr && n != currentNode &&
         n->getStatus() != UNDETERMINED && !n->isHidden()) {
-      Space* curSpace = NULL;
+      Space* curSpace = nullptr;
       for (int i=0; i<moveInspectors.size(); i++) {
         if (moveInspectors[i].second) {
-          if (curSpace == NULL)
+          if (curSpace == nullptr)
             curSpace = n->getSpace(*na,curBest,c_d,a_d);
           try {
             moveInspectors[i].first->inspect(*curSpace);
@@ -1309,7 +1343,7 @@ namespace Gecode { namespace Gist {
         }
       }
     }
-    if (n != NULL) {
+    if (n != nullptr) {
       currentNode->setMarked(false);
       currentNode = n;
       currentNode->setMarked(true);
@@ -1330,14 +1364,14 @@ namespace Gecode { namespace Gist {
       if (event->button() == Qt::LeftButton) {
         VisualNode* n = eventNode(event);
         if (compareNodes) {
-          if (n != NULL && n->getStatus() != UNDETERMINED &&
-              currentNode != NULL &&
+          if (n != nullptr && n->getStatus() != UNDETERMINED &&
+              currentNode != nullptr &&
               currentNode->getStatus() != UNDETERMINED) {
-            Space* curSpace = NULL;
-            Space* compareSpace = NULL;
+            Space* curSpace = nullptr;
+            Space* compareSpace = nullptr;
             for (int i=0; i<comparators.size(); i++) {
               if (comparators[i].second) {
-                if (curSpace == NULL) {
+                if (curSpace == nullptr) {
                   curSpace = currentNode->getSpace(*na,curBest,c_d,a_d);
 
                   if (!compareNodesBeforeFP || n->isRoot()) {
@@ -1372,7 +1406,7 @@ namespace Gecode { namespace Gist {
         }
         compareNodes = false;
         setCursor(QCursor(Qt::ArrowCursor));
-        if (n != NULL) {
+        if (n != nullptr) {
           event->accept();
           mutex.unlock();
           return;

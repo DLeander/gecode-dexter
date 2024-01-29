@@ -35,11 +35,12 @@
  *
  */
 
-#ifndef __GECODE_TEST_TEST_HH__
-#define __GECODE_TEST_TEST_HH__
+#ifndef GECODE_TEST_TEST_HH
+#define GECODE_TEST_TEST_HH
 
 #include <gecode/kernel.hh>
 #include <gecode/search.hh>
+#include <gecode/int.hh>
 
 #include <iostream>
 #include <sstream>
@@ -71,10 +72,18 @@ namespace Test {
     ind(int i) : l(i) {}
   };
 
+  /// How to match
+  enum MatchType {
+    MT_ANY,  //< Positive match anywhere in string
+    MT_NOT,  //< Negative match
+    MT_FIRST //< Positive match at beginning
+  };
 
   /// Commandline options
   class Options {
   public:
+    /// Number of threads to use
+    unsigned int threads;
     /// The random seed to be used
     unsigned int seed;
     /// Number of iterations for each test
@@ -83,17 +92,26 @@ namespace Test {
     static const int defiter = 5;
     /// The probability for computing a fixpoint
     unsigned int fixprob;
-    /// Default fixpoint probaibility
+    /// Default fixpoint probability
     static const unsigned int deffixprob = 10;
     /// Whether to stop on an error
     bool stop;
     /// Whether to log the tests
     bool log;
+    /// Patterns to test against
+    std::vector<std::pair<MatchType, const char*> > testpat;
+    /// Name of first test to start with
+    const char* start_from;
+    /// Whether to list all tests
+    bool list;
 
     /// Initialize options with defaults
     Options(void);
     /// Parse commandline arguments
     void parse(int argc, char* argv[]);
+
+    /// True iff a test name should be executed according to the patterns. With no patterns, always true.
+    bool is_test_name_matching(const std::string& test_name);
   };
 
   /// The options
@@ -112,7 +130,7 @@ namespace Test {
     static unsigned int _n_tests;
   public:
     /// Create and register test with name \a s
-    Base(const std::string& s);
+    Base(std::string  s);
     /// Sort tests alphabetically
     static void sort(void);
     /// Return name of test
@@ -126,12 +144,24 @@ namespace Test {
     /// Run test
     virtual bool run(void) = 0;
     /// Throw a coin whether to compute a fixpoint
-    static bool fixpoint(void);
+    bool fixpoint(void);
+    /// Throw a coin whether to compute a fixpoint
+    static bool fixpoint(Gecode::Support::RandomGenerator& rand);
     /// Destructor
     virtual ~Base(void);
 
+    /// \name Mapping scalar values to strings
+    //@{
+    /// Map bool to string
+    static std::string str(bool b);
+    /// Map integer to string
+    static std::string str(int i);
+    /// Map integer array to string
+    static std::string str(const Gecode::IntArgs& i);
+    //@}
+
     /// Random number generator
-    static Gecode::Support::RandomGenerator rand;
+    mutable Gecode::Support::RandomGenerator _rand;
   };
   //@}
 

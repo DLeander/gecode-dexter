@@ -41,6 +41,7 @@
 using namespace Gecode;
 
 namespace {
+
   using std::vector;
 
   /// Layout of the cards
@@ -50,7 +51,7 @@ namespace {
 
   /** \brief Generates\ref layout.
    *
-   * This function generates the layeout and intializes \ref layer and
+   * This function generates the layout and initializes \ref layer and
    * \ref pile from it. The layout is randomly generated from the
    * supplied seed.
    */
@@ -61,7 +62,7 @@ namespace {
     vector<int> deck(51);
     for (int i = 51; i--; ) deck[i] = i+1;
     Support::RandomGenerator rnd(seed+1);
-    std::random_shuffle(deck.begin(), deck.end(), rnd);
+    std::shuffle(deck.begin(), deck.end(), rnd);
 
     // Place cards from deck
     int pos = 0;
@@ -88,7 +89,7 @@ namespace {
  *
  * The model of the problem is mostly taken from "Search in the
  * Patience Game 'Black Hole'", by Ian P. Gent, Chris Jefferson, Tom
- * Kelsey, Inês Lynce, Ian Miguel, Peter Nightingale, Barbara
+ * Kelsey, InÃªs Lynce, Ian Miguel, Peter Nightingale, Barbara
  * M. Smith, and S. Armagan Tarim.
  *
  * The conditional symmetry identified in the above paper can be

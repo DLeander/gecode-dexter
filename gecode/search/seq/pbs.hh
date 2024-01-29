@@ -31,8 +31,8 @@
  *
  */
 
-#ifndef __GECODE_SEARCH_SEQ_PBS_HH__
-#define __GECODE_SEARCH_SEQ_PBS_HH__
+#ifndef GECODE_SEARCH_SEQ_PBS_HH
+#define GECODE_SEARCH_SEQ_PBS_HH
 
 #include <gecode/search.hh>
 
@@ -44,10 +44,10 @@ namespace Gecode { namespace Search { namespace Seq {
     /// Whether search stopped because the slice is done
     bool done;
     /// The current failure limit, incremented for each slice
-    unsigned long int l;
+    unsigned long long int l;
   };
 
-  /// Stop object used for controling slaves in a portfolio
+  /// Stop object used for controlling slaves in a portfolio
   class GECODE_SEARCH_EXPORT PortfolioStop : public Stop {
   private:
     /// The stop object for the slaves
@@ -57,7 +57,7 @@ namespace Gecode { namespace Search { namespace Seq {
   public:
     /// Initialize
     PortfolioStop(Stop* so);
-    /// Intialize shared stop information
+    /// Initialize shared stop information
     void share(SharedStopInfo* ssi);
     /// Return true if portfolio engine must be stopped
     virtual bool stop(const Statistics& s, const Options& o);
@@ -71,6 +71,12 @@ namespace Gecode { namespace Search { namespace Seq {
     /// Stop object
     Stop* stop;
   public:
+    /// Default constructor
+    Slave(void);
+    /// Copy constructor
+    Slave(const Slave& s) = default;
+    /// Assignment operator
+    Slave& operator =(const Slave& s) = default;
     /// Initialize with slave \a s and its stop object \a so
     void init(Engine* s, Stop* so);
     /// Return next solution
@@ -109,7 +115,7 @@ namespace Gecode { namespace Search { namespace Seq {
     /// Initialize
     PBS(Engine** slaves, Stop** stops, unsigned int n,
         const Statistics& stat, const Search::Options& opt);
-    /// Return next solution (NULL, if none exists or search has been stopped)
+    /// Return next solution (nullptr, if none exists or search has been stopped)
     virtual Space* next(void);
     /// Return statistics
     virtual Statistics statistics(void) const;

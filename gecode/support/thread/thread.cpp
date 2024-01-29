@@ -44,19 +44,16 @@ namespace Gecode { namespace Support {
     return m;
   }
 
-  Thread::Run* Thread::idle = NULL;
+  Thread::Run* Thread::idle = nullptr;
 
   void
   Thread::Run::exec(void) {
     while (true) {
       // Execute runnable
       {
-        Runnable* e;
-        m.acquire();
-        GECODE_ASSUME(r != NULL);
-        e=r; r=NULL;
-        m.release();
-        assert(e != NULL);
+        GECODE_ASSUME(r != nullptr);
+        Runnable* e = r.exchange(nullptr);
+        assert(e != nullptr);
         e->run();
         if (e->todelete()) {
           Terminator* t = e->terminator();
@@ -72,6 +69,90 @@ namespace Gecode { namespace Support {
       // Wait for next runnable
       e.wait();
     }
+  }
+
+  Thread::Run::Run(Runnable* r0) {
+#ifdef GECODE_HAS_THREADS
+    r.store(r0);
+    std::thread t([](Thread::Run* r){r->exec();}, this);
+    t.detach();
+#else
+    throw OperatingSystemError("Thread::run[Threads not supported]");
+#endif
+  }
+
+
+  namespace {
+
+    class GlobalMutexRunnable : public Runnable {
+    protected:
+      Mutex _m;
+      Mutex _m_write;
+      Event _e;
+      Event _e_done;
+      Mutex* _to_acquire;
+      Mutex* _to_release;
+    public:
+      GlobalMutexRunnable(void) : _to_acquire(nullptr), _to_release(nullptr) {}
+      virtual void run(void) {
+        while (true) {
+          _m.acquire();
+          if (_to_acquire) {
+            _to_acquire->acquire();
+            _to_acquire = nullptr;
+            _e_done.signal();
+          } else if (_to_release) {
+            _to_release->release();
+            _to_release = nullptr;
+            _e_done.signal();
+          }
+          _m.release();
+          _e.wait();
+        }
+      }
+      void acquire(Mutex* m) {
+        _m_write.acquire();
+        _m.acquire();
+        _to_acquire = m;
+        _m.release();
+        _e.signal();
+        _e_done.wait();
+        _m_write.release();
+      }
+      void release(Mutex* m) {
+        _m_write.acquire();
+        _m.acquire();
+        _to_release = m;
+        _m.release();
+        _e.signal();
+        _e_done.wait();
+        _m_write.release();
+      }
+    };
+    
+    class GlobalMutexRunnableInit {
+    public:
+      GlobalMutexRunnable* gmr;
+      GlobalMutexRunnableInit(void) : gmr(new GlobalMutexRunnable) {
+        Thread::run(gmr);
+      }
+    };
+    
+    GlobalMutexRunnable&
+    globalMutexRunnable(void) {
+      static GlobalMutexRunnableInit gmri;
+      return *gmri.gmr;
+    }
+  }
+
+  void
+  Thread::acquireGlobalMutex(Mutex* m) {
+    globalMutexRunnable().acquire(m);
+  }
+
+  void
+  Thread::releaseGlobalMutex(Mutex* m) {
+    globalMutexRunnable().release(m);
   }
 
 }}

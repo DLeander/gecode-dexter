@@ -470,13 +470,13 @@ namespace Gecode {
    * \ingroup TaskActor
    */
   enum ExecStatus {
-    __ES_SUBSUMED       = -2, ///< Internal: propagator is subsumed, do not use
+    ES_SUBSUMED_       = -2, ///< Internal: propagator is subsumed, do not use
     ES_FAILED           = -1, ///< Execution has resulted in failure
     ES_NOFIX            =  0, ///< Propagation has not computed fixpoint
     ES_OK               =  0, ///< Execution is okay
     ES_FIX              =  1, ///< Propagation has computed fixpoint
     ES_NOFIX_FORCE      =  2, ///< Advisor forces rescheduling of propagator
-    __ES_PARTIAL        =  2  ///< Internal: propagator has computed partial fixpoint, do not use
+    ES_PARTIAL_        =  2  ///< Internal: propagator has computed partial fixpoint, do not use
   };
 
   /**
@@ -868,9 +868,11 @@ namespace Gecode {
     /// \name Conversion
     //@{
     /// Initialize the home with space \a s and propagator \a p and group \a g
-    Home(Space& s, Propagator* p=NULL,
+    Home(Space& s, Propagator* p=nullptr,
          PropagatorGroup pg=PropagatorGroup::def,
          BrancherGroup bg=BrancherGroup::def);
+    /// Copy constructor
+    Home(const Home& h);
     /// Assignment operator
     Home& operator =(const Home& h);
     /// Retrieve the space of the home
@@ -884,7 +886,7 @@ namespace Gecode {
     Home operator ()(PropagatorGroup pg);
     /// Return a home extended by a brancher group
     Home operator ()(BrancherGroup bg);
-    /// Return propagator (or NULL) for currently rewritten propagator
+    /// Return propagator (or nullptr) for currently rewritten propagator
     Propagator* propagator(void) const;
     /// Return propagator group
     PropagatorGroup propagatorgroup(void) const;
@@ -1025,7 +1027,7 @@ namespace Gecode {
     /// Return alternative
     unsigned int alternative(void) const;
   };
- 
+
   /**
    * \brief Post trace information
    */
@@ -1493,9 +1495,9 @@ namespace Gecode {
      * The current brancher in the space \a home creates a no-good literal
      * from the information provided by the choice \a c and the alternative
      * \a a. The brancher has the following options:
-     *  - it returns NULL for all alternatives \a a. This means that the
+     *  - it returns nullptr for all alternatives \a a. This means that the
      *    brancher does not support no-good literals (default).
-     *  - it returns NULL for the last alternative \a a. This means that
+     *  - it returns nullptr for the last alternative \a a. This means that
      *    this alternative is equivalent to the negation of the disjunction
      *    of all other alternatives.
      *
@@ -1560,7 +1562,7 @@ namespace Gecode {
     /// The local object
     LocalObject* o;
   protected:
-    /// Create local handle pointing to NULL object
+    /// Create local handle pointing to nullptr object
     LocalHandle(void);
     /// Create local handle that points to local object \a lo
     LocalHandle(LocalObject* lo);
@@ -1619,6 +1621,19 @@ namespace Gecode {
       /// Information is provided by a portfolio-based engine
       PORTFOLIO
     };
+    /// Reason for restarting 
+    enum RestartReason {
+      /// No reason - used for PORTFOLIO
+      RR_NO,
+      /// Restarting after initialisation
+      RR_INIT,
+      /// Restarting after a solution is found
+      RR_SOL,
+      /// Restarting after exhausting search space
+      RR_CMPL,
+      /// Restarting after reaching restart limit
+      RR_LIM
+    };
   protected:
     /// Type of information
     const Type t;
@@ -1626,10 +1641,12 @@ namespace Gecode {
     //@{
     /// Number of restarts
     const unsigned long int r;
+    /// Reason for restarting
+    const RestartReason rr;
     /// Number of solutions since last restart
-    const unsigned long int s;
+    const unsigned long long int s;
     /// Number of failures since last restart
-    const unsigned long int f;
+    const unsigned long long int f;
     /// Last solution found
     const Space* l;
     /// No-goods from restart
@@ -1645,8 +1662,9 @@ namespace Gecode {
     //@{
     /// Constructor for restart-based engine
     MetaInfo(unsigned long int r,
-             unsigned long int s,
-             unsigned long int f,
+             RestartReason rr,
+             unsigned long long int s,
+             unsigned long long int f,
              const Space* l,
              NoGoods& ng);
     /// Constructor for portfolio-based engine
@@ -1658,11 +1676,13 @@ namespace Gecode {
     //@{
     /// Return number of restarts
     unsigned long int restart(void) const;
+    /// Return reason for restarting
+    RestartReason reason(void) const;
     /// Return number of solutions since last restart
-    unsigned long int solution(void) const;
+    unsigned long long int solution(void) const;
     /// Return number of failures since last restart
-    unsigned long int fail(void) const;
-    /// Return last solution found (possibly NULL)
+    unsigned long long int fail(void) const;
+    /// Return last solution found (possibly nullptr)
     const Space* last(void) const;
     /// Return no-goods recorded from restart
     const NoGoods& nogoods(void) const;
@@ -1691,7 +1711,7 @@ namespace Gecode {
   class StatusStatistics {
   public:
     /// Number of propagator executions
-    unsigned long int propagate;
+    unsigned long long int propagate;
     /// Initialize
     StatusStatistics(void);
     /// Reset information
@@ -2005,10 +2025,15 @@ namespace Gecode {
      * Must copy and update all data structures (such as variables
      * and variable arrays) required by the subclass of Space.
      *
+     * Should not be used directly, use Space::clone to create a clone
+     * of a Space.
+     *
      * \ingroup TaskModelScript
      */
     GECODE_KERNEL_EXPORT
     Space(Space& s);
+    /// Assignment operator
+    Space& operator =(const Space& s) = default;
     /**
      * \brief Destructor
      * \ingroup TaskModelScript
@@ -2019,6 +2044,10 @@ namespace Gecode {
      * \brief Copying member function
      *
      * Must create a new object using the constructor for cloning.
+     *
+     * Should not be used directly, use Space::clone to create a clone
+     * of a Space.
+     *
      * \ingroup TaskModelScript
      */
     virtual Space* copy(void) = 0;
@@ -2126,7 +2155,7 @@ namespace Gecode {
      *
      * If the status() member function has returned that the space has
      * no more branchers (that is, the result was either SS_FAILED or
-     * SS_SOLVED), a call to choice() will return NULL and purge
+     * SS_SOLVED), a call to choice() will return nullptr and purge
      * all remaining branchers inside the space. This is interesting
      * for the case SS_SOLVED, where the call to choice can serve as
      * garbage collection.
@@ -2244,9 +2273,9 @@ namespace Gecode {
      * The current brancher in the space \a home creates a no-good literal
      * from the information provided by the choice \a c and the alternative
      * \a a. The brancher has the following options:
-     *  - it returns NULL for all alternatives \a a. This means that the
+     *  - it returns nullptr for all alternatives \a a. This means that the
      *    brancher does not support no-good literals.
-     *  - it returns NULL for the last alternative \a a. This means that
+     *  - it returns nullptr for the last alternative \a a. This means that
      *    this alternative is equivalent to the negation of the disjunction
      *    of all other alternatives.
      *
@@ -2298,7 +2327,7 @@ namespace Gecode {
 
 
     /**
-     * \Brief %Propagator \a p is subsumed
+     * \brief %Propagator \a p is subsumed
      *
      * First disposes the propagator and then returns subsumption.
      *
@@ -3068,15 +3097,16 @@ namespace Gecode {
    */
   forceinline
   MetaInfo::MetaInfo(unsigned long int r0,
-                     unsigned long int s0,
-                     unsigned long int f0,
+                     RestartReason rr0,
+                     unsigned long long int s0,
+                     unsigned long long int f0,
                      const Space* l0,
                      NoGoods& ng0)
-    : t(RESTART), r(r0), s(s0), f(f0), l(l0), ng(ng0), a(0) {}
+    : t(RESTART), r(r0), rr(rr0), s(s0), f(f0), l(l0), ng(ng0), a(0) {}
 
   forceinline
   MetaInfo::MetaInfo(unsigned int a0)
-    : t(PORTFOLIO), r(0), s(0), f(0), l(NULL), ng(NoGoods::eng), a(a0) {}
+    : t(PORTFOLIO), r(0), rr(RR_NO), s(0), f(0), l(nullptr), ng(NoGoods::eng), a(a0) {}
 
   forceinline MetaInfo::Type
   MetaInfo::type(void) const {
@@ -3087,12 +3117,16 @@ namespace Gecode {
     assert(type() == RESTART);
     return r;
   }
-  forceinline unsigned long int
+  forceinline MetaInfo::RestartReason
+  MetaInfo::reason(void) const {
+    return rr;
+  }
+  forceinline unsigned long long int
   MetaInfo::solution(void) const {
     assert(type() == RESTART);
     return s;
   }
-  forceinline unsigned long int
+  forceinline unsigned long long int
   MetaInfo::fail(void) const {
     assert(type() == RESTART);
     return f;
@@ -3262,6 +3296,9 @@ namespace Gecode {
   Home::Home(Space& s0, Propagator* p0,
              PropagatorGroup pg0, BrancherGroup bg0)
     : s(s0), p(p0), pg(pg0), bg(bg0) {}
+  forceinline
+  Home::Home(const Home& h)
+    : s(h.s), p(h.p), pg(h.pg), bg(h.bg) {}
   forceinline Home&
   Home::operator =(const Home& h) {
     s=h.s; p=h.p; pg=h.pg; bg=h.bg;
@@ -3277,11 +3314,11 @@ namespace Gecode {
   }
   forceinline Home
   Home::operator ()(PropagatorGroup pg) {
-    return Home(s,NULL,pg,BrancherGroup::def);
+    return Home(s,nullptr,pg,BrancherGroup::def);
   }
   forceinline Home
   Home::operator ()(BrancherGroup bg) {
-    return Home(s,NULL,PropagatorGroup::def,bg);
+    return Home(s,nullptr,PropagatorGroup::def,bg);
   }
   forceinline Home
   Space::operator ()(Propagator& p) {
@@ -3289,11 +3326,11 @@ namespace Gecode {
   }
   forceinline Home
   Space::operator ()(PropagatorGroup pg) {
-    return Home(*this,NULL,pg,BrancherGroup::def);
+    return Home(*this,nullptr,pg,BrancherGroup::def);
   }
   forceinline Home
   Space::operator ()(BrancherGroup bg) {
-    return Home(*this,NULL,PropagatorGroup::def,bg);
+    return Home(*this,nullptr,PropagatorGroup::def,bg);
   }
   forceinline Propagator*
   Home::propagator(void) const {
@@ -3496,13 +3533,13 @@ namespace Gecode {
 
   forceinline
   Propagator::Propagator(Home home)
-    : gpi_disabled((home.propagator() != NULL) ?
+    : gpi_disabled((home.propagator() != nullptr) ?
                    // Inherit propagator information
                    home.propagator()->gpi_disabled :
                    // New propagator information
                    static_cast<Space&>(home).ssd.data().gpi.allocate
                    (home.propagatorgroup().gid)) {
-    u.advisors = NULL;
+    u.advisors = nullptr;
     assert((u.med == 0) && (u.size == 0));
     static_cast<Space&>(home).pl.head(this);
   }
@@ -3510,7 +3547,7 @@ namespace Gecode {
   forceinline
   Propagator::Propagator(Space&, Propagator& p)
     : gpi_disabled(p.gpi_disabled) {
-    u.advisors = NULL;
+    u.advisors = nullptr;
     assert((u.med == 0) && (u.size == 0));
     // Set forwarding pointer
     p.prev(this);
@@ -3556,27 +3593,27 @@ namespace Gecode {
   forceinline ExecStatus
   Space::ES_SUBSUMED_DISPOSED(Propagator& p, size_t s) {
     p.u.size = s;
-    return __ES_SUBSUMED;
+    return ES_SUBSUMED_;
   }
 
   forceinline ExecStatus
   Space::ES_SUBSUMED(Propagator& p) {
     p.u.size = p.dispose(*this);
-    return __ES_SUBSUMED;
+    return ES_SUBSUMED_;
   }
 
   forceinline ExecStatus
   Space::ES_FIX_PARTIAL(Propagator& p, const ModEventDelta& med) {
     p.u.med = med;
     assert(p.u.med != 0);
-    return __ES_PARTIAL;
+    return ES_PARTIAL_;
   }
 
   forceinline ExecStatus
   Space::ES_NOFIX_PARTIAL(Propagator& p, const ModEventDelta& med) {
     p.u.med = AllVarConf::med_combine(p.u.med,med);
     assert(p.u.med != 0);
-    return __ES_PARTIAL;
+    return ES_PARTIAL_;
   }
 
 
@@ -3658,6 +3695,18 @@ namespace Gecode {
     assert(!failed());
     p.unlink();
     rfree(&p,p.dispose(*this));
+    // Is the space already stable?
+    if (pc.p.active < &pc.p.queue[0])
+      return;
+    // Enforce that empty queues are ignored
+    do {
+      assert(pc.p.active >= &pc.p.queue[0]);
+      // First propagator or link back to queue?
+      if (pc.p.active != pc.p.active->next())
+        return; // A propagator is left in the queue
+    } while (--pc.p.active >= &pc.p.queue[0]);
+    // The space is stable now
+    assert(pc.p.active < &pc.p.queue[0]);
   }
 
   forceinline Brancher*
@@ -3692,7 +3741,7 @@ namespace Gecode {
         else
           return b_commit;
     }
-    return NULL;
+    return nullptr;
   }
 
 
@@ -3720,23 +3769,23 @@ namespace Gecode {
   forceinline
   LocalObject::LocalObject(Home home) {
     (void) home;
-    ActorLink::cast(this)->prev(NULL);
+    ActorLink::cast(this)->prev(nullptr);
   }
 
   forceinline
   LocalObject::LocalObject(Space&, LocalObject&) {
-    ActorLink::cast(this)->prev(NULL);
+    ActorLink::cast(this)->prev(nullptr);
   }
 
   forceinline LocalObject*
   LocalObject::fwd(Space& home) {
-    if (prev() == NULL)
+    if (prev() == nullptr)
       fwdcopy(home);
     return LocalObject::cast(prev());
   }
 
   forceinline
-  LocalHandle::LocalHandle(void) : o(NULL) {}
+  LocalHandle::LocalHandle(void) : o(nullptr) {}
   forceinline
   LocalHandle::LocalHandle(LocalObject* lo) : o(lo) {}
   forceinline
@@ -3810,13 +3859,13 @@ namespace Gecode {
 
   forceinline
   NGL::NGL(void)
-    : nl(NULL) {}
+    : nl(nullptr) {}
   forceinline
   NGL::NGL(Space&)
-    : nl(NULL) {}
+    : nl(nullptr) {}
   forceinline
   NGL::NGL(Space&, NGL&)
-    : nl(NULL) {}
+    : nl(nullptr) {}
   forceinline size_t
   NGL::dispose(Space&) {
     return sizeof(*this);
@@ -3840,7 +3889,7 @@ namespace Gecode {
 
   forceinline bool
   Advisor::disposed(void) const {
-    return prev() == NULL;
+    return prev() == nullptr;
   }
 
   forceinline Advisor*
@@ -3863,10 +3912,10 @@ namespace Gecode {
   forceinline void
   Advisor::dispose(Space&,Council<A>&) {
     assert(!disposed());
-    ActorLink::prev(NULL);
+    ActorLink::prev(nullptr);
     // Shorten chains of disposed advisors by one, if possible
     Advisor* n = Advisor::cast(next());
-    if ((n != NULL) && n->disposed())
+    if ((n != nullptr) && n->disposed())
       next(n->next());
   }
 
@@ -3909,16 +3958,16 @@ namespace Gecode {
   template<class A>
   forceinline
   Council<A>::Council(Space&)
-    : advisors(NULL) {}
+    : advisors(nullptr) {}
 
   template<class A>
   forceinline bool
   Council<A>::empty(void) const {
     ActorLink* a = advisors;
-    while ((a != NULL) && static_cast<A*>(a)->disposed())
+    while ((a != nullptr) && static_cast<A*>(a)->disposed())
       a = a->next();
     advisors = a;
-    return a == NULL;
+    return a == nullptr;
   }
 
   template<class A>
@@ -3927,12 +3976,12 @@ namespace Gecode {
     // Skip all disposed advisors
     {
       ActorLink* a = c.advisors;
-      while ((a != NULL) && static_cast<A*>(a)->disposed())
+      while ((a != nullptr) && static_cast<A*>(a)->disposed())
         a = a->next();
       c.advisors = a;
     }
     // Are there any advisors to be cloned?
-    if (c.advisors != NULL) {
+    if (c.advisors != nullptr) {
       // The propagator in from-space
       Propagator* p_f = &static_cast<A*>(c.advisors)->propagator();
       // The propagator in to-space
@@ -3940,8 +3989,8 @@ namespace Gecode {
       // Advisors in from-space
       ActorLink** a_f = &c.advisors;
       // Advisors in to-space
-      A* a_t = NULL;
-      while (*a_f != NULL) {
+      A* a_t = nullptr;
+      while (*a_f != nullptr) {
         if (static_cast<A*>(*a_f)->disposed()) {
           *a_f = (*a_f)->next();
         } else {
@@ -3959,10 +4008,10 @@ namespace Gecode {
       }
       advisors = a_t;
       // Enter advisor link for reset
-      assert(p_f->u.advisors == NULL);
+      assert(p_f->u.advisors == nullptr);
       p_f->u.advisors = c.advisors;
     } else {
-      advisors = NULL;
+      advisors = nullptr;
     }
   }
 
@@ -3970,7 +4019,7 @@ namespace Gecode {
   forceinline void
   Council<A>::dispose(Space& home) {
     ActorLink* a = advisors;
-    while (a != NULL) {
+    while (a != nullptr) {
       if (!static_cast<A*>(a)->disposed())
         static_cast<A*>(a)->dispose(home,*this);
       a = a->next();
@@ -3987,14 +4036,14 @@ namespace Gecode {
   forceinline
   Advisors<A>::Advisors(const Council<A>& c)
     : a(c.advisors) {
-    while ((a != NULL) && static_cast<A*>(a)->disposed())
+    while ((a != nullptr) && static_cast<A*>(a)->disposed())
       a = a->next();
   }
 
   template<class A>
   forceinline bool
   Advisors<A>::operator ()(void) const {
-    return a != NULL;
+    return a != nullptr;
   }
 
   template<class A>
@@ -4002,7 +4051,7 @@ namespace Gecode {
   Advisors<A>::operator ++(void) {
     do {
       a = a->next();
-    } while ((a != NULL) && static_cast<A*>(a)->disposed());
+    } while ((a != nullptr) && static_cast<A*>(a)->disposed());
   }
 
   template<class A>
@@ -4067,19 +4116,27 @@ namespace Gecode {
       pc.p.bid_sc |= sc_trace;
     }
     // Currently unused
-    if (p & AP_WEAKLY) {}
+    if (p & AP_WEAKLY) {
+      // Nothing to do
+    }
   }
 
   forceinline void
   Space::ignore(Actor& a, ActorProperty p, bool d) {
-    // Check wether array has already been discarded as space
+    // Check whether array has already been discarded as space
     // deletion is already in progress
-    if ((p & AP_DISPOSE) && (d_fst != NULL))
+    if ((p & AP_DISPOSE) && (d_fst != nullptr))
       ap_ignore_dispose(&a,d);
-    if (p & AP_VIEW_TRACE) {}
-    if (p & AP_TRACE) {}
+    if (p & AP_VIEW_TRACE) {
+      // Nothing to do
+    }
+    if (p & AP_TRACE) {
+      // Nothing to do
+    }
     // Currently unused
-    if (p & AP_WEAKLY) {}
+    if (p & AP_WEAKLY) {
+      // Nothing to do
+    }
   }
 
 
@@ -4126,7 +4183,7 @@ namespace Gecode {
 #ifndef GECODE_HAS_CBS
     (void) home;
 #endif
-    b.base = NULL; entries = 0;
+    b.base = nullptr; entries = 0;
     for (PropCond pc=1; pc<pc_max+2; pc++)
       idx(pc) = 0;
     free_and_bits = 0;
@@ -4139,7 +4196,7 @@ namespace Gecode {
   : var_id(0)
 #endif
   {
-    b.base = NULL; entries = 0;
+    b.base = nullptr; entries = 0;
     for (PropCond pc=1; pc<pc_max+2; pc++)
       idx(pc) = 0;
     free_and_bits = 0;
@@ -4246,7 +4303,7 @@ namespace Gecode {
   {
     VarImpBase** reg;
     free_and_bits = x.free_and_bits & ((1 << free_bits) - 1);
-    if (x.b.base == NULL) {
+    if (x.b.base == nullptr) {
       // Variable implementation needs no index structure
       reg = &home.pc.c.vars_noidx;
       assert(x.degree() == 0);
@@ -4303,7 +4360,7 @@ namespace Gecode {
   template<class VIC>
   forceinline void
   VarImp<VIC>::resize(Space& home) {
-    if (b.base == NULL) {
+    if (b.base == nullptr) {
       assert((free_and_bits >> free_bits) == 0);
       // Create fresh dependency array with four entries
       free_and_bits += 4 << free_bits;
@@ -4446,7 +4503,7 @@ namespace Gecode {
   template<class VIC>
   forceinline void
   VarImp<VIC>::cancel(Space& home, Propagator& p, PropCond pc) {
-    if (b.base != NULL)
+    if (b.base != nullptr)
       remove(home,&p,pc);
   }
 
@@ -4476,7 +4533,7 @@ namespace Gecode {
   template<class VIC>
   forceinline void
   VarImp<VIC>::cancel(Space& home, Advisor& a, bool fail) {
-    if (b.base != NULL) {
+    if (b.base != nullptr) {
       Advisor* ma = static_cast<Advisor*>(Support::ptrjoin(&a,fail ? 1 : 0));
       remove(home,ma);
     }
@@ -4489,11 +4546,11 @@ namespace Gecode {
     home.pc.p.n_sub -= n_sub;
     unsigned int n = (free_and_bits >> free_bits) + n_sub;
     home.free<ActorLink*>(b.base,n);
-    // Must be NULL such that cloning works
-    b.base = NULL;
+    // Must be nullptr such that cloning works
+    b.base = nullptr;
     // Must be 0 such that degree works
     entries = 0;
-    // Must be NULL such that afc works
+    // Must be nullptr such that afc works
     for (PropCond pc=1; pc<pc_max+2; pc++)
       idx(pc) = 0;
     free_and_bits &= (1 << free_bits) - 1;
@@ -4531,7 +4588,7 @@ namespace Gecode {
       case ES_NOFIX_FORCE:
         schedule(home,p,me,true);
         break;
-      case __ES_SUBSUMED:
+      case ES_SUBSUMED_:
       default:
         GECODE_NEVER;
       }
@@ -4568,9 +4625,14 @@ namespace Gecode {
   template<class VIC>
   ModEvent
   VarImp<VIC>::fail(Space& home) {
-    _fail(home); 
+    _fail(home);
     return ME_GEN_FAILED;
   }
+
+  // Clang incorrectly reports an error on the access to u.idx[1] for BoolVarImp,
+  // even though the access is guarded by pc_max > 0 which implies that the size is sufficient.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warray-bounds"
 
   template<class VIC>
   forceinline void
@@ -4585,8 +4647,8 @@ namespace Gecode {
 
     unsigned int np =
       static_cast<unsigned int>(x->actorNonZero(pc_max+1) - x->actor(0));
-    unsigned int na = 
-      static_cast<unsigned int >(x->b.base + x->entries - 
+    unsigned int na =
+      static_cast<unsigned int >(x->b.base + x->entries -
                                  x->actorNonZero(pc_max+1));
     unsigned int n  = na + np;
     assert(n == x->degree());
@@ -4601,7 +4663,7 @@ namespace Gecode {
       ActorLink* p3 = f[3]->prev();
       ActorLink* p0 = f[0]->prev();
       ActorLink* p1 = f[1]->prev();
-      ActorLink* p2 = f[2]->prev(); 
+      ActorLink* p2 = f[2]->prev();
       t[0] = p0; t[1] = p1; t[2] = p2; t[3] = p3;
       np -= 4; t += 4; f += 4;
     }
@@ -4621,7 +4683,7 @@ namespace Gecode {
       ptrdiff_t m0, m1, m2, m3;
       ActorLink* p3 =
         static_cast<ActorLink*>(Support::ptrsplit(f[3],m3))->prev();
-      ActorLink* p0 = 
+      ActorLink* p0 =
         static_cast<ActorLink*>(Support::ptrsplit(f[0],m0))->prev();
       ActorLink* p1 =
         static_cast<ActorLink*>(Support::ptrsplit(f[1],m1))->prev();
@@ -4635,7 +4697,7 @@ namespace Gecode {
     }
     if (na >= 2) {
       ptrdiff_t m0, m1;
-      ActorLink* p0 = 
+      ActorLink* p0 =
         static_cast<ActorLink*>(Support::ptrsplit(f[0],m0))->prev();
       ActorLink* p1 =
         static_cast<ActorLink*>(Support::ptrsplit(f[1],m1))->prev();
@@ -4645,17 +4707,18 @@ namespace Gecode {
     }
     if (na > 0) {
       ptrdiff_t m0;
-      ActorLink* p0 = 
+      ActorLink* p0 =
         static_cast<ActorLink*>(Support::ptrsplit(f[0],m0))->prev();
       t[0] = static_cast<ActorLink*>(Support::ptrjoin(p0,m0));
     }
   }
+#pragma clang diagnostic pop
 
   template<class VIC>
   forceinline void
   VarImp<VIC>::update(Space& home, ActorLink**& sub) {
     VarImp<VIC>* x = static_cast<VarImp<VIC>*>(home.pc.c.vars_u[idx_c]);
-    while (x != NULL) {
+    while (x != nullptr) {
       VarImp<VIC>* n = x->next(); x->forward()->update(x,sub); x = n;
     }
   }
@@ -4679,7 +4742,7 @@ namespace Gecode {
     VarImp* x = static_cast<VarImp*>(_x);
     do {
       x->dispose(home); x = static_cast<VarImp*>(x->next_d());
-    } while (x != NULL);
+    } while (x != nullptr);
   }
 
   /*
@@ -4828,24 +4891,24 @@ namespace Gecode {
       }
       q--;
     }
-    q = NULL;
+    q = nullptr;
     if (!home.pl.empty()) {
       c = Propagator::cast(home.pl.next());
       e = Propagator::cast(&home.pl);
     } else {
-      c = e = NULL;
+      c = e = nullptr;
     }
   }
   forceinline bool
   Space::Propagators::operator ()(void) const {
-    return c != NULL;
+    return c != nullptr;
   }
   forceinline void
   Space::Propagators::operator ++(void) {
     c = c->next();
     if (c == e) {
-      if (q == NULL) {
-        c = NULL;
+      if (q == nullptr) {
+        c = nullptr;
       } else {
         while (q >= &home.pc.p.queue[0]) {
           if (q->next() != q) {
@@ -4854,12 +4917,12 @@ namespace Gecode {
           }
           q--;
         }
-        q = NULL;
+        q = nullptr;
         if (!home.pl.empty()) {
           c = Propagator::cast(home.pl.next());
           e = Propagator::cast(&home.pl);
         } else {
-          c = NULL;
+          c = nullptr;
         }
       }
     }
@@ -4880,18 +4943,18 @@ namespace Gecode {
       }
       q--;
     }
-    q = c = e = NULL;
+    q = c = e = nullptr;
   }
   forceinline bool
   Space::ScheduledPropagators::operator ()(void) const {
-    return c != NULL;
+    return c != nullptr;
   }
   forceinline void
   Space::ScheduledPropagators::operator ++(void) {
     c = c->next();
     if (c == e) {
-      if (q == NULL) {
-        c = NULL;
+      if (q == nullptr) {
+        c = nullptr;
       } else {
         while (q >= &home.pc.p.queue[0]) {
           if (q->next() != q) {
@@ -4900,7 +4963,7 @@ namespace Gecode {
           }
           q--;
         }
-        q = c = e = NULL;
+        q = c = e = nullptr;
       }
     }
   }
@@ -4994,7 +5057,7 @@ namespace Gecode {
 
   forceinline Home
   PropagatorGroup::operator ()(Space& home) {
-    return Home(home,NULL,*this,BrancherGroup::def);
+    return Home(home,nullptr,*this,BrancherGroup::def);
   }
 
   forceinline bool
@@ -5032,7 +5095,7 @@ namespace Gecode {
 
   forceinline Home
   BrancherGroup::operator ()(Space& home) {
-    return Home(home,NULL,PropagatorGroup::def,*this);
+    return Home(home,nullptr,PropagatorGroup::def,*this);
   }
 
   forceinline bool

@@ -29,10 +29,10 @@
 #  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-# 
+#
 # This file contains entries for changelogs
 #
-# There are two kinds of entries: one marking releases and the others 
+# There are two kinds of entries: one marking releases and the others
 # being actual entries.
 #
 # All the lines for describing entries must start at the beginning.
@@ -42,25 +42,510 @@
 #   Version: <version string>
 #   Date:    <when release>
 #   [DESCRIPTION]
-#   ... All the text up to the next [ENTRY] is included 
+#   ... All the text up to the next [ENTRY] is included
 #   as description
 #
 # An entry is described as follows:
 #   [ENTRY]
-#   Module: 
+#   Module:
 #     kernel|search|int|set|cpltset|example|minimodel|iter|support|
 #     driver|test|gist|flatzinc|other
 #   What:   bug|documentation|performance|new|removed|change
 #   Rank:   minor|major
 #   Bug:    <optional, for number from bugzilla>
+#   Issue:  <optional, for number from github>
 #   Thanks: <optional, who reported etc>
 #   [DESCRIPTION]
-#   ... All the text up to the next [ENTRY] or [RELEASE] is included 
+#   ... All the text up to the next [ENTRY] or [RELEASE] is included
 #   as description
 #   [MORE]
 #    ... If a more section is included, then it will be displayed as an
 #    optional section in the html page.
 #
+
+[RELEASE]
+Version: 6.3.0
+Date: 2020-??-??
+[DESCRIPTION]
+Let's see.
+
+[ENTRY]
+Module: flatzinc
+What:   bug
+Rank:   minor
+[DESCRIPTION]
+Allow par identifiers in var array initialisers.
+
+[ENTRY]
+Module: flatzinc
+What:   change
+Rank:   minor
+[DESCRIPTION]
+Expose the full cumulatives scheduling constraint to MiniZinc.
+
+[ENTRY]
+Module: flatzinc
+What:   bug
+Issue:  171
+Rank:   minor
+[DESCRIPTION]
+Correctly unshare variables for inverse constraint.
+
+[ENTRY]
+Module: flatzinc
+What:   bug
+Issue:  170
+Rank:   minor
+[DESCRIPTION]
+Correctly unshare variables for div and mod constraints.
+
+[ENTRY]
+Module: flatzinc
+What:   bug
+Issue:  169
+Rank:   minor
+[DESCRIPTION]
+Unshare variables for maximum_arg / minimum_arg constraints.
+
+[ENTRY]
+Module: int
+What:   bug
+Issue:  167
+Rank:   minor
+[DESCRIPTION]
+Make extensional (compact-table) constraints check for duplicated variables.
+Also fixes the FlatZinc interface to unshare arguments for extensional
+constraints.
+
+[ENTRY]
+Module: support
+What:   change
+Rank:   major
+[DESCRIPTION]
+Replace platform-specific multithreading code with standard C++ threads.
+
+[ENTRY]
+Module: test
+What:   new
+Rank:   minor
+[DESCRIPTION]
+Add ability to add command line options to a FlatZinc test
+
+[ENTRY]
+Module: flatzinc
+What:   new
+Rank:   minor
+Thanks: Jip J. Dekker
+[DESCRIPTION]
+Add the implementation of the experimental "meta-search on restart" FlatZinc
+feature. This features enforces search restrictions when the solver restarts,
+allowing users to express many types of common meta-search operation. Examples
+are (structured) large neighbourhood, lexicographic optimization, and pareto
+front optimization.
+
+[ENTRY]
+Module: search
+What:   new
+Rank:   minor
+Thanks: Jip J. Dekker
+[DESCRIPTION]
+Add the reason for restarting to the MetaInfo object available when restarting. 
+
+[ENTRY]
+Module: other
+What:   new
+Rank:   minor
+Thanks:	Jason Nguyen
+[DESCRIPTION]
+Set CMake policy for finding OpenGL to be compatible with application bundlers
+on new systems.
+
+[ENTRY]
+Module: other
+What:   new
+Rank:   minor
+Thanks:	Jip J. Dekker
+[DESCRIPTION]
+Add optional support for compiling gecode with MPFR using the CMake build
+system.
+
+[ENTRY]
+Module: search
+What:   bug
+Rank:   minor
+Thanks: Alexis LG
+Issue:  156
+[DESCRIPTION]
+The parallel search engines could in some cases leak memory, when multiple
+solutions are produced but not consumed. The fix clears the queue of solutions
+on destruction.
+
+[ENTRY]
+Module: flatzinc
+What:   bug
+Rank:   minor
+Thanks: Jip J. Dekker
+[DESCRIPTION]
+The FlatZinc decomposition of "int_pow" would use a zero default value for the
+base even raised to a negative value, causing unsatisfiability. The fix
+introduces a simpler decomposition that moves the default values for impossible
+exponent values to the result.
+
+[ENTRY]
+Module: flatzinc
+What:   change
+Rank:   minor
+Thanks: Jason Nguyen
+[DESCRIPTION]
+Rewrite "int_pow_fixed" into "gecode_int_pow" rather than using the default
+MiniZinc decomposition.
+
+[ENTRY]
+Module: other
+What:   bug
+Rank:   minor
+Thanks: Joerg Strebel
+Issue:  136
+[DESCRIPTION]
+Fix compilation without threads
+
+[ENTRY]
+Module: gist
+What:   change
+Rank:   minor
+Thanks: Jip J. Dekker
+[DESCRIPTION]
+Add support for building Gecode Gist with Qt6.
+
+[ENTRY]
+Module: flatzinc 
+What:   new
+Rank:   minor
+Thanks: Jip J. Dekker
+[DESCRIPTION]
+Add support for disjunctive and cumulative on optional variables.
+
+[ENTRY]
+Module: flatzinc 
+What:   new
+Rank:   minor
+Thanks: Jip J. Dekker
+[DESCRIPTION]
+Generate MiniZinc solver configuration for the Gecode FlatZinc using Gist.
+
+[ENTRY]
+Module: search
+What:   new
+Rank:   minor
+Thanks: Jip J. Dekker
+[DESCRIPTION]
+Add RestartStop class to enforce a limit on the amount of restarts conducted
+in a search. RestartStop is included in CombinedStop and accessible from the
+FlatZinc interface through the --restart-limit flag.
+
+[ENTRY]
+Module: int
+What:   bug
+Rank:   minor
+Issue:  128
+Thanks: Mattias GrÃ¶nkvist
+[DESCRIPTION]
+Distinct propagation (as used by distinct, channel, and circuit) would
+sometimes read from uninitialized memory.
+
+[ENTRY]
+Module: flatzinc
+What:   bug
+Rank:   minor
+Thanks: Luis Quesada
+[DESCRIPTION]
+The gecode.mzn file now contains search annotation definitions for action
+branching renamed from the previous erroneous and not working activity.
+
+[ENTRY]
+Module: other
+What:   change
+Rank:   major
+[DESCRIPTION]
+Gecode now requires C++ 11, the support for compiling without C++ 11
+has been removed.
+
+[ENTRY]
+Module: kernel
+What:   change
+Rank:   minor
+[DESCRIPTION]
+Make the region pool thread local.
+[MORE]
+When running tests in parallel, having a shared pool for regions took too much
+time on macOS. This change makes the pool into a thread_local instead.
+
+[ENTRY]
+Module: kernel
+What:   change
+Rank:   minor
+[DESCRIPTION]
+Use std::atomic for the global propagator identifier counter instead of guarding
+using Support::Mutex.
+[MORE]
+Using a normal int and locking took too much time when running
+tests in parallel on macOS.
+
+[ENTRY]
+Module: test
+What:   new
+Rank:   major
+[DESCRIPTION]
+Tests can now be run using multiple threads. Use the -threads n argument to
+the test runner to run the tests using n threads. A value of 0 uses the number
+of processing units to set the thread count.
+Using 6 parallel threads, running the full test suite went from 4 hours 15 minutes
+to 55 minutes on a 6-core machine. While not a perfect speed-up, it significantly
+reduces the time to test Gecode.
+[MORE]
+Due to the high frequency of memory operations when running tests in parallel,
+the system allocation on macOS has a hard time keeping up. To get full performance,
+we recommend using another allocator, such as for example mimalloc.
+Note also that logging and multiple threads for running tests do not work at the
+same time.
+
+[ENTRY]
+Module: flatzinc
+What:   change
+Rank:   minor
+Thanks: Jip J. Dekker
+[DESCRIPTION]
+Automatically generate and install a MiniZinc solver configuration and
+install MiniZinc library into the share/minizinc/gecode standard location.
+
+[ENTRY]
+Module: int
+What:   new
+Rank:   minor
+[DESCRIPTION]
+Add versions of element constraints with offsets, to enable fast domain
+consistent index set transformations.
+
+[ENTRY]
+Module: flatzinc
+What:   change
+Rank:   minor
+[DESCRIPTION]
+Use element-with-offset and 2d element propagators instead of performing
+index transformations in MiniZinc.
+
+[ENTRY]
+Module: flatzinc
+What:   change
+Rank:   minor
+[DESCRIPTION]
+Accept combined -cp-profiler flag for activating CP-Profiler and always
+send information to profiler.
+
+[ENTRY]
+Module: driver
+What:   change
+Rank:   minor
+[DESCRIPTION]
+Accept combined -cp-profiler flag for activating CP-Profiler instead of
+using separate script mode.
+
+[ENTRY]
+Module: test
+What:   bug
+Rank:   minor
+[DESCRIPTION]
+Fix testing for IntAction, BoolAction, SetAction, FloatAction with
+merit functions.
+
+[ENTRY]
+Module: flatzinc
+What:   change
+Issue:  77
+Rank:   minor
+[DESCRIPTION]
+Move parser.tab.hh to parser.tab.hpp, Bison's standard location. This
+ensures that the generated implementation file is compatible with
+Bison 3.7.
+
+[ENTRY]
+Module: flatzinc
+What:   bug
+Issue:  61
+Rank:   minor
+[DESCRIPTION]
+Fix fzn_table_bool and fzn_table_bool_reif predicates, which had
+incorrect types.
+
+[ENTRY]
+Module: other
+What:   change
+Rank:   minor
+Issue:  63
+Thanks: Markus Elfring
+[DESCRIPTION]
+Remove usages of reserved identifiers such as __GECODE_KERNEL_HH__ and
+_View.
+[MORE]
+Gecode used to use include guards of the form __GECODE_KERNEL_HH__.
+Using a double underscore in an identifier is reserved, and thus
+undefined behaviour. Use guards of the form GECODE_KERNEL_HH instead.
+Similarly, names with a single leading underscore followed by a
+capital letter are also reserved, and usage is thus undefined
+behaviour, and are removed.
+
+[ENTRY]
+Module: flatzinc
+What:   new
+Rank:   minor
+[DESCRIPTION]
+Add MiniZinc constraint names to FlatZinc errors when applicable and
+available.
+[MORE]
+A constraint name is specified in MiniZinc using a string annotation
+"my name" on the constraint item, and is translated into FlatZinc
+using the mzn_constraint_name("my name").
+
+[ENTRY]
+Module: flatzinc
+What:   bug
+Rank:   minor
+[DESCRIPTION]
+The cumulative constraint now respects the semantics of the MiniZinc
+definition for 0-duration tasks.
+
+[ENTRY]
+Module: flatzinc
+What:   bug
+Rank:   minor
+[DESCRIPTION]
+The roots and int_set_channel constraints now work for empty sets and arrays.
+
+[ENTRY]
+Module: flatzinc
+What:   change
+Rank:   minor
+[DESCRIPTION]
+The MiniZinc global constraint library has been updated for MiniZinc
+version 2.3.0 and higher, taking advantage of the new library
+structure that separates the modelling-level definition of a predicate
+from the solver-level one.
+
+[ENTRY]
+Module: minimodel
+What:   change
+Rank:   minor
+Thanks:	Marco Correia
+[DESCRIPTION]
+Do not require that cost for FloatMinimizeSpace (use the maximum
+instead) and FloatMaximizeSpace (use the minimum instead) must be
+assigned.
+
+[ENTRY]
+Module: kernel
+What:   bug
+Rank:   minor
+Thanks:	Konstantin Popov
+[DESCRIPTION]
+Fixed crash when killing the last propagator in a space.
+
+[ENTRY]
+Module: example
+What:   bug
+Rank:   minor
+Thanks:	Florian Fontan
+[DESCRIPTION]
+Do not use size-based symmetry breaking together with CDBF.
+
+[ENTRY]
+Module: kernel
+What:   change
+Rank:   minor
+Thanks:	John W. Spirent
+[DESCRIPTION]
+Some small changes to compile with MSVC 2015 again.
+
+[ENTRY]
+Module: int
+What:   change
+Rank:   minor
+Thanks:	John W. Spirent
+[DESCRIPTION]
+Some small changes to compile with MSVC 2015 again.
+
+[ENTRY]
+Module: set
+What:   change
+Rank:   minor
+Thanks:	John W. Spirent
+[DESCRIPTION]
+Some small changes to compile with MSVC 2015 again.
+
+[ENTRY]
+Module: set
+What:   bug
+Rank:   minor
+Thanks:	Mats Carlsson
+[DESCRIPTION]
+Fix bool-set channel propagator to work correctly when posted
+with a fixed set variable.
+
+[ENTRY]
+Module: flatzinc
+What:   change
+Rank:   minor
+Thanks:	Jip J. Dekker
+[DESCRIPTION]
+Update the error produced by the FlatZinc parser when an integer
+literal is outside Gecode's integer limits.
+
+[ENTRY]
+Module: flatzinc
+What:   change
+Rank:   minor
+[DESCRIPTION]
+The number of nodes and failures is now of type unsigned long
+long int. Time is now consistently of type double.
+
+[ENTRY]
+Module: driver
+What:   change
+Rank:   minor
+[DESCRIPTION]
+The number of propagations, nodes, and failures is now of type
+unsigned long long int. Time is now consistently of type double.
+
+[ENTRY]
+Module: search
+What:   change
+Rank:   minor
+[DESCRIPTION]
+The number of nodes and failures in statistics is now of type
+unsigned long long int. Time is now consistently of type double.
+
+[ENTRY]
+Module: kernel
+What:   change
+Rank:   minor
+[DESCRIPTION]
+The number of propagations in statistics is now of type unsigned
+long long int.
+
+[ENTRY]
+Module: search
+What:   bug
+Rank:   minor
+[DESCRIPTION]
+The linear cutoff generator started at zero rather than at the
+scale factor.
+
+[ENTRY]
+Module: kernel
+What:   new
+Rank:   minor
+[DESCRIPTION]
+For action-based branching heuristics, one can now define whether
+failure, propagation, or both should be considered.
 
 [RELEASE]
 Version: 6.2.0
@@ -78,7 +563,7 @@ Rank:   minor
 Thanks:	Jip J. Dekker
 [DESCRIPTION]
 Enable support for half-reified constraints in the Gecode MiniZinc
-library. Half-reified constraints are used when a MiniZinc 
+library. Half-reified constraints are used when a MiniZinc
 expression has to be reified and is detected to be in a positive
 context. If no Half-reified constraint has been made available by
 solver, the full reification will be used. Half-reifed constraints
@@ -375,7 +860,7 @@ and nroot.
 Module: kernel
 What:   change
 Rank:   minor
-Thanks: Rui Machado, Jens Krüger
+Thanks: Rui Machado, Jens KrÃ¼ger
 [DESCRIPTION]
 The alignment of memory allocated from a Region is now as
 prescribed by the maximum of std::max_align_t and
@@ -819,7 +1304,7 @@ Add redefinition of disjunctive_strict in terms of cumulative.
 Module: driver
 What:   new
 Rank:   major
-Thanks:	Roberto Castañeda Lozano
+Thanks:	Roberto CastaÃ±eda Lozano
 [DESCRIPTION]
 Added IntLexMinimizeScript and IntLexMaximizeScript for
 lexicographic optimization.
@@ -828,7 +1313,7 @@ lexicographic optimization.
 Module: minimodel
 What:   new
 Rank:   major
-Thanks:	Roberto Castañeda Lozano
+Thanks:	Roberto CastaÃ±eda Lozano
 [DESCRIPTION]
 Added IntLexMinimizeSpace and IntLexMaximizeSpace for
 lexicographic optimization.
@@ -1148,7 +1633,7 @@ Date: 2017-04-18
 [DESCRIPTION]
 This is a rather major release, fixing a number of bugs and
 adding quite a number of new features. Some of the features
-require changes to your models. 
+require changes to your models.
 
 In more detail: extended tracing so that all propagator
 executions and commit operations can be traced; renamed activity
@@ -1609,7 +2094,7 @@ the -relax commandline option.
 Module: int
 What:   bug
 Rank:   major
-Thanks:	Roberto Castañeda Lozano
+Thanks:	Roberto CastaÃ±eda Lozano
 [DESCRIPTION]
 The domain consistent dom() constraint for integer ranges was
 only bounds consistent...
@@ -1952,7 +2437,7 @@ syntax error during parsing.
 Module: minimodel
 What:   bug
 Rank:   minor
-Thanks: Roberto Castañeda Lozano, Matthias Balzer
+Thanks: Roberto CastaÃ±eda Lozano, Matthias Balzer
 [DESCRIPTION]
 Fixed posting of Boolean element expressions and relations.
 
@@ -2237,7 +2722,7 @@ unassigned variables appearing in the output.
 Module: flatzinc
 What:   bug
 Rank:   minor
-Thanks: Jean-Noël Monette
+Thanks: Jean-NoÃ«l Monette
 [DESCRIPTION]
 Improve error messages in FlatZinc for some type errors.
 
@@ -2261,7 +2746,7 @@ it is done.
 Module: flatzinc
 What:   new
 Rank:   minor
-Thanks: Mark Manser 
+Thanks: Mark Manser
 [DESCRIPTION]
 An option -step now can pass an improvement step for
 optimization of float problems.
@@ -2272,7 +2757,7 @@ What:   change
 Rank:   major
 [DESCRIPTION]
 All scripts now must call the constructor of their base class
-with an option argument. 
+with an option argument.
 
 Note that you will have to change your models by a call to the
 constructor of the script class with an option argument!
@@ -2281,7 +2766,7 @@ constructor of the script class with an option argument!
 Module: driver
 What:   new
 Rank:   minor
-Thanks: Mark Manser 
+Thanks: Mark Manser
 [DESCRIPTION]
 An option -step now can pass an improvement step to scripts of
 type FloatMinimizeScript and FloatMaximizeScript.
@@ -2290,7 +2775,7 @@ type FloatMinimizeScript and FloatMaximizeScript.
 Module: minimodel
 What:   new
 Rank:   minor
-Thanks: Mark Manser 
+Thanks: Mark Manser
 [DESCRIPTION]
 The classes FloatMinimizeSpace and FloatMaximizeSpace can be
 created with an improvement step for optimization.
@@ -2322,7 +2807,7 @@ Exposed class definitions for common cutoff generators.
 Module: flatzinc
 What:   bug
 Rank:   minor
-Thanks: Håkan Kjellerstrand
+Thanks: HÃ¥kan Kjellerstrand
 [DESCRIPTION]
 LNS could fail when the search was restarted before finding the first solution.
 
@@ -2330,7 +2815,7 @@ LNS could fail when the search was restarted before finding the first solution.
 Module: search
 What:   bug
 Rank:   major
-Thanks: Håkan Kjellerstrand
+Thanks: HÃ¥kan Kjellerstrand
 [DESCRIPTION]
 Fix memory leak in the DFS and BAB search engines that could make restart-based
 search run out of memory very quickly.
@@ -2451,7 +2936,7 @@ incorrectly turn a cumulatives into a disjunctive constraint.
 Module: flatzinc
 What:   bug
 Rank:   minor
-Thanks: Björn Böttcher
+Thanks: BjÃ¶rn BÃ¶ttcher
 [DESCRIPTION]
 Fix behavior of -a command line option for satisfaction problems.
 
@@ -2506,7 +2991,7 @@ Fix cmake build file to work better when building with Qt.
 Module: flatzinc
 What:   bug
 Rank:   major
-Thanks: Jean-Noël Monette
+Thanks: Jean-NoÃ«l Monette
 [DESCRIPTION]
 Fixed major bug that would cause the FlatZinc interpreter to crash
 on most models.
@@ -2567,9 +3052,9 @@ Added support for building examples with CMake.
 Module: minimodel
 What:   bug
 Rank:   minor
-Thanks:	Léonard Benedetti
+Thanks:	LÃ©onard Benedetti
 [DESCRIPTION]
-Removed potentially undefined behavior for regular expressions. 
+Removed potentially undefined behavior for regular expressions.
 
 [ENTRY]
 Module: flatzinc
@@ -2660,7 +3145,7 @@ Module: flatzinc
 What:   performance
 Rank:   minor
 [DESCRIPTION]
-Treat equality constraints in FlatZinc as aliases instead of posting 
+Treat equality constraints in FlatZinc as aliases instead of posting
 propagators, and post simple domain constraints before more complex
 propagators to help post the most efficient versions.
 
@@ -2765,7 +3250,7 @@ Fixed posting of set relations involving constants.
 Module: int
 What:   bug
 Rank:   major
-Thanks:	Roberto Castañeda Lozano, Gabriel Hjort Blindell
+Thanks:	Roberto CastaÃ±eda Lozano, Gabriel Hjort Blindell
 [DESCRIPTION]
 In extremely rare cases, the bounds-consistent distinct (and
 hence all other distinct propagators as they use the
@@ -2776,7 +3261,7 @@ numerical overflow.
 Module: kernel
 What:   bug
 Rank:   minor
-Thanks:	Roberto Castañeda Lozano
+Thanks:	Roberto CastaÃ±eda Lozano
 [DESCRIPTION]
 The function brancher did not return a handle.
 
@@ -2807,7 +3292,7 @@ Compiles with MSVC 2013.
 Module: search
 What:   bug
 Rank:   major
-Thanks:	Roberto Castañeda Lozano
+Thanks:	Roberto CastaÃ±eda Lozano
 [DESCRIPTION]
 Fix for restart-based search when the master does not have a branching.
 
@@ -2815,7 +3300,7 @@ Fix for restart-based search when the master does not have a branching.
 Module: search
 What:   bug
 Rank:   major
-Thanks:	Roberto Castañeda Lozano
+Thanks:	Roberto CastaÃ±eda Lozano
 [DESCRIPTION]
 Restart-based search did not work when the cutoff limit did not
 strictly increase.
@@ -2824,7 +3309,7 @@ strictly increase.
 Module: search
 What:   new
 Rank:   minor
-Thanks:	Roberto Castañeda Lozano
+Thanks:	Roberto CastaÃ±eda Lozano
 [DESCRIPTION]
 Added support for a repeat cutoff generator.
 
@@ -3223,7 +3708,7 @@ variable types.
 Module: minimodel
 What:   bug
 Rank:   minor
-Thanks:	Roberto Castañeda Lozano
+Thanks:	Roberto CastaÃ±eda Lozano
 [DESCRIPTION]
 Boolean expressions could lead to a segfault when initialized
 with default constructor.
@@ -3326,7 +3811,7 @@ Fixed missing propagation in reified rel-constraints.
 Module: search
 What:   bug
 Rank:   major
-Thanks: Chris Mears, Roberto Castañeda Lozano
+Thanks: Chris Mears, Roberto CastaÃ±eda Lozano
 [DESCRIPTION]
 Fixed a bug in restart-based search, which would crash if the
 problem is failed at the root or only had a single solution
@@ -3530,7 +4015,7 @@ Updated to compile with Qt version 5.0 (still works with Qt >= 4.3 as well).
 Module: int
 What:   bug
 Rank:   minor
-Thanks:	Roberto Castañeda Lozano
+Thanks:	Roberto CastaÃ±eda Lozano
 [DESCRIPTION]
 Fixed precede constraint with less than two values.
 
@@ -3538,7 +4023,7 @@ Fixed precede constraint with less than two values.
 Module: set
 What:   bug
 Rank:   minor
-Thanks:	Roberto Castañeda Lozano
+Thanks:	Roberto CastaÃ±eda Lozano
 [DESCRIPTION]
 Fixed precede constraint with less than two values.
 
@@ -3621,7 +4106,7 @@ MPG).
 Module: int
 What:   change
 Rank:   minor
-Thanks:	Roberto Castañeda Lozano
+Thanks:	Roberto CastaÃ±eda Lozano
 [DESCRIPTION]
 Generalized definition of no-overlap propagators for better reuse.
 
@@ -3760,7 +4245,7 @@ statistics to arbitrary files and streams.
 Module: flatzinc
 What:   bug
 Rank:   minor
-Thanks: Jean-Noël Monette
+Thanks: Jean-NoÃ«l Monette
 [DESCRIPTION]
 Exported registry and helper functions so that users can add
 constraint handlers to the FlatZinc interpreter.
@@ -3784,7 +4269,7 @@ single integer variable.
 Module: int
 What:   bug
 Rank:   minor
-Thanks: Jean-Noël Monette
+Thanks: Jean-NoÃ«l Monette
 [DESCRIPTION]
 Added missing propagation for nary min/max constraint.
 
@@ -3856,7 +4341,7 @@ Added support for float variables.
 Module:	int
 What:	new
 Rank:	minor
-Thanks: Kathrin Dannmann, Roberto Castañeda Lozano
+Thanks: Kathrin Dannmann, Roberto CastaÃ±eda Lozano
 [DESCRIPTION]
 The binpacking constraint now also accepts items of size zero.
 
@@ -4171,7 +4656,7 @@ switched off.
 Module: flatzinc
 What:   bug
 Rank:   major
-Thanks: Håkan Kjellerstrand
+Thanks: HÃ¥kan Kjellerstrand
 [DESCRIPTION]
 Fixed linear inequations over integer variables that are channeled
 from Boolean variables.
@@ -4282,7 +4767,7 @@ What:   bug
 Rank:   minor
 Thanks: Gustavo Gutierrez
 [DESCRIPTION]
-Install generated variable implementation headers instead of the shipped 
+Install generated variable implementation headers instead of the shipped
 versions (fixes a problem when building Gecode in a separate directory).
 
 [ENTRY]
@@ -4349,7 +4834,7 @@ as arguments.
 Module: set
 What:   bug
 Rank:   minor
-Thanks: Johannes Inführ
+Thanks: Johannes InfÃ¼hr
 [DESCRIPTION]
 Fixed a memory leak in the set weights constraint, and use
 IntSharedArray instead of IntArgs as parameters for weights.
@@ -4530,7 +5015,7 @@ Module: flatzinc
 What:   new
 Rank:   major
 [DESCRIPTION]
-Added native support for the no-overlap constraint (called diffn in 
+Added native support for the no-overlap constraint (called diffn in
 MiniZinc/FlatZinc).
 
 [ENTRY]
@@ -4554,7 +5039,7 @@ path). See "Modeling and Programming with Gecode" for details.
 Module: flatzinc
 What:   new
 Rank:   minor
-Thanks: Håkan Kjellerstrand
+Thanks: HÃ¥kan Kjellerstrand
 [DESCRIPTION]
 Support indomain_middle and indomain_interval search annotation by
 replacing them with indomain_median and indomain_split, respectively.
@@ -4614,7 +5099,7 @@ Module: flatzinc
 What:   new
 Rank:   minor
 [DESCRIPTION]
-Added native support for link_set_to_booleans, 
+Added native support for link_set_to_booleans,
 global_cardinality_low_up_closed, and decreasing_bool.
 
 [ENTRY]
@@ -4630,7 +5115,7 @@ Module: search
 What:   bug
 Rank:   minor
 [DESCRIPTION]
-Fixed memory leak when passing a failed space to a search engine with cloning 
+Fixed memory leak when passing a failed space to a search engine with cloning
 option set to false.
 
 [ENTRY]
@@ -4638,8 +5123,8 @@ Module: kernel
 What:   new
 Rank:   minor
 [DESCRIPTION]
-Moved RangeList class, which is a list of ranges implemented as a FreeList, 
-from the set module into the kernel. Also added corresponding 
+Moved RangeList class, which is a list of ranges implemented as a FreeList,
+from the set module into the kernel. Also added corresponding
 Iter::Ranges::RangeList iterator.
 
 [ENTRY]
@@ -4677,7 +5162,7 @@ What:   bug
 Rank:   minor
 [DESCRIPTION]
 Changed keyboard shortcuts in Gist so that they work on all platforms: "Inspect"
-is now Ctrl+number of inspector, for "Inspect before fixpoint" press Alt in 
+is now Ctrl+number of inspector, for "Inspect before fixpoint" press Alt in
 addition (on Mac OS, use the Command key instead of Ctrl).
 
 [ENTRY]
@@ -4703,7 +5188,7 @@ Module: set
 What:   bug
 Rank:   minor
 [DESCRIPTION]
-The constructors for set variable arrays and argument arrays threw incorrect 
+The constructors for set variable arrays and argument arrays threw incorrect
 VariableEmptyDomain exceptions.
 
 [ENTRY]
@@ -4735,7 +5220,7 @@ Module: flatzinc
 What:   change
 Rank:   minor
 [DESCRIPTION]
-Adapted the MiniZinc declarations and the command line options for 
+Adapted the MiniZinc declarations and the command line options for
 Gecode/FlatZinc to MiniZinc 1.3. The fz binary now works with the
 minizinc driver script.
 
@@ -4743,7 +5228,7 @@ minizinc driver script.
 Module: flatzinc
 What:   bug
 Rank:   minor
-Thanks: Håkan Kjellerstrand
+Thanks: HÃ¥kan Kjellerstrand
 [DESCRIPTION]
 Re-enabled the global cardinality constraint in the FlatZinc interpreter.
 
@@ -4751,9 +5236,9 @@ Re-enabled the global cardinality constraint in the FlatZinc interpreter.
 Module: flatzinc
 What:   bug
 Rank:   minor
-Thanks: Håkan Kjellerstrand
+Thanks: HÃ¥kan Kjellerstrand
 [DESCRIPTION]
-Fixed the MiniZinc definition for the circuit constraints to work with 
+Fixed the MiniZinc definition for the circuit constraints to work with
 arbitrarily indexed arrays.
 
 [ENTRY]
@@ -4837,7 +5322,7 @@ Embed resource information into Gecode DLLs and EXEs on Windows.
 Module: flatzinc
 What:   bug
 Rank:   major
-Thanks: Roberto Castañeda Lozano
+Thanks: Roberto CastaÃ±eda Lozano
 [DESCRIPTION]
 Fixed incorrect posting of linear constraints with variable arrays
 of size one.
@@ -4931,7 +5416,7 @@ Removed obsolete Glossary in reference documentation.
 Module: int
 What:   bug
 Rank:   minor
-Thanks: Gustavo A. Gómez Farhat
+Thanks: Gustavo A. GÃ³mez Farhat
 [DESCRIPTION]
 Do not inline functions with variable arguments.
 
@@ -4963,7 +5448,7 @@ the automatic cast from integers to LinExpr was sometimes ambiguous).
 Module: scheduling
 What:   bug
 Rank:   major
-Thanks: Roberto Castañeda Lozano
+Thanks: Roberto CastaÃ±eda Lozano
 [DESCRIPTION]
 Fixed initialization for unary and cumulative edge-finding (just
 worked accidentally).
@@ -5002,7 +5487,7 @@ What:   bug
 Rank:   minor
 Thanks: Kish Shen
 [DESCRIPTION]
-The reified dom constraint failed instead of setting the BoolVar to 0 when the 
+The reified dom constraint failed instead of setting the BoolVar to 0 when the
 minimum argument given was greater than the maximum.
 
 [ENTRY]
@@ -5011,9 +5496,9 @@ What:   performance
 Rank:   minor
 Thanks: Kish Shen
 [DESCRIPTION]
-Fixed sortedness constraint by replacing an algorithm that is linear in the 
-width of the union of all domains with an algorithm that is quadratic in the 
-number of variables. The previous algorithm crashed for domains with large 
+Fixed sortedness constraint by replacing an algorithm that is linear in the
+width of the union of all domains with an algorithm that is quadratic in the
+number of variables. The previous algorithm crashed for domains with large
 values due to excessive memory use.
 
 [ENTRY]
@@ -5021,9 +5506,9 @@ Module: int
 What:   performance
 Rank:   minor
 [DESCRIPTION]
-Using ICL_DOM for binary linear equations with unit coefficients (such as x = 
-y+3) is now implemented using the much more efficient binary equality 
-propagator instead of the linear equation propagator (which has worst case 
+Using ICL_DOM for binary linear equations with unit coefficients (such as x =
+y+3) is now implemented using the much more efficient binary equality
+propagator instead of the linear equation propagator (which has worst case
 exponential runtime).
 
 [ENTRY]
@@ -5049,7 +5534,7 @@ Module: flatzinc
 What:   performance
 Rank:   minor
 [DESCRIPTION]
-The FlatZinc parser now uses hash maps instead of STL maps, which 
+The FlatZinc parser now uses hash maps instead of STL maps, which
 significantly increases parsing performance for larger files.
 Furthermore, a single symbol table is used, also increasing
 performance and allowing to report duplicate symbol errors,
@@ -5067,7 +5552,7 @@ initialization and element addition to arrays); state-of-the-art
 unary and cumulative scheduling propagators (including optional
 and flexible tasks); major cleanups of the variable and view
 infrastructure (now also documented in MPG); cleanups of the
-examples; several other fixes and performance improvements. 
+examples; several other fixes and performance improvements.
 
 This release is the first to be accompanied by a complete version
 of "Modeling and Programming in Gecode" which has been extended
@@ -5133,7 +5618,7 @@ Added propagators for cumulative scheduling.
 Module: minimodel
 What:   bug
 Rank:   minor
-Thanks: Håkan Kjellerstrand
+Thanks: HÃ¥kan Kjellerstrand
 [DESCRIPTION]
 Fixed a bug in minimodel, which could crash when using zero
 coefficients.
@@ -5152,7 +5637,7 @@ Module: gist
 What:   change
 Rank:   minor
 [DESCRIPTION]
-If an inspector throws an exception, an error message is 
+If an inspector throws an exception, an error message is
 printed indicating which inspector caused the problem.
 Previously, Gist would crash with a Qt error that was difficult
 to trace.
@@ -5162,7 +5647,7 @@ Module: flatzinc
 What:   bug
 Rank:   minor
 [DESCRIPTION]
-Fixed garbage collection of variables that are not printed. The 
+Fixed garbage collection of variables that are not printed. The
 bug lead to variables being mixed up in the output.
 
 [ENTRY]
@@ -5224,7 +5709,7 @@ Module: example
 What:   change
 Rank:   minor
 [DESCRIPTION]
-The Nonogram example now uses AFC as the default branching and 
+The Nonogram example now uses AFC as the default branching and
 includes some more instances.
 
 [ENTRY]
@@ -5239,7 +5724,7 @@ Module: other
 What:   change
 Rank:   minor
 [DESCRIPTION]
-The configure script now checks for qmake-qt4 and moc-qt4, which are used on 
+The configure script now checks for qmake-qt4 and moc-qt4, which are used on
 some Linux systems to distinguish between Qt3 and Qt4.
 
 [ENTRY]
@@ -5294,7 +5779,7 @@ Module: int
 What: 	change
 Rank:	minor
 [DESCRIPTION]
-IntArgs with simple sequences of values can now be created using the 
+IntArgs with simple sequences of values can now be created using the
 IntArgs::create static member function.
 
 [ENTRY]
@@ -5354,7 +5839,7 @@ What:   bug
 Rank:   minor
 Thanks: David Zaremby
 [DESCRIPTION]
-Fixed bug in interactive search where every move in the tree required 
+Fixed bug in interactive search where every move in the tree required
 recomputation.
 
 
@@ -5412,9 +5897,9 @@ Module: gist
 What:   new
 Rank:   major
 [DESCRIPTION]
-In addition to inspectors, you can now also register comparators, which can be 
-used to compare two nodes in the tree. In combination with the option to 
-compare before computing a fixpoint of the second node, this lets you see what 
+In addition to inspectors, you can now also register comparators, which can be
+used to compare two nodes in the tree. In combination with the option to
+compare before computing a fixpoint of the second node, this lets you see what
 exactly was modified by a branching.
 
 [ENTRY]
@@ -5422,7 +5907,7 @@ Module: set
 What:   bug
 Rank:   minor
 [DESCRIPTION]
-Fixed channeling between set and integer variables which did not propagate 
+Fixed channeling between set and integer variables which did not propagate
 enough.
 
 [ENTRY]
@@ -5438,8 +5923,8 @@ Module: gist
 What:   bug
 Rank:   minor
 [DESCRIPTION]
-Missing export declarations prevented embedding Gist as a widget. There is 
-now example code for embedding Gist in the directory 
+Missing export declarations prevented embedding Gist as a widget. There is
+now example code for embedding Gist in the directory
 gecode/gist/standalone-example.
 
 [ENTRY]
@@ -5449,7 +5934,7 @@ Rank:   major
 [DESCRIPTION]
 Gist can now stop exploration after all alternatives of a certain branching
 are exhausted. This feature can be turned on by posting a special branching
-using the Gist::stopBranch post function. Gist will then stop whenever that 
+using the Gist::stopBranch post function. Gist will then stop whenever that
 special branching becomes active.
 
 [ENTRY]
@@ -5486,7 +5971,7 @@ Module: set
 What:   removed
 Rank:   minor
 [DESCRIPTION]
-Removed Set::IntSetPropagator and Set::IntSetRePropagator because they are 
+Removed Set::IntSetPropagator and Set::IntSetRePropagator because they are
 subsumed by the MixBinaryPropagator patterns.
 
 [ENTRY]
@@ -5501,9 +5986,9 @@ Module: gist
 What:   performance
 Rank:   major
 [DESCRIPTION]
-Scrolling and zooming have been reimplemented. The new implementation is more 
-efficient and works around problems that occurred with large trees on some 
-platforms. Zooming is now more intuitive, keeping the current center 
+Scrolling and zooming have been reimplemented. The new implementation is more
+efficient and works around problems that occurred with large trees on some
+platforms. Zooming is now more intuitive, keeping the current center
 centered. You can now also zoom by pressing shift while using the mouse wheel.
 
 [ENTRY]
@@ -5539,9 +6024,9 @@ Module: flatzinc
 What:   change
 Rank:   minor
 [DESCRIPTION]
-Comply with MiniZinc 1.1. String literals are not allowed any longer 
-except in annotations, the solver outputs UNKNOWN and UNSATISFIABLE 
-instead of just ==========, and the global constraints all_equal, 
+Comply with MiniZinc 1.1. String literals are not allowed any longer
+except in annotations, the solver outputs UNKNOWN and UNSATISFIABLE
+instead of just ==========, and the global constraints all_equal,
 decreasing_int, and decreasing_bool are supported.
 
 
@@ -5666,7 +6151,7 @@ Module: flatzinc
 What:   change
 Rank:   minor
 [DESCRIPTION]
-Added command line option -print, which controls whether all solutions are 
+Added command line option -print, which controls whether all solutions are
 printed or only the last one that is found, and -search, to choose between
 branch-and-bound and restart optimization.
 
@@ -5685,7 +6170,7 @@ Module: flatzinc
 What:   bug
 Rank:   minor
 [DESCRIPTION]
-The FlatZinc interpreter ignored the -c-d and -a-d command line 
+The FlatZinc interpreter ignored the -c-d and -a-d command line
 switches when used with Gist.
 
 [ENTRY]
@@ -5733,7 +6218,7 @@ Module: gist
 What:   bug
 Rank:   minor
 [DESCRIPTION]
-Avoid inter-thread call to QWidget::update, which apparently causes a slight 
+Avoid inter-thread call to QWidget::update, which apparently causes a slight
 memory leak (and warning messages on stderr) on Mac OS.
 
 
@@ -5767,7 +6252,7 @@ Fixed bug in the ICL_VAL propagator for global cardinality.
 Module: flatzinc
 What:   bug
 Rank:   minor
-Thanks: Håkan Kjellerstrand
+Thanks: HÃ¥kan Kjellerstrand
 [DESCRIPTION]
 Support search annotations with constants in the variable arrays.
 
@@ -5856,7 +6341,7 @@ array to have zero occurrences, while in MiniZinc they are unrestricted.
 Module: flatzinc
 What:   bug
 Rank:   major
-Thanks: Håkan Kjellerstrand
+Thanks: HÃ¥kan Kjellerstrand
 [DESCRIPTION]
 Element constraints in reified positions produced an error in the mzn2fzn
 translation.
@@ -5877,7 +6362,7 @@ a little this and that as always.
 Module: minimodel
 What:   performance
 Rank:   minor
-Thanks:	Håkan Kjellerstrand
+Thanks:	HÃ¥kan Kjellerstrand
 [DESCRIPTION]
 Conversion of a regular expression to a DFA would crash on
 regular expressions with several million nodes (due to running
@@ -5909,7 +6394,7 @@ What:   change
 Rank:   minor
 [DESCRIPTION]
 The semantics of division and modulo has changed to match the C standard. This
-means that the operations round towards zero, and that the result of the 
+means that the operations round towards zero, and that the result of the
 modulo has the same sign as its first argument.
 
 [ENTRY]
@@ -5946,7 +6431,7 @@ Fixed segfault in matrix element constraint.
 Module:	example
 What:	new
 Rank:	minor
-Author:	Håkan Kjellerstrand
+Author:	HÃ¥kan Kjellerstrand
 [DESCRIPTION]
 Added word square puzzle.
 
@@ -6206,7 +6691,7 @@ Module: kernel
 What:   change
 Rank:   major
 [DESCRIPTION]
-A branching is now a brancher and a branching description is now a choice. 
+A branching is now a brancher and a branching description is now a choice.
 [MORE]
 Classes and member functions have been renamed accordingly. The
 change is necessary due to proper explanation in the forthcoming
@@ -6225,8 +6710,8 @@ What:   change
 Rank:   minor
 [DESCRIPTION]
 The Gist console now has a toolbar that provides buttons to clear the text
-as well as to configure the console window to stay on top of Gist. 
-Furthermore, after adding output, the console now automatically scrolls to the 
+as well as to configure the console window to stay on top of Gist.
+Furthermore, after adding output, the console now automatically scrolls to the
 bottom.
 
 [ENTRY]
@@ -6354,7 +6839,7 @@ Added branch and assign for single set variable.
 Module: minimodel
 What:   new
 Rank:   minor
-Thanks: Håkan Kjellerstrand
+Thanks: HÃ¥kan Kjellerstrand
 [DESCRIPTION]
 Added element constraints for Matrix interface to arrays.
 
@@ -6362,7 +6847,7 @@ Added element constraints for Matrix interface to arrays.
 Module: int
 What:   new
 Rank:   minor
-Thanks: Håkan Kjellerstrand
+Thanks: HÃ¥kan Kjellerstrand
 [DESCRIPTION]
 Added element constraints for Matrix arrays.
 
@@ -6370,7 +6855,7 @@ Added element constraints for Matrix arrays.
 Module: set
 What:   new
 Rank:   minor
-Thanks: Håkan Kjellerstrand
+Thanks: HÃ¥kan Kjellerstrand
 [DESCRIPTION]
 Added element constraints for Matrix arrays.
 
@@ -6454,7 +6939,7 @@ Module: gist
 What:   bug
 Rank:   minor
 [DESCRIPTION]
-Fixed a dead lock that could occur when closing the Gist main window while 
+Fixed a dead lock that could occur when closing the Gist main window while
 search is still running.
 
 [ENTRY]
@@ -6478,8 +6963,8 @@ Module: gist
 What:   change
 Rank:   minor
 [DESCRIPTION]
-Small user interface changes: disable search from hidden nodes, add depth 
-information to status bar, and add statistics for subtrees (available from the 
+Small user interface changes: disable search from hidden nodes, add depth
+information to status bar, and add statistics for subtrees (available from the
 node context menu and the Node menu).
 
 [ENTRY]
@@ -6550,7 +7035,7 @@ Added a new module "driver" as a commandline driver for
 scripts. This is due to popular request: most people have been
 using the support functionality for examples anyway. This
 function is now wrapped into a proper module (and Example is
-now called Script to be more general). See "Modeling with Gecode" 
+now called Script to be more general). See "Modeling with Gecode"
 for documentation.
 
 [ENTRY]
@@ -6575,7 +7060,7 @@ transition from 2.2.0 to 3.0.*. Please update asap.
 Module: example
 What:   bug
 Rank:   minor
-Thanks: Håkan Kjellerstrand
+Thanks: HÃ¥kan Kjellerstrand
 [DESCRIPTION]
 The radiotherapy example was missing in the Makefile.
 
@@ -6703,7 +7188,7 @@ PageHowToChange_3 "How to Change to Gecode 3.0.0".
 Module: example
 What:   performance
 Rank:   minor
-Thanks:	Håkan Kjellerstrand
+Thanks:	HÃ¥kan Kjellerstrand
 [DESCRIPTION]
 Improved branching for Nonogram examples.
 
@@ -6813,7 +7298,7 @@ Module: set
 What:   new
 Rank:   minor
 [DESCRIPTION]
-More set branching strategies have been added (for instance random variable 
+More set branching strategies have been added (for instance random variable
 and value selection), as well as set assignment.
 
 [ENTRY]
@@ -6904,7 +7389,7 @@ Module: kernel
 What:   change
 Rank:   minor
 [DESCRIPTION]
-Introduced CopiedHandle as a new base class for SharedHandle. 
+Introduced CopiedHandle as a new base class for SharedHandle.
 [MORE]
 A copied handle provides access to an object that is used by
 entities in a space, and that is copied when then space is
@@ -6951,7 +7436,7 @@ What:   bug
 Rank:   minor
 Thanks: Denys Duchier
 [DESCRIPTION]
-Fixed constructors for set variables. They now throw proper exceptions when 
+Fixed constructors for set variables. They now throw proper exceptions when
 trying to create empty variable domains.
 
 [ENTRY]
@@ -6960,7 +7445,7 @@ What:   new
 Rank:   minor
 Thanks: Denys Duchier
 [DESCRIPTION]
-Added reified propagators constraining an integer variable to be the minimum 
+Added reified propagators constraining an integer variable to be the minimum
 or maximum element of a set variable.
 
 [ENTRY]
@@ -7092,7 +7577,7 @@ Module: other
 What:   change
 Rank:   major
 [DESCRIPTION]
-Changed naming scheme for files. 
+Changed naming scheme for files.
 [MORE]
 All files with extension .cc have been renamed to .cpp, and .icc
 has become .hpp. This avoids conflicts as .icc is typically used
@@ -7113,7 +7598,7 @@ Module: set
 What:   change
 Rank:   minor
 [DESCRIPTION]
-Reorganized the internal data structures of set variables so that each 
+Reorganized the internal data structures of set variables so that each
 variable takes up 8 bytes less memory on 64 bit machines.
 
 [ENTRY]
@@ -7124,8 +7609,8 @@ Rank:   minor
 The index structure for variable dependencies is now implemented using integers
 instead of pointers, saving memory on 64 bit machines.
 [MORE]
-For example, the index 
-structure of integer variables is now 40% smaller, for Boolean variables 
+For example, the index
+structure of integer variables is now 40% smaller, for Boolean variables
 (which have the smallest possible index structure) we still save 16%.
 
 [ENTRY]
@@ -7150,7 +7635,7 @@ Module: kernel
 What:   change
 Rank:   major
 [DESCRIPTION]
-%Gecode now supports weakly monotonic propagators. 
+%Gecode now supports weakly monotonic propagators.
 [MORE]
 A weakly monotonic propagator must only be able to decide for
 assignments whether they are solutions or not (which is a very
@@ -7169,7 +7654,7 @@ What:   change
 Rank:   minor
 [DESCRIPTION]
 The functions force and unforce of an actor to force disposal
-have been removed. 
+have been removed.
 [MORE]
 Now, the new interface based on notice and ignore using actor
 properties must be used instead. So, instead of "force(home)",
@@ -7218,7 +7703,7 @@ What:   change
 Rank:   major
 [DESCRIPTION]
 Now everything is passed as reference (Space, Propagator,
-ModEventDelta, Advisor, Branching, and BranchingDesc). 
+ModEventDelta, Advisor, Branching, and BranchingDesc).
 [MORE]
 The reason for this massive change is to be more C++ compliant
 and make the interfaces more consistent (at some places things
@@ -7244,7 +7729,7 @@ Module: other
 What:   change
 Rank:   major
 [DESCRIPTION]
-The memory management has been completely reworked. 
+The memory management has been completely reworked.
 [MORE]
 It is now more robust, more portable (does not use alloca any
 longer), more efficient, fits C++ better and is much easier too
@@ -7338,7 +7823,7 @@ What:   change
 Rank:   major
 [DESCRIPTION]
 The values for variable and value selection for branching have
-been made consistent and extended. 
+been made consistent and extended.
 [MORE]
 The following values have been renamed:
  - SET_VAR_MIN_CARD -> SET_VAR_SIZE_MIN
@@ -7396,13 +7881,13 @@ What:   bug
 Rank:   major
 [DESCRIPTION]
 Fixed a bug in the memory alignment on Windows 64bit (very hard to reproduce).
-	
+
 [ENTRY]
 Module: other
 What:   new
 Rank:   minor
 [DESCRIPTION]
-Added configure options for adding a prefix and a suffix to the names of the 
+Added configure options for adding a prefix and a suffix to the names of the
 compiled libraries.
 
 [ENTRY]
@@ -7412,13 +7897,13 @@ Rank:   major
 [DESCRIPTION]
 Fixed a bug in the domain consistent distinct propagator that would cause
 a stack overflow under rare circumstances.
-	
+
 [ENTRY]
 Module: set
 What:   bug
 Rank:   major
 [DESCRIPTION]
-The ternary intersection propagator was incorrect if any of the sets had a 
+The ternary intersection propagator was incorrect if any of the sets had a
 maximum cardinality of Set::Limits::card.
 
 [ENTRY]
@@ -7451,7 +7936,7 @@ Module: int
 What:   new
 Rank:   minor
 [DESCRIPTION]
-The channel constraint now comes in a version that allows to specify offsets 
+The channel constraint now comes in a version that allows to specify offsets
 to the array indices.
 
 [ENTRY]
@@ -7468,7 +7953,7 @@ Module: other
 What:   new
 Rank:   minor
 [DESCRIPTION]
-The Makefile has a new target, check, which performs a minimal integrity check 
+The Makefile has a new target, check, which performs a minimal integrity check
 using some tests from the test suite.
 
 [ENTRY]
@@ -7571,7 +8056,7 @@ Module: kernel
 What:   change
 Rank:   minor
 [DESCRIPTION]
-Cleaned up Reflection::Var type, overloading did not conform to the C++ 
+Cleaned up Reflection::Var type, overloading did not conform to the C++
 standard.
 
 [ENTRY]
@@ -7672,7 +8157,7 @@ the first release where really everything that we can test
 been systematically tested. So, better switch now to 2.1.0!
 
 Apart from that, the value range for variables has been increased
-(basically, 32 bits minus three values, so that is 32 bits), the reflection 
+(basically, 32 bits minus three values, so that is 32 bits), the reflection
 API is now fully functional and no longer considered experimental, and we have
 the usual small additions.
 
@@ -7760,8 +8245,8 @@ Rank:   major
 [DESCRIPTION]
 Fixed bugs in several set constraints:
 rel(Space*,SetVar,IntRelType irt,IntVar) for irt=IRT_NQ,
-rel(Space*,SetVar,SetOpType sot,const IntSet&,SetRelType srt,SetVar) for 
-sot=SOT_MINUS, srt=SRT_SUP, selectDisjoint, selectUnion with constant IntSet 
+rel(Space*,SetVar,SetOpType sot,const IntSet&,SetRelType srt,SetVar) for
+sot=SOT_MINUS, srt=SRT_SUP, selectDisjoint, selectUnion with constant IntSet
 arguments, dom with SRT_NQ.
 
 [ENTRY]
@@ -7843,7 +8328,7 @@ Module: int
 What:   removed
 Rank:   minor
 [DESCRIPTION]
-The offset arguments for element constraints have been removed, as you can 
+The offset arguments for element constraints have been removed, as you can
 simply add dummy elements to the array to achieve the same effect.
 
 [ENTRY]
@@ -7851,7 +8336,7 @@ Module: set
 What:   removed
 Rank:   minor
 [DESCRIPTION]
-The offset arguments for selection constraints have been removed, as you can 
+The offset arguments for selection constraints have been removed, as you can
 simply add dummy elements to the array to achieve the same effect.
 
 [ENTRY]
@@ -7859,9 +8344,9 @@ Module: other
 What:   new
 Rank:   major
 [DESCRIPTION]
-The serialization library now contains a registry of all the %Gecode post 
-functions. This makes interfacing to %Gecode much easier. The registry is 
-automatically generated from the post functions defined in gecode/int.hh and 
+The serialization library now contains a registry of all the %Gecode post
+functions. This makes interfacing to %Gecode much easier. The registry is
+automatically generated from the post functions defined in gecode/int.hh and
 gecode/set.hh.
 
 [ENTRY]
@@ -7869,12 +8354,12 @@ Module: kernel
 What:   change
 Rank:   minor
 [DESCRIPTION]
-Cleaned up reflection. Unreflection is now part of the kernel instead of the 
-serialization library. Branchings now provide a human-readable description of 
-a BranchingDesc. The name function of a Propagator has been renamed to ati 
-(actor type identifier). All reflection is now const where possible. 
-Unreflection of variables now checks dynamically that the variable types 
-match. Unreflection of propagators checks the number of arguments. A 
+Cleaned up reflection. Unreflection is now part of the kernel instead of the
+serialization library. Branchings now provide a human-readable description of
+a BranchingDesc. The name function of a Propagator has been renamed to ati
+(actor type identifier). All reflection is now const where possible.
+Unreflection of variables now checks dynamically that the variable types
+match. Unreflection of propagators checks the number of arguments. A
 tutorial-style section on reflection has been added to the documentation.
 
 [ENTRY]
@@ -7943,9 +8428,9 @@ Module: examples
 What:   new
 Rank:   minor
 [DESCRIPTION]
-Added an example that interprets a JavaScript program and runs a search of the 
-model that the program encodes. This is an example of how to use the 
-JavaScript interpreter. A simple JavaScript model for n-Queens has been added, 
+Added an example that interprets a JavaScript program and runs a search of the
+model that the program encodes. This is an example of how to use the
+JavaScript interpreter. A simple JavaScript model for n-Queens has been added,
 too.
 
 [ENTRY]
@@ -7953,9 +8438,9 @@ Module: kernel
 What:   new
 Rank:   minor
 [DESCRIPTION]
-A generic variable class has been added that can be used for interfacing. It 
-can store arbitrary %Gecode variables (e.g. IntVar and SetVar), and cast them 
-back using a run-time type check. The update, reflection, and output 
+A generic variable class has been added that can be used for interfacing. It
+can store arbitrary %Gecode variables (e.g. IntVar and SetVar), and cast them
+back using a run-time type check. The update, reflection, and output
 operations are implemented through the reflection registry.
 
 [ENTRY]
@@ -8005,10 +8490,10 @@ it got actually reimplemented):
  - Automatically generated stubs for variable implementations are directly
    inlined into the kernel. This improves performance, but more
    importantly, lifts some limits on the number of variables. Now, the
-   only limit is that the sum of the ceiling of the logarithms of the 
+   only limit is that the sum of the ceiling of the logarithms of the
    number of modification events of all variables does not exceed 32
    (as an estimate, the kernel now can handle around 10 to 16 variable
-   types). Moreover, if the need for more variable types arises this is 
+   types). Moreover, if the need for more variable types arises this is
    straightforward to do.
  - The addition of new variable types for users has been simplified.
  - The main propagation loop has been entirely rewritten (much much simpler).
@@ -8020,7 +8505,7 @@ it got actually reimplemented):
    do that already).
  - Variable implementations became smaller by one word. Now variable
    implementations are optimal in the sense that no additional memory
-   is needed for cloning or book-keeping, the memory required for 
+   is needed for cloning or book-keeping, the memory required for
    propagation is sufficient.
  - Spaces have lost some weight as memory for datastructures only used
    during cloning or propagation are shared (saves some 25% of memory
@@ -8047,7 +8532,7 @@ Module: gist
 What:   new
 Rank:   major
 [DESCRIPTION]
-The %Gecode Interactive Search Tool (Gist), a Qt-based graphical search 
+The %Gecode Interactive Search Tool (Gist), a Qt-based graphical search
 engine, is now part of the main %Gecode distribution. It is currently included
 as an experimental beta preview and may not be completely stable yet.
 
@@ -8153,7 +8638,7 @@ Module: kernel
 What:   bug
 Rank:   major
 [DESCRIPTION]
-Static initialization order was undefined, making reflection work unreliably. 
+Static initialization order was undefined, making reflection work unreliably.
 In particular, linking Gecode statically did not work.
 
 [ENTRY]
@@ -8161,7 +8646,7 @@ Module: int
 What:   bug
 Rank:   minor
 [DESCRIPTION]
-Initializing an IntVar with an empty IntSet did not throw the appropriate 
+Initializing an IntVar with an empty IntSet did not throw the appropriate
 exception but crashed.
 
 [ENTRY]
@@ -8169,7 +8654,7 @@ Module: kernel
 What:   bug
 Rank:   minor
 [DESCRIPTION]
-Exceptions did not have rtti information when compiled with gcc and 
+Exceptions did not have rtti information when compiled with gcc and
 visibility, which meant that they could not be caught.
 
 [ENTRY]
@@ -8185,7 +8670,7 @@ Module: kernel
 What:   change
 Rank:   minor
 [DESCRIPTION]
-The VarMapIter can now return both a specification and the actual VarBase* of 
+The VarMapIter can now return both a specification and the actual VarBase* of
 the currently iterated variable.
 
 [ENTRY]
@@ -8193,7 +8678,7 @@ Module: other
 What:   bug
 Rank:   minor
 [DESCRIPTION]
-Revived boost serialization.  The serialization functions will be compiled if 
+Revived boost serialization.  The serialization functions will be compiled if
 Gecode is configured with --with-boost.
 
 [ENTRY]
@@ -8247,7 +8732,7 @@ The highlights are:
 
 The features marked as experimental are all functional, but might
 be revised in the next releases.
- 
+
 As %Gecode 2.0.0 is a major release, you might have to adapt your
 programs:  \ref PageHowToChange_2 "How to Change to Gecode 2.0.0".
 
@@ -8448,7 +8933,7 @@ Module: kernel
 What:   new
 Rank:   major
 [DESCRIPTION]
-A reflection API has been added, which allows querying spaces 
+A reflection API has been added, which allows querying spaces
 about the variables and propagators they contain.
 
 [ENTRY]
@@ -8604,7 +9089,7 @@ Module:	int
 What:	new
 Rank:	minor
 [DESCRIPTION]
-Relaxed sharing restrictions for channel, in particular 
+Relaxed sharing restrictions for channel, in particular
 channel(this, x, x) is allowed.
 
 [ENTRY]
@@ -8915,7 +9400,7 @@ Module: int
 What:   change
 Rank:   minor
 [DESCRIPTION]
-Boolean variables cannot longer be initialized from an integer 
+Boolean variables cannot longer be initialized from an integer
 variable. If needed, a channel propagator must be posted (added).
 
 [ENTRY]
@@ -8999,9 +9484,9 @@ What:   bug
 Rank:   major
 Thanks: Rafael Meneses
 [DESCRIPTION]
-Branch&Bound search with ViewValBranchings (all standard branchings) together 
-with batch recomputation was severely broken. The problems ranged from wrong 
-search trees (missing solutions) to segmentation faults. The fix changes the 
+Branch&Bound search with ViewValBranchings (all standard branchings) together
+with batch recomputation was severely broken. The problems ranged from wrong
+search trees (missing solutions) to segmentation faults. The fix changes the
 way assigned variables are removed from the array in a ViewValBranching.
 
 [ENTRY]
@@ -9017,7 +9502,7 @@ Module: int
 What:   performance
 Rank:   minor
 [DESCRIPTION]
-Bounds-consistent distinct eliminates assigned variables more 
+Bounds-consistent distinct eliminates assigned variables more
 aggressively (can save up to 10% runtime in some cases).
 
 [ENTRY]
@@ -9114,7 +9599,7 @@ Rank:	minor
 [DESCRIPTION]
 New configure switches: --enable-audit to include audit code, which may
 contain expensive checks of internal invariants or alternative, checked
-implementations of critical parts of %Gecode. --enable-universal and 
+implementations of critical parts of %Gecode. --enable-universal and
 --with-sdk, to support building universal binaries on Mac OS X.
 
 [ENTRY]
@@ -9122,9 +9607,9 @@ Module: kernel
 What:	new
 Rank:	minor
 [DESCRIPTION]
-Variables can now be deallocated when the Space is deallocated (for example in 
-case of failure). This is important in case a variable implementation needs to 
-reference external resources. Deallocation can be switched on in the 
+Variables can now be deallocated when the Space is deallocated (for example in
+case of failure). This is important in case a variable implementation needs to
+reference external resources. Deallocation can be switched on in the
 high-level description used for generating the variable implementation.
 
 [ENTRY]
@@ -9133,7 +9618,7 @@ What:	bug
 Rank:	minor
 Thanks:	Rafael Meneses
 [DESCRIPTION]
-Under certain conditions (posting in a failed space), the post function 
+Under certain conditions (posting in a failed space), the post function
 returned uninitialized variables.
 
 [ENTRY]
@@ -9144,7 +9629,7 @@ Rank: 	major
 Variable implementations are now generated from a high-level
 description (taking care of all aspects relating to modification
 events and propagation conditions). While simplifying the
-implementation of new variable domains considerably, this also can, 
+implementation of new variable domains considerably, this also can,
 in lucky cases, deliver a speed-up of 5%.
 
 [ENTRY]
@@ -9560,21 +10045,21 @@ but a "dispose" member function that takes a home space as argument
 and must return the size of the actor.
 Important: this requires that dispose member functions from super-classes
 and class members are called explicitly!
-	
+
 [ENTRY]
 Module: kernel
 What:   new
 Rank:   minor
 [DESCRIPTION]
 Spaces can be queried for number of propagators and branchings.
-	
+
 [ENTRY]
 Module: search
 What:   new
 Rank:   minor
 [DESCRIPTION]
 Search engines can now be checked whether they have been stopped.
-	
+
 [ENTRY]
 Module: int
 What:   documentation
@@ -9582,7 +10067,7 @@ Rank:   minor
 Thanks:	Martin Mann
 [DESCRIPTION]
 Fixed bug in description of PC_INT_DOM.
-	
+
 [ENTRY]
 Module: other
 What:   change
@@ -9592,7 +10077,7 @@ Thanks:	Martin Mann
 Moved library source code into gecode subdirectory. Facilitates cleaner
 installation. Programs compiling against %Gecode now need to include
 e.g. "gecode/int.hh".
-	
+
 [ENTRY]
 Module: example
 What:   change
@@ -9610,7 +10095,7 @@ small fixes. Most notably, the test infrastructure has been extended to
 also check whether propagators correctly claim that they have computed
 a fixpoint (now all invariants a propagator must obey in %Gecode are covered
 by the test infrastructure). This has lead to many small fixes.
-	
+
 [ENTRY]
 Module: other
 What:   bug
@@ -9620,7 +10105,7 @@ Thanks: Kari Pahula
 [DESCRIPTION]
 Added a configure switch --enable-doc-dot. If enabled, this checks for
 presence of the dot tool (used for generating graphs in the documentation)
-	
+
 [ENTRY]
 Module: example
 What:   new
@@ -9633,7 +10118,7 @@ Module: minimodel
 What:   new
 Rank:   minor
 [DESCRIPTION]
-Added functions returning variables for arithmetic 
+Added functions returning variables for arithmetic
 (min, max, abs, mult, plus, minus).
 
 [ENTRY]
@@ -9641,16 +10126,16 @@ Module: int
 What:   change
 Rank:   minor
 [DESCRIPTION]
-Support for shared views has been removed in 
-sortedness propagator and in the propagator 
-for global cardinality with fixed cardinalities. 
+Support for shared views has been removed in
+sortedness propagator and in the propagator
+for global cardinality with fixed cardinalities.
 
 [ENTRY]
 Module: int
 What:   bug
 Rank:   minor
 [DESCRIPTION]
-Fixed bug in fixpoint detection of sortedness and 
+Fixed bug in fixpoint detection of sortedness and
 global cardinality propagator.
 
 [ENTRY]
@@ -9724,7 +10209,7 @@ Module: int
 What:   bug
 Rank:   minor
 [DESCRIPTION]
-Fixed bug in fixpoint detection of bounds-consistent 
+Fixed bug in fixpoint detection of bounds-consistent
 element for variables propagator.
 
 [ENTRY]
@@ -9766,7 +10251,7 @@ Rank:   major
 Thanks: Jean-Christophe Godart
 [DESCRIPTION]
 Fixed indexing bug in SupportSet (part of the domain consistent linear
-equation propagator). 
+equation propagator).
 
 [ENTRY]
 Module: int

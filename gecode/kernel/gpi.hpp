@@ -72,7 +72,7 @@ namespace Gecode { namespace Kernel {
     /// The inverse decay factor
     double invd;
     /// Next free propagator id
-    unsigned int npid;
+    std::atomic<unsigned int> npid;
     /// Whether to unshare
     bool us;
     /// The first block
@@ -109,7 +109,7 @@ namespace Gecode { namespace Kernel {
 
   forceinline
   GPI::Block::Block(void)
-    : next(NULL), free(n_info) {}
+    : next(nullptr), free(n_info) {}
 
   forceinline void
   GPI::Block::rescale(void) {
@@ -127,7 +127,7 @@ namespace Gecode { namespace Kernel {
     m.acquire();
     c.afc = invd * (c.afc + 1.0);
     if (c.afc > Kernel::Config::rescale_limit)
-      for (Block* i = b; i != NULL; i = i->next)
+      for (Block* i = b; i != nullptr; i = i->next)
         i->rescale();
     m.release();
   }
@@ -143,11 +143,7 @@ namespace Gecode { namespace Kernel {
 
   forceinline unsigned int
   GPI::pid(void) const {
-    unsigned int p;
-    const_cast<GPI&>(*this).m.acquire();
-    p = npid;
-    const_cast<GPI&>(*this).m.release();
-    return p;
+    return npid.load(std::memory_order_acquire);
   }
 
   forceinline bool
@@ -189,8 +185,8 @@ namespace Gecode { namespace Kernel {
       n->next = b; b = n;
     }
     c = &b->info[--b->free];
-    c->init(npid++,gid);
     m.release();
+    c->init(npid.fetch_add(1, std::memory_order_seq_cst),gid);
     return c;
   }
 

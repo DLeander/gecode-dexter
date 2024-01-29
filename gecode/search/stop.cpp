@@ -40,16 +40,20 @@ namespace Gecode { namespace Search {
     *
     */
   Stop*
-  Stop::node(unsigned long int l) {
+  Stop::node(unsigned long long int l) {
     return new NodeStop(l);
   }
   Stop*
-  Stop::fail(unsigned long int l) {
+  Stop::fail(unsigned long long int l) {
     return new FailStop(l);
   }
   Stop*
-  Stop::time(unsigned long int l) {
+  Stop::time(double l) {
     return new TimeStop(l);
+  }
+  Stop*
+  Stop::restart(unsigned long long int  l) {
+    return new RestartStop(l);
   }
 
 
@@ -82,6 +86,14 @@ namespace Gecode { namespace Search {
     return t.stop() > l;
   }
 
+  /*
+   * Stopping for restart limit
+   *
+   */
+  bool
+  RestartStop::stop(const Statistics& s, const Options&) {
+    return s.restart > l;
+  }
 
 }}
 

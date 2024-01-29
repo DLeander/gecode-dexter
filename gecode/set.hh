@@ -37,8 +37,8 @@
  *
  */
 
-#ifndef __GECODE_SET_HH__
-#define __GECODE_SET_HH__
+#ifndef GECODE_SET_HH
+#define GECODE_SET_HH
 
 #include <gecode/kernel.hh>
 #include <gecode/int.hh>
@@ -258,6 +258,9 @@ namespace Gecode {
     /// Test whether \a i is not in the least upper bound
     bool notContains(int i) const;
     //@}
+
+    /// Assignment operator
+    SetVar& operator =(const SetVar&) = default;
   };
 
   /**
@@ -548,6 +551,8 @@ namespace Gecode {
                const IntSet& glb,const IntSet& lub,
                unsigned int minCard = 0,
                unsigned int maxCard = Set::Limits::card);
+    /// Assignment operator
+    SetVarArgs& operator =(const SetVarArgs&) = default;
     //@}
   };
   //@}
@@ -620,6 +625,8 @@ namespace Gecode {
                 const IntSet& glb,const IntSet& lub,
                 unsigned int minCard = 0,
                 unsigned int maxCard = Set::Limits::card);
+    /// Assignment operator
+    SetVarArray& operator =(const SetVarArray&) = default;
     //@}
   };
 
@@ -1197,6 +1204,8 @@ namespace Gecode {
     /**
      * \brief Initialize for set variables \a x with decay factor \a d
      *
+     * Counts propagation if \a p is true and failure if \a f is true.
+     *
      * If the branch merit function \a bm is different from nullptr, the
      * action for each variable is initialized with the merit returned
      * by \a bm.
@@ -1204,9 +1213,12 @@ namespace Gecode {
      */
     GECODE_SET_EXPORT
     SetAction(Home home, const SetVarArgs& x, double d=1.0,
-                SetBranchMerit bm=nullptr);
+              bool p=true, bool f=true,
+              SetBranchMerit bm=nullptr);
     /**
      * \brief Initialize for set variables \a x with decay factor \a d
+     *
+     * Counts propagation if \a p is true and failure if \a f is true.
      *
      * If the branch merit function \a bm is different from nullptr, the
      * action for each variable is initialized with the merit returned
@@ -1218,6 +1230,7 @@ namespace Gecode {
      */
     GECODE_SET_EXPORT void
     init(Home home, const SetVarArgs& x, double d=1.0,
+         bool p=true, bool f=true,
          SetBranchMerit bm=nullptr);
   };
 
@@ -1710,7 +1723,7 @@ namespace Gecode {
    *
    * The variables in \a x are assigned values from the assigned variables
    * in the solution \a sx with a relaxation probability \a p. That is,
-   * if \$fp=0.1\f$ approximately 10% of the variables in \a x will be
+   * if \f$p=0.1\f$ approximately 10% of the variables in \a x will be
    * assigned a value from \a sx.
    *
    * The random numbers are generated from the generator \a r. At least

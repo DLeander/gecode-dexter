@@ -409,9 +409,9 @@ namespace Test { namespace Branch {
 
   /// Find number of solutions
   template<class TestSpace>
-  int solutions(TestSpace* c, Gecode::Search::Options& o, int maxNbSol = -1) {
-    o.a_d = Base::rand(10);
-    o.c_d = Base::rand(10);
+  int solutions(TestSpace* c, Gecode::Search::Options& o, Gecode::Support::RandomGenerator& rand, int maxNbSol = -1) {
+    o.a_d = rand(10);
+    o.c_d = rand(10);
     Gecode::DFS<TestSpace> e_s(c, o);
     delete c;
 
@@ -419,7 +419,7 @@ namespace Test { namespace Branch {
     int s = 0;
     do {
       Gecode::Space* ex = e_s.next();
-      if (ex == NULL) break;
+      if (ex == nullptr) break;
       delete ex;
       ++s;
       if ((maxNbSol >= 0) && (maxNbSol == s)) break;
@@ -516,7 +516,7 @@ namespace Test { namespace Branch {
 
             Rnd rb(2);
             IntVarBranch ivbb;
-            IntAction iab(*c, c->x, 0.9, &int_merit);
+            IntAction iab(*c, c->x, 0.9, true, true, &int_merit);
             IntCHB icb(*c, c->x, &int_merit);
             switch (varb) {
             case  0: ivbb = INT_VAR_NONE(); break;
@@ -552,7 +552,7 @@ namespace Test { namespace Branch {
             case 30: ivbb = INT_VAR_REGRET_MAX_MAX(&tbl); break;
             }
 
-            switch (Base::rand(9U)) {
+            switch (_rand(9U)) {
             case 0U:
               branch(*c, c->x, ivba, ivb); break;
             case 1U:
@@ -575,7 +575,7 @@ namespace Test { namespace Branch {
 
           }
           Gecode::Search::Options o;
-          results[solutions(c,o)].push_back
+          results[solutions(c, o, _rand)].push_back
             (RunInfo(int_var_branch_name[vara],
                      int_var_branch_name[varb],
                      int_val_branch_name[val],
@@ -664,7 +664,7 @@ namespace Test { namespace Branch {
 
             Rnd rb(2);
             BoolVarBranch bvbb;
-            BoolAction bab(*c, c->x, 0.9, &bool_merit);
+            BoolAction bab(*c, c->x, 0.9, true, true, &bool_merit);
             BoolCHB bcb(*c, c->x, &bool_merit);
             switch (varb) {
             case  0: bvbb = BOOL_VAR_NONE(); break;
@@ -682,7 +682,7 @@ namespace Test { namespace Branch {
             case 12: bvbb = BOOL_VAR_CHB_MAX(bcb,&tbl); break;
             }
 
-            switch (Base::rand(9U)) {
+            switch (_rand(9U)) {
             case 0U:
               branch(*c, c->x, bvba, bvb); break;
             case 1U:
@@ -705,7 +705,7 @@ namespace Test { namespace Branch {
 
           }
           Gecode::Search::Options o;
-          results[solutions(c,o)].push_back
+          results[solutions(c, o, _rand)].push_back
             (RunInfo(int_var_branch_name[vara],
                      int_var_branch_name[varb],
                      int_val_branch_name[val],
@@ -812,7 +812,7 @@ namespace Test { namespace Branch {
 
             Rnd rb(2);
             SetVarBranch svbb;
-            SetAction sab(*c, c->x, 0.9, &set_merit);
+            SetAction sab(*c, c->x, 0.9, true, true, &set_merit);
             SetCHB scb(*c, c->x, &set_merit);
             switch (varb) {
             case  0: break;
@@ -844,7 +844,7 @@ namespace Test { namespace Branch {
             case 26: svbb = SET_VAR_CHB_SIZE_MAX(scb,&tbl); break;
             }
 
-            switch (Base::rand(9U)) {
+            switch (_rand(9U)) {
             case 0U:
               branch(*c, c->x, svba, svb); break;
             case 1U:
@@ -867,7 +867,7 @@ namespace Test { namespace Branch {
 
           }
           Gecode::Search::Options o;
-          results[solutions(c,o)].push_back
+          results[solutions(c, o, _rand)].push_back
             (RunInfo(set_var_branch_name[vara],
                      set_var_branch_name[varb],
                      set_val_branch_name[val],
@@ -969,7 +969,7 @@ namespace Test { namespace Branch {
 
             Rnd rb(2);
             FloatVarBranch fvbb;
-            FloatAction fab(*c, c->x, 0.9, &float_merit);
+            FloatAction fab(*c, c->x, 0.9, true, true, &float_merit);
             FloatCHB fcb(*c, c->x, &float_merit);
             switch (varb) {
             case  0: break;
@@ -1001,7 +1001,7 @@ namespace Test { namespace Branch {
             case 26: fvbb = FLOAT_VAR_CHB_SIZE_MAX(fcb,&tbl); break;
             }
 
-            switch (Base::rand(9U)) {
+            switch (_rand(9U)) {
             case 0U:
               branch(*c, c->x, fvba, fvb); break;
             case 1U:
@@ -1024,7 +1024,7 @@ namespace Test { namespace Branch {
 
           }
           Gecode::Search::Options o;
-          results[solutions(c,o,nbSols)].push_back
+          results[solutions(c, o, _rand, nbSols)].push_back
             (RunInfo(float_var_branch_name[vara],
                      float_var_branch_name[varb],
                      float_val_branch_name[val],

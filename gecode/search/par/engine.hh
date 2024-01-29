@@ -31,8 +31,8 @@
  *
  */
 
-#ifndef __GECODE_SEARCH_PAR_ENGINE_HH__
-#define __GECODE_SEARCH_PAR_ENGINE_HH__
+#ifndef GECODE_SEARCH_PAR_ENGINE_HH
+#define GECODE_SEARCH_PAR_ENGINE_HH
 
 #include <gecode/search.hh>
 #include <gecode/search/support.hh>
@@ -66,7 +66,7 @@ namespace Gecode { namespace Search { namespace Par {
     public:
       /// Initialize for space \a s with engine \a e
       Worker(Space* s, Engine& e);
-      /// Hand over some work (NULL if no work available)
+      /// Hand over some work (nullptr if no work available)
       Space* steal(unsigned long int& d, Tracer& myt, Tracer& ot);
       /// Return statistics
       Statistics statistics(void);
@@ -188,11 +188,14 @@ namespace Gecode { namespace Search { namespace Par {
     //@{
     /// Initialize with options \a o
     Engine(const Options& o);
-    /// Return next solution (NULL, if none exists or search has been stopped)
+    /// Return next solution (nullptr, if none exists or search has been stopped)
     virtual Space* next(void);
     /// Check whether engine has been stopped
     virtual bool stopped(void) const;
     //@}
+
+    /// Destructor
+    virtual ~Engine(void);
   };
 
 }}}

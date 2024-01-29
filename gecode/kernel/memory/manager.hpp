@@ -38,6 +38,8 @@
  *
  */
 
+#include <memory>
+
 namespace Gecode { namespace Kernel {
 
   /// Memory chunk with size information
@@ -183,11 +185,11 @@ namespace Gecode { namespace Kernel {
   forceinline
   SharedMemory::SharedMemory(void) {
     heap.n_hc = 0;
-    heap.hc = NULL;
+    heap.hc = nullptr;
   }
   forceinline
   SharedMemory::~SharedMemory(void) {
-    while (heap.hc != NULL) {
+    while (heap.hc != nullptr) {
       HeapChunk* hc = heap.hc;
       heap.hc = static_cast<HeapChunk*>(hc->next);
       Gecode::heap.rfree(hc);
@@ -198,14 +200,14 @@ namespace Gecode { namespace Kernel {
   SharedMemory::alloc(size_t s, size_t l) {
     // To protect from exceptions from heap.ralloc()
     Support::Lock guard(m());
-    while ((heap.hc != NULL) && (heap.hc->size < l)) {
+    while ((heap.hc != nullptr) && (heap.hc->size < l)) {
       heap.n_hc--;
       HeapChunk* hc = heap.hc;
       heap.hc = static_cast<HeapChunk*>(hc->next);
       Gecode::heap.rfree(hc);
     }
     HeapChunk* hc;
-    if (heap.hc == NULL) {
+    if (heap.hc == nullptr) {
       assert(heap.n_hc == 0);
       hc = static_cast<HeapChunk*>(Gecode::heap.ralloc(s));
       hc->size = s;
@@ -312,7 +314,8 @@ namespace Gecode { namespace Kernel {
     sz += overhead;
     // Round size to next multiple of current heap chunk size
     size_t allocate = ((sz > cur_hcsz) ?
-                       (((size_t) (sz / cur_hcsz)) + 1) * cur_hcsz : cur_hcsz);
+                       (static_cast<size_t>(sz / cur_hcsz) + 1) * cur_hcsz 
+                       : cur_hcsz);
     // Request a chunk of preferably size allocate, but at least size sz
     HeapChunk* hc = sm.alloc(allocate,sz);
     start = ptr_cast<char*>(&hc->area[0]);
@@ -320,7 +323,7 @@ namespace Gecode { namespace Kernel {
     // Link heap chunk, where the first heap chunk is kept in place
     if (first) {
       requested = hc->size;
-      hc->next = NULL; cur_hc = hc;
+      hc->next = nullptr; cur_hc = hc;
     } else {
       requested += hc->size;
       hc->next = cur_hc->next; cur_hc->next = hc;
@@ -333,17 +336,17 @@ namespace Gecode { namespace Kernel {
 
   forceinline
   MemoryManager::MemoryManager(SharedMemory& sm)
-    : cur_hcsz(MemoryConfig::hcsz_min), requested(0), slack(NULL) {
+    : cur_hcsz(MemoryConfig::hcsz_min), requested(0), slack(nullptr) {
     alloc_fill(sm,cur_hcsz,true);
     for (size_t i = 0; i<MemoryConfig::fl_size_max-MemoryConfig::fl_size_min+1;
          i++)
-      fl[i] = NULL;
+      fl[i] = nullptr;
   }
 
   forceinline
   MemoryManager::MemoryManager(SharedMemory& sm, MemoryManager& mm,
                                size_t s_sub)
-    : cur_hcsz(mm.cur_hcsz), requested(0), slack(NULL) {
+    : cur_hcsz(mm.cur_hcsz), requested(0), slack(nullptr) {
     MemoryConfig::align(s_sub);
     if ((mm.requested < MemoryConfig::hcsz_dec_ratio*mm.cur_hcsz) &&
         (cur_hcsz > MemoryConfig::hcsz_min) &&
@@ -355,7 +358,7 @@ namespace Gecode { namespace Kernel {
     start += s_sub;
     for (size_t i = 0; i<MemoryConfig::fl_size_max-MemoryConfig::fl_size_min+1;
          i++)
-      fl[i] = NULL;
+      fl[i] = nullptr;
   }
 
   forceinline void
@@ -365,7 +368,7 @@ namespace Gecode { namespace Kernel {
     do {
       HeapChunk* t = hc; hc = static_cast<HeapChunk*>(hc->next);
       sm.free(t);
-    } while (hc != NULL);
+    } while (hc != nullptr);
   }
 
 
@@ -385,16 +388,23 @@ namespace Gecode { namespace Kernel {
       }
     }
 #endif
-    if (s < (MemoryConfig::fl_size_min<<MemoryConfig::fl_unit_size))
+
+    size_t aligned_s = s;
+    void* aligned_p = std::align(std::min(static_cast<size_t>(GECODE_MEMORY_ALIGNMENT), s),
+                                 MemoryConfig::fl_size_min<<MemoryConfig::fl_unit_size,
+                                 p, aligned_s);
+
+    if (aligned_p==nullptr ||
+        aligned_s < (MemoryConfig::fl_size_min<<MemoryConfig::fl_unit_size))
       return;
-    if (s > (MemoryConfig::fl_size_max<<MemoryConfig::fl_unit_size)) {
-      MemoryChunk* rc = static_cast<MemoryChunk*>(p);
+    if (aligned_s > (MemoryConfig::fl_size_max<<MemoryConfig::fl_unit_size)) {
+      MemoryChunk* rc = static_cast<MemoryChunk*>(aligned_p);
       rc->next = slack;
-      rc->size = s;
+      rc->size = aligned_s;
       slack = rc;
     } else {
-      size_t i = sz2i(s);
-      FreeList* f = static_cast<FreeList*>(p);
+      size_t i = sz2i(aligned_s);
+      FreeList* f = static_cast<FreeList*>(aligned_p);
       f->next(fl[i]); fl[i]=f;
     }
   }
@@ -410,7 +420,7 @@ namespace Gecode { namespace Kernel {
   MemoryManager::fl_alloc(SharedMemory& sm) {
     size_t i = sz2i(s);
     FreeList* f = fl[i];
-    if (f == NULL) {
+    if (f == nullptr) {
       fl_refill<s>(sm); f = fl[i];
     }
     FreeList* n = f->next();
@@ -436,9 +446,9 @@ namespace Gecode { namespace Kernel {
   void
   MemoryManager::fl_refill(SharedMemory& sm) {
     // Try to acquire memory from slack
-    if (slack != NULL) {
+    if (slack != nullptr) {
       MemoryChunk* m = slack;
-      slack = NULL;
+      slack = nullptr;
       do {
         char*  block = ptr_cast<char*>(m);
         size_t s     = m->size;
@@ -450,18 +460,20 @@ namespace Gecode { namespace Kernel {
           block += sz;
           s     -= sz;
         }
-        ptr_cast<FreeList*>(block)->next(NULL);
-      } while (m != NULL);
+        ptr_cast<FreeList*>(block)->next(nullptr);
+      } while (m != nullptr);
     } else {
       char* block = static_cast<char*>(alloc(sm,MemoryConfig::fl_refill*sz));
       fl[sz2i(sz)] = ptr_cast<FreeList*>(block);
       int i = MemoryConfig::fl_refill-2;
       do {
-        ptr_cast<FreeList*>(block+i*sz)->next(ptr_cast<FreeList*>(block+(i+1)*sz));
+        ptr_cast<FreeList*>(block+static_cast<unsigned int>(i)*sz)
+          ->next(ptr_cast<FreeList*>(block+
+                                     (static_cast<unsigned int>(i)+1)*sz));
       } while (--i >= 0);
       ptr_cast<FreeList*>(block+
                           (MemoryConfig::fl_refill-1)*sz)->next
-        (ptr_cast<FreeList*>(NULL));
+        (ptr_cast<FreeList*>(nullptr));
     }
   }
 

@@ -40,15 +40,15 @@ namespace Gecode {
    */
   //@{
   /// Base class for value selection
-  template<class _View, class _Val>
+  template<class View_, class Val_>
   class ValSel {
   public:
     /// View type
-    typedef _View View;
+    typedef View_ View;
     /// Corresponding variable type
     typedef typename View::VarType Var;
     /// Value type
-    typedef _Val Val;
+    typedef Val_ Val;
   public:
     /// Constructor for initialization
     ValSel(Space& home, const ValBranch<Var>& vb);
@@ -65,9 +65,11 @@ namespace Gecode {
   class ValSelFunction :
     public ValSel<View,
                   typename BranchTraits<typename View::VarType>::ValType> {
-    using typename ValSel<View,
-                          typename BranchTraits<typename View::VarType>::ValType>::Var;
   public:
+    /// The corresponding variable type
+    typedef typename ValSel<View,
+                            typename BranchTraits<typename View::VarType>
+                              ::ValType>::Var Var;
     /// The corresponding value type
     typedef typename ValSel<View,
                             typename BranchTraits<typename View::VarType>
@@ -113,7 +115,7 @@ namespace Gecode {
   template<class View>
   forceinline
   ValSelFunction<View>::ValSelFunction
-    (Space& home, const ValBranch<ValSelFunction<View>::Var>& vb)
+    (Space& home, const ValBranch<Var>& vb)
     : ValSel<View,Val>(home,vb), v(vb.val()) {
     if (!v())
       throw InvalidFunction("ValSelFunction::ValSelFunction");

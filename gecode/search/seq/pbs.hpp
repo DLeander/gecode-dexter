@@ -45,6 +45,9 @@ namespace Gecode { namespace Search { namespace Seq {
   }
 
 
+  forceinline
+  Slave::Slave(void)
+    : slave(nullptr), stop(nullptr) {}
   forceinline void
   Slave::init(Engine* e, Stop* s) {
     slave = e; stop = s;
@@ -110,7 +113,7 @@ namespace Gecode { namespace Search { namespace Seq {
           cur++; n_exhausted++;
         } else {
           slave_stop = true;
-          return NULL;
+          return nullptr;
         }
       } else {
         // This slave is done, kill it after saving the statistics
@@ -129,7 +132,7 @@ namespace Gecode { namespace Search { namespace Seq {
       if (cur == n_slaves)
         cur = 0;
     }
-    return NULL;
+    return nullptr;
   }
 
   template<bool best>

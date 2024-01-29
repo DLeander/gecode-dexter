@@ -106,7 +106,7 @@ namespace Gecode {
     /**
      * \brief Heap allocation information
      *
-     * If NULL, no heap memory has been allocated. If the pointer
+     * If nullptr, no heap memory has been allocated. If the pointer
      * is marked, it points to a single heap allocated block. Otherwise,
      * it points to a HeapInfo data structure.
      */
@@ -313,15 +313,15 @@ namespace Gecode {
     //@}
     /// Return memory
     ~Region(void);
-  private:
+
     /// Allocate memory from heap (disabled)
-    static void* operator new(size_t s) throw() { (void) s; return NULL; }
+    static void* operator new(size_t s) = delete;
     /// Free memory allocated from heap (disabled)
-    static void  operator delete(void* p) { (void) p; };
+    static void  operator delete(void* p) = delete;
     /// Copy constructor (disabled)
-    Region(const Region&) {}
+    Region(const Region&) = delete;
     /// Assignment operator (disabled)
-    const Region& operator =(const Region&) { return *this; }
+    const Region& operator =(const Region&) = delete;
   };
   //@}
 
@@ -350,7 +350,7 @@ namespace Gecode {
 
   forceinline
   Region::Region(void)
-    : chunk(pool().chunk()), hi(0) {}
+    : chunk(pool().chunk()), hi(nullptr) {}
 
   forceinline void
   Region::free(void) {
@@ -372,7 +372,7 @@ namespace Gecode {
   forceinline
   Region::~Region(void) {
     pool().chunk(chunk);
-    if (hi != NULL)
+    if (hi != nullptr)
       heap_free();
   }
 

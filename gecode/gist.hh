@@ -30,8 +30,8 @@
  *
  */
 
-#ifndef __GECODE_GIST_HH__
-#define __GECODE_GIST_HH__
+#ifndef GECODE_GIST_HH
+#define GECODE_GIST_HH
 
 #include <gecode/kernel.hh>
 #include <gecode/search.hh>
@@ -234,7 +234,7 @@ namespace Gecode {
     class Options : public Search::Options {
     public:
       /// Helper class storing inspectors
-      class _I {
+      class I_ {
       private:
         Support::DynamicArray<Inspector*,Heap> _click;
         unsigned int n_click;
@@ -246,7 +246,7 @@ namespace Gecode {
         unsigned int n_compare;
       public:
         /// Constructor
-        _I(void);
+        I_(void);
         /// Add inspector that reacts on node double clicks
         void click(Inspector* i);
         /// Add inspector that reacts on each new solution that is found
@@ -256,13 +256,13 @@ namespace Gecode {
         /// Add comparator
         void compare(Comparator* c);
 
-        /// Return click inspector number \a i, or NULL if it does not exist
+        /// Return click inspector number \a i, or nullptr if it does not exist
         Inspector* click(unsigned int i) const;
-        /// Return solution inspector number \a i, or NULL if it does not exist
+        /// Return solution inspector number \a i, or nullptr if it does not exist
         Inspector* solution(unsigned int i) const;
-        /// Return move inspector number \a i, or NULL if it does not exist
+        /// Return move inspector number \a i, or nullptr if it does not exist
         Inspector* move(unsigned int i) const;
-        /// Return comparator number \a i, or NULL if it does not exist
+        /// Return comparator number \a i, or nullptr if it does not exist
         Comparator* compare(unsigned int i) const;
       } inspect;
       /// Default options

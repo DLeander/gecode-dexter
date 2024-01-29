@@ -35,8 +35,8 @@
  *
  */
 
-#ifndef __GECODE_FLATZINC_HH__
-#define __GECODE_FLATZINC_HH__
+#ifndef GECODE_FLATZINC_HH
+#define GECODE_FLATZINC_HH
 
 #include <iostream>
 
@@ -150,7 +150,7 @@ namespace Gecode { namespace FlatZinc {
 #endif
                        ) const;
   public:
-    Printer(void) : _output(NULL) {}
+    Printer(void) : _output(nullptr) {}
     void init(AST::Array* output);
 
     void print(std::ostream& out,
@@ -234,14 +234,15 @@ namespace Gecode { namespace FlatZinc {
       Gecode::Driver::DoubleOption      _decay;       ///< Decay option
       Gecode::Driver::UnsignedIntOption _c_d;       ///< Copy recomputation distance
       Gecode::Driver::UnsignedIntOption _a_d;       ///< Adaptive recomputation distance
-      Gecode::Driver::UnsignedIntOption _node;      ///< Cutoff for number of nodes
-      Gecode::Driver::UnsignedIntOption _fail;      ///< Cutoff for number of failures
-      Gecode::Driver::UnsignedIntOption _time;      ///< Cutoff for time
-      Gecode::Driver::UnsignedIntOption _time_limit;  ///< Cutoff for time (for compatibility with flatzinc command line)
+      Gecode::Driver::UnsignedLongLongIntOption _node;      ///< Cutoff for number of nodes
+      Gecode::Driver::UnsignedLongLongIntOption _fail;      ///< Cutoff for number of failures
+      Gecode::Driver::DoubleOption _time;      ///< Cutoff for time
+      Gecode::Driver::DoubleOption _time_limit;  ///< Cutoff for time (for compatibility with flatzinc command line)
       Gecode::Driver::IntOption         _seed;      ///< Random seed
       Gecode::Driver::StringOption      _restart;   ///< Restart method option
       Gecode::Driver::DoubleOption      _r_base;    ///< Restart base
       Gecode::Driver::UnsignedIntOption _r_scale;   ///< Restart scale factor
+      Gecode::Driver::UnsignedLongLongIntOption _r_limit; ///< Cutoff for number of restarts 
       Gecode::Driver::BoolOption        _nogoods;   ///< Whether to use no-goods
       Gecode::Driver::UnsignedIntOption _nogoods_limit; ///< Depth limit for extracting no-goods
       Gecode::Driver::BoolOption        _interrupt; ///< Whether to catch SIGINT
@@ -255,11 +256,7 @@ namespace Gecode { namespace FlatZinc {
       Gecode::Driver::StringValueOption _output;     ///< Output file
 
 #ifdef GECODE_HAS_CPPROFILER
-
-      Gecode::Driver::IntOption         _profiler_id; ///< Use this execution id for the CP-profiler
-      Gecode::Driver::UnsignedIntOption _profiler_port; ///< Connect to this port
-      Gecode::Driver::BoolOption        _profiler_info; ///< Whether solution information should be sent to the CP-profiler
-
+      Gecode::Driver::ProfilerOption    _profiler; ///< Use this execution id for the CP-profiler
 #endif
 
       //@}
@@ -283,6 +280,7 @@ namespace Gecode { namespace FlatZinc {
       _restart("restart","restart sequence type",RM_NONE),
       _r_base("restart-base","base for geometric restart sequence",1.5),
       _r_scale("restart-scale","scale factor for restart sequence",250),
+      _r_limit("restart-limit","restart cutoff (0 = none, solution mode)"),
       _nogoods("nogoods","whether to use no-goods from restarts",false),
       _nogoods_limit("nogoods-limit","depth limit for no-good extraction",
                      Search::Config::nogoods_limit),
@@ -295,16 +293,12 @@ namespace Gecode { namespace FlatZinc {
 
 #ifdef GECODE_HAS_CPPROFILER
       ,
-      _profiler_id("cpprofiler-id", "use this execution id with cpprofiler", 0),
-      _profiler_port("cpprofiler-port", "connect to cpprofiler on this port", 6565),
-      _profiler_info("cpprofiler-info", "send solution information to cpprofiler", false)
-
+      _profiler("cp-profiler", "use this execution id and port (comma separated) with CP-profiler")
 #endif
     {
       _mode.add(Gecode::SM_SOLUTION, "solution");
       _mode.add(Gecode::SM_STAT, "stat");
       _mode.add(Gecode::SM_GIST, "gist");
-      _mode.add(Gecode::SM_CPPROFILER, "cpprofiler");
       _restart.add(RM_NONE,"none");
       _restart.add(RM_CONSTANT,"constant");
       _restart.add(RM_LINEAR,"linear");
@@ -318,14 +312,12 @@ namespace Gecode { namespace FlatZinc {
       add(_node); add(_fail); add(_time); add(_time_limit); add(_interrupt);
       add(_seed);
       add(_step);
-      add(_restart); add(_r_base); add(_r_scale);
+      add(_restart); add(_r_base); add(_r_scale); add(_r_limit);
       add(_nogoods); add(_nogoods_limit);
       add(_mode); add(_stat);
       add(_output);
 #ifdef GECODE_HAS_CPPROFILER
-      add(_profiler_id);
-      add(_profiler_port);
-      add(_profiler_info);
+      add(_profiler);
 #endif
     }
 
@@ -354,9 +346,9 @@ namespace Gecode { namespace FlatZinc {
     bool free(void) const { return _free.value(); }
     unsigned int c_d(void) const { return _c_d.value(); }
     unsigned int a_d(void) const { return _a_d.value(); }
-    unsigned int node(void) const { return _node.value(); }
-    unsigned int fail(void) const { return _fail.value(); }
-    unsigned int time(void) const { return _time.value(); }
+    unsigned long long int node(void) const { return _node.value(); }
+    unsigned long long int fail(void) const { return _fail.value(); }
+    double time(void) const { return _time.value(); }
     int seed(void) const { return _seed.value(); }
     double step(void) const { return _step.value(); }
     const char* output(void) const { return _output.value(); }
@@ -376,15 +368,16 @@ namespace Gecode { namespace FlatZinc {
     void restart_base(double d) { _r_base.value(d); }
     unsigned int restart_scale(void) const { return _r_scale.value(); }
     void restart_scale(int i) { _r_scale.value(i); }
+    unsigned long long int restart_limit(void) const { return _r_limit.value(); }
     bool nogoods(void) const { return _nogoods.value(); }
     unsigned int nogoods_limit(void) const { return _nogoods_limit.value(); }
     bool interrupt(void) const { return _interrupt.value(); }
 
 #ifdef GECODE_HAS_CPPROFILER
 
-    int profiler_id(void) const { return _profiler_id.value(); }
-    unsigned int profiler_port(void) const { return _profiler_port.value(); }
-    bool profiler_info(void) const { return _profiler_info.value(); }
+    int profiler_id(void) const { return _profiler.execution_id(); }
+    unsigned int profiler_port(void) const { return _profiler.port(); }
+    bool profiler_info(void) const { return true; }
 
 #endif
 
@@ -413,6 +406,8 @@ namespace Gecode { namespace FlatZinc {
                unsigned int a, int i, const FloatNumBranch& nl,
                std::ostream& o) const;
 #endif
+    /// Assignment operator
+    BranchInformation& operator =(const BranchInformation&) = default;
   };
 
   /// Uninitialized default random number generator
@@ -455,7 +450,7 @@ namespace Gecode { namespace FlatZinc {
     /// Percentage of variables to keep in LNS (or 0 for no LNS)
     unsigned int _lns;
 
-    /// Initial solution to start the LNS (or NULL for no LNS)
+    /// Initial solution to start the LNS (or nullptr for no LNS)
     IntSharedArray _lnsInitialSolution;
 
     /// Random number generator
@@ -488,6 +483,71 @@ namespace Gecode { namespace FlatZinc {
 
     /// The integer variables used in LNS
     Gecode::IntVarArray iv_lns;
+
+    /* === Experimental `on_restart` support === */
+    class OnRestartHandle : public SharedHandle {
+    protected:
+      class OnRestartData : public SharedHandle::Object {
+        public:
+        /// Marker set to `true` if solve process can be marked as complete
+        bool mark_complete = false;
+        /// Inclusive ranges to assign random values
+        std::vector<std::pair<int, int>> uniform_range_int;
+#ifdef GECODE_HAS_FLOAT_VARS
+        std::vector<std::pair<FloatVal, FloatVal>> uniform_range_float;
+#endif
+        /// Last assigned values for different types of decisions
+        std::vector<bool> last_val_bool;
+        std::vector<int> last_val_int;
+#ifdef GECODE_HAS_SET_VARS
+        std::vector<IntSet> last_val_set;
+#endif
+#ifdef GECODE_HAS_FLOAT_VARS
+        std::vector<FloatVal> last_val_float;
+#endif
+        /// Number of `sol` calls for which variables are stored in
+        /// on_restart_iv. In the array you first find this number of variable
+        /// for which the solution is read, then you find the same number of
+        /// variables which value is set.
+        int on_restart_iv_sol = 0;
+        int on_restart_bv_sol = 0;
+        int on_restart_sv_sol = 0;
+        int on_restart_fv_sol = 0;
+        /// Whether the last on_restart_iv should be set to the restart status
+        bool on_restart_status = false;
+      };
+    public:
+      OnRestartHandle() : SharedHandle() {}
+      OnRestartHandle(const OnRestartHandle& handle): SharedHandle(handle) {}
+      OnRestartHandle& operator =(const OnRestartHandle& handle) {
+        return static_cast<OnRestartHandle&>(SharedHandle::operator =(handle));
+      }
+      virtual ~OnRestartHandle() {};
+
+      void init() {
+        if (object() == nullptr) {
+          object(new OnRestartData());
+        }
+      }
+      bool initialized() const { return object() != nullptr; }
+      OnRestartData& operator ()() {
+        return *static_cast<OnRestartData*>(object());
+      };
+    };
+    OnRestartHandle restart_data;
+    /// On Restart Tracked Integer Variables
+    Gecode::IntVarArray on_restart_iv;
+    /// On Restart Tracked Boolean Variables
+    Gecode::BoolVarArray on_restart_bv;
+#ifdef GECODE_HAS_SET_VARS
+    /// On Restart Tracked Set Variables
+    Gecode::SetVarArray on_restart_sv;
+#endif
+#ifdef GECODE_HAS_FLOAT_VARS
+    /// On Restart Tracked Floating Point Variables
+    Gecode::FloatVarArray on_restart_fv;
+#endif
+    /* === End `on_restart` === */
 
     /// Indicates whether an integer variable is introduced by mzn2fzn
     std::vector<bool> iv_introduced;
@@ -668,28 +728,65 @@ namespace Gecode { namespace FlatZinc {
   public:
     Error(const std::string& where, const std::string& what)
     : msg(where+": "+what) {}
+    Error(const std::string& where, const std::string& what, AST::Array *const ann)
+    : msg(make_message(where, what, ann)) {}
     const std::string& toString(void) const { return msg; }
+  private:
+    static std::string make_message(const std::string &where, const std::string &what, AST::Array *const ann) {
+      std::ostringstream result;
+      result << where << ": " << what;
+
+      std::vector<std::string> names = get_constraint_names(ann);
+      if (names.size() > 1) {
+        result << " in constraints ";
+        for (unsigned int i = 0; i < names.size(); ++i) {
+          result << '\"' << names[i] << '\"';
+          if (i < names.size() - 1) {
+            result << ",";
+          }
+          result << " ";
+        }
+      } else if (names.size() == 1) {
+        result << " in constraint " << '\"' << names[0] << '\"';
+      }
+
+      return result.str();
+    }
+    static std::vector<std::string> get_constraint_names(AST::Array *const ann) {
+      std::vector<std::string> result;
+      if (ann) {
+        for (const auto & i : ann->a) {
+          if (i->isArray()) {
+            auto nested_result = get_constraint_names(i->getArray());
+            result.insert(result.end(), nested_result.begin(), nested_result.end());
+          } else if (i->isCall("mzn_constraint_name")) {
+            result.emplace_back(i->getCall()->args->getString());
+          }
+        }
+      }
+      return result;
+    }
   };
 
   /**
    * \brief Parse FlatZinc file \a fileName into \a fzs and return it.
    *
-   * Creates a new empty FlatZincSpace if \a fzs is NULL.
+   * Creates a new empty FlatZincSpace if \a fzs is nullptr.
    */
   GECODE_FLATZINC_EXPORT
   FlatZincSpace* parse(const std::string& fileName,
                        Printer& p, std::ostream& err = std::cerr,
-                       FlatZincSpace* fzs=NULL, Rnd& rnd=defrnd);
+                       FlatZincSpace* fzs=nullptr, Rnd& rnd=defrnd);
 
   /**
    * \brief Parse FlatZinc from \a is into \a fzs and return it.
    *
-   * Creates a new empty FlatZincSpace if \a fzs is NULL.
+   * Creates a new empty FlatZincSpace if \a fzs is nullptr.
    */
   GECODE_FLATZINC_EXPORT
   FlatZincSpace* parse(std::istream& is,
                        Printer& p, std::ostream& err = std::cerr,
-                       FlatZincSpace* fzs=NULL, Rnd& rnd=defrnd);
+                       FlatZincSpace* fzs=nullptr, Rnd& rnd=defrnd);
 
 }}
 

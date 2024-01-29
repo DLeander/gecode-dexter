@@ -39,7 +39,8 @@ namespace Test {
    */
   inline
   Options::Options(void)
-    : seed(0), iter(defiter), fixprob(deffixprob), stop(true), log(false)
+    : threads(1), seed(0), iter(defiter), fixprob(deffixprob),
+      stop(true), log(false), testpat(), start_from(nullptr), list(false)
   {}
 
   /*
@@ -64,8 +65,39 @@ namespace Test {
   }
   inline bool
   Base::fixpoint(void) {
+    return fixpoint(_rand);
+  }
+
+  inline bool
+  Base::fixpoint(Gecode::Support::RandomGenerator& rand) {
     return rand(opt.fixprob) == 0;
   }
+
+  inline std::string
+  Base::str(bool b) {
+    std::stringstream s;
+    if (b)
+      s << "+";
+    else
+      s << "-";
+    return s.str();
+  }
+
+  inline std::string
+  Base::str(int i) {
+    std::stringstream s;
+    s << i;
+    return s.str();
+  }
+
+  inline std::string
+  Base::str(const Gecode::IntArgs& x) {
+    std::string s = "";
+    for (int i=0; i<x.size()-1; i++)
+      s += str(x[i]) + ",";
+    return "[" + s + str(x[x.size()-1]) + "]";
+  }
+
 
 }
 

@@ -31,8 +31,8 @@
  *
  */
 
-#ifndef __GECODE_SEARCH_WORKER_HH__
-#define __GECODE_SEARCH_WORKER_HH__
+#ifndef GECODE_SEARCH_WORKER_HH
+#define GECODE_SEARCH_WORKER_HH
 
 #include <gecode/search.hh>
 
@@ -77,7 +77,7 @@ namespace Gecode { namespace Search {
 
   forceinline bool
   Worker::stop(const Options& o) {
-    if (o.stop == NULL)
+    if (o.stop == nullptr)
       return false;
     _stopped |= o.stop->stop(*this,o);
     return _stopped;

@@ -31,8 +31,8 @@
  *
  */
 
-#ifndef __GECODE_DRIVER_HH__
-#define __GECODE_DRIVER_HH__
+#ifndef GECODE_DRIVER_HH
+#define GECODE_DRIVER_HH
 
 #include <gecode/minimodel.hh>
 #include <gecode/search.hh>
@@ -96,7 +96,6 @@ namespace Gecode {
     SM_TIME,      ///< Measure average runtime
     SM_STAT,      ///< Print statistics for script
     SM_GIST,      ///< Run script in Gist
-    SM_CPPROFILER ///< Run script with CP-profiler
   };
 
   /**
@@ -153,7 +152,7 @@ namespace Gecode {
       const char* cur; ///< Current value
     public:
       /// Initialize for option \a o and explanation \a e and default value \a v
-      StringValueOption(const char* o, const char* e, const char* v=NULL);
+      StringValueOption(const char* o, const char* e, const char* v=nullptr);
       /// Set default value to \a v
       void value(const char* v);
       /// Return current option value
@@ -192,7 +191,7 @@ namespace Gecode {
       /// Return current option value
       int value(void) const;
       /// Add option value for value \a v, string \a o, and help text \a h
-      void add(int v, const char* o, const char* h = NULL);
+      void add(int v, const char* o, const char* h = nullptr);
       /// Parse option at first position and return number of parsed arguments
       virtual int parse(int argc, char* argv[]);
       /// Print help text
@@ -236,6 +235,27 @@ namespace Gecode {
       void value(unsigned int v);
       /// Return current option value
       unsigned int value(void) const;
+      /// Parse option at first position and return number of parsed arguments
+      virtual int parse(int argc, char* argv[]);
+      /// Print help text
+      virtual void help(void);
+    };
+
+    /**
+     * \brief Unsigned long long integer option
+     *
+     */
+    class GECODE_DRIVER_EXPORT UnsignedLongLongIntOption : public BaseOption {
+    protected:
+      unsigned long long int cur; ///< Current value
+    public:
+      /// Initialize for option \a o and explanation \a e and default value \a v
+      UnsignedLongLongIntOption(const char* o, const char* e,
+                                unsigned long long int v=0);
+      /// Set default value to \a v
+      void value(unsigned long long int v);
+      /// Return current option value
+      unsigned long long int value(void) const;
       /// Parse option at first position and return number of parsed arguments
       virtual int parse(int argc, char* argv[]);
       /// Print help text
@@ -322,6 +342,30 @@ namespace Gecode {
       virtual void help(void);
     };
 
+    /**
+     * \brief Profiler option
+     *
+     */
+    class GECODE_DRIVER_EXPORT ProfilerOption : public BaseOption {
+     protected:
+      unsigned int cur_port;  ///< Current port
+      int cur_execution_id;   ///< Current execution ID
+     public:
+      /// Initialize for option \a o and explanation \a e and default value \a v
+      ProfilerOption(const char* o, const char* e, unsigned int p = 0, int v = -1);
+      /// Set default port to \a p
+      void port(unsigned int p);
+      /// Return current port
+      unsigned int port(void) const;
+      /// Set default execution ID to \a i
+      void execution_id(int i);
+      /// Return current execution ID
+      int execution_id(void) const;
+      /// Parse option at first position and return number of parsed arguments
+      virtual int parse(int argc, char* argv[]);
+      /// Print help text
+      virtual void help(void);
+    };
   }
 
   /**
@@ -380,19 +424,24 @@ namespace Gecode {
     /// \name Search options
     //@{
     Driver::StringOption      _search;        ///< Search options
-    Driver::UnsignedIntOption _solutions;     ///< How many solutions
+    Driver::UnsignedLongLongIntOption
+                              _solutions;     ///< How many solutions
     Driver::DoubleOption      _threads;       ///< How many threads to use
     Driver::UnsignedIntOption _c_d;           ///< Copy recomputation distance
     Driver::UnsignedIntOption _a_d;           ///< Adaptive recomputation distance
     Driver::UnsignedIntOption _d_l;           ///< Discrepancy limit for LDS
-    Driver::UnsignedIntOption _node;          ///< Cutoff for number of nodes
-    Driver::UnsignedIntOption _fail;          ///< Cutoff for number of failures
-    Driver::UnsignedIntOption _time;          ///< Cutoff for time
+    Driver::UnsignedLongLongIntOption
+                              _node;          ///< Cutoff for number of nodes
+    Driver::UnsignedLongLongIntOption
+                              _fail;          ///< Cutoff for number of failures
+    Driver::DoubleOption      _time;          ///< Cutoff for time
     Driver::UnsignedIntOption _assets;        ///< Number of assets in a portfolio
     Driver::UnsignedIntOption _slice;         ///< Size of a portfolio slice
     Driver::StringOption      _restart;       ///< Restart method option
     Driver::DoubleOption      _r_base;        ///< Restart base
     Driver::UnsignedIntOption _r_scale;       ///< Restart scale factor
+    Driver::UnsignedLongLongIntOption
+                              _r_limit;       ///< Cutoff for number of restarts 
     Driver::BoolOption        _nogoods;       ///< Whether to use no-goods
     Driver::UnsignedIntOption _nogoods_limit; ///< Limit for no-good extraction
     Driver::DoubleOption      _relax;         ///< Probability to relax variable
@@ -410,9 +459,7 @@ namespace Gecode {
     Driver::TraceOption       _trace;         ///< Trace flags for tracing
 
 #ifdef GECODE_HAS_CPPROFILER
-    Driver::IntOption         _profiler_id;   ///< Use this execution id for the CP-profiler
-    Driver::UnsignedIntOption _profiler_port; ///< Connect to this port
-    Driver::BoolOption        _profiler_info; ///< Whether solution information should be sent to the CPProfiler
+    Driver::ProfilerOption    _profiler;      ///< Options for the CP Profiler
 #endif
 
     //@}
@@ -426,21 +473,21 @@ namespace Gecode {
     /// Set default model value
     void model(int v);
     /// Add model option value for value \a v, string \a o, and help \a h
-    void model(int v, const char* o, const char* h = NULL);
+    void model(int v, const char* o, const char* h = nullptr);
     /// Return model value
     int model(void) const;
 
     /// Set default symmetry value
     void symmetry(int v);
     /// Add symmetry option value for value \a v, string \a o, and help \a h
-    void symmetry(int v, const char* o, const char* h = NULL);
+    void symmetry(int v, const char* o, const char* h = nullptr);
     /// Return symmetry value
     int symmetry(void) const;
 
     /// Set default propagation value
     void propagation(int v);
     /// Add propagation option value for value \a v, string \a o, and help \a h
-    void propagation(int v, const char* o, const char* h = NULL);
+    void propagation(int v, const char* o, const char* h = nullptr);
     /// Return propagation value
     int propagation(void) const;
 
@@ -452,7 +499,7 @@ namespace Gecode {
     /// Set default branching value
     void branching(int v);
     /// Add branching option value for value \a v, string \a o, and help \a h
-    void branching(int v, const char* o, const char* h = NULL);
+    void branching(int v, const char* o, const char* h = nullptr);
     /// Return branching value
     int branching(void) const;
 
@@ -477,14 +524,14 @@ namespace Gecode {
     /// Set default search value
     void search(int v);
     /// Add search option value for value \a v, string \a o, and help \a h
-    void search(int v, const char* o, const char* h = NULL);
+    void search(int v, const char* o, const char* h = nullptr);
     /// Return search value
     int search(void) const;
 
     /// Set default number of solutions to search for
-    void solutions(unsigned int n);
+    void solutions(unsigned long long int n);
     /// Return number of solutions to search for
-    unsigned int solutions(void) const;
+    unsigned long long int solutions(void) const;
 
     /// Set number of parallel threads
     void threads(double n);
@@ -507,19 +554,19 @@ namespace Gecode {
     unsigned int d_l(void) const;
 
     /// Set default node cutoff
-    void node(unsigned int n);
+    void node(unsigned long long int n);
     /// Return node cutoff
-    unsigned int node(void) const;
+    unsigned long long int node(void) const;
 
     /// Set default failure cutoff
-    void fail(unsigned int n);
+    void fail(unsigned long long int n);
     /// Return failure cutoff
-    unsigned int fail(void) const;
+    unsigned long long int fail(void) const;
 
     /// Set default time cutoff
-    void time(unsigned int t);
+    void time(double t);
     /// Return time cutoff
-    unsigned int time(void) const;
+    double time(void) const;
 
     /// Set default number of assets in a portfolio
     void assets(unsigned int n);
@@ -545,6 +592,11 @@ namespace Gecode {
     void restart_scale(unsigned int scale);
     /// Return restart scale factor
     unsigned int restart_scale(void) const;
+
+    /// Set default restart cutoff
+    void restart_limit(unsigned long long int n);
+    /// Return restart cutoff
+    unsigned long long int restart_limit(void) const;
 
     /// Set default nogoods posting behavior
     void nogoods(bool b);
@@ -613,16 +665,12 @@ namespace Gecode {
     void profiler_port(unsigned int p);
     /// Return profiler execution id
     unsigned int profiler_port(void) const;
-    /// Whether solution info should be sent to profiler
-    void profiler_info(bool b);
-    /// Return whether solution info should be sent to profiler
-    bool profiler_info(void) const;
 #endif
     //@}
 
 #ifdef GECODE_HAS_GIST
     /// Helper class storing Gist inspectors
-    class _I {
+    class I_ {
     private:
       /// The double click inspectors
       Support::DynamicArray<Gist::Inspector*,Heap> _click;
@@ -642,7 +690,7 @@ namespace Gecode {
       unsigned int n_compare;
     public:
       /// Constructor
-      _I(void);
+      I_(void);
       /// Add inspector that reacts on node double clicks
       void click(Gist::Inspector* i);
       /// Add inspector that reacts on each new solution that is found
@@ -652,13 +700,13 @@ namespace Gecode {
       /// Add comparator
       void compare(Gist::Comparator* i);
 
-      /// Return click inspector number \a i, or NULL if it does not exist
+      /// Return click inspector number \a i, or nullptr if it does not exist
       Gist::Inspector* click(unsigned int i) const;
-      /// Return solution inspector number \a i, or NULL if it does not exist
+      /// Return solution inspector number \a i, or nullptr if it does not exist
       Gist::Inspector* solution(unsigned int i) const;
-      /// Return move inspector number \a i, or NULL if it does not exist
+      /// Return move inspector number \a i, or nullptr if it does not exist
       Gist::Inspector* move(unsigned int i) const;
-      /// Return comparator number \a i, or NULL if it does not exist
+      /// Return comparator number \a i, or nullptr if it does not exist
       Gist::Comparator* compare(unsigned int i) const;
     } inspect;
 #endif
@@ -744,11 +792,11 @@ namespace Gecode { namespace Driver {
      * SIGINT to the process (i.e., pressing Ctrl-C on the command
      * line).
      *
-     * In case \a s is different from NULL, the search engine uses
+     * In case \a s is different from nullptr, the search engine uses
      * \a s as root of the search tree.
      */
     template<class Script, template<class> class Engine, class Options>
-    static void run(const Options& opt, Script* s=NULL);
+    static void run(const Options& opt, Script* s=nullptr);
   private:
     template<class Script, template<class> class Engine, class Options,
              template<class, template<class> class> class Meta>
