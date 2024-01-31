@@ -1,0 +1,1 @@
+minizinc -s --solver dexter testmodel/test.mzn testmodel/n5.dzn -o results/test

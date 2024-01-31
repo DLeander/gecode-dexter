@@ -1,0 +1,9 @@
+minizinc -s --solver dexter ../data/kidney-exchange/ccmcp.mzn ../data/kidney-exchange/3_20_0.15_3.dzn -o results/kidney-exchange
+minizinc -s --solver dexter ../data/multi-agent-graph-coverage/graph-scan-revised.mzn ../data/multi-agent-graph-coverage/rnd_n10_p1500_c15_s1.dzn -o results/multi-agent-graph-coverage
+minizinc -s --solver dexter ../data/roster/roster_model.mzn ../data/roster/chicroster_dataset_8.dzn -o results/roster
+minizinc -s --solver dexter ../data/table-layout/TableLayout.mzn ../data/table-layout/p1000_m3_r100_c10.dzn -o results/table-layout
+minizinc -s --solver dexter ../data/test-scheduling/test-scheduling.mzn ../data/test-scheduling/t20m10r10-17.dzn -o results/test-scheduling
+minizinc -s --solver dexter ../data/unit-commitment/Unit-Commitment.mzn ../data/unit-commitment/L3-T6G5L5.dzn -o results/unit-commitment
+minizinc -s --solver dexter ../data/valve-network/valve-network.mzn ../data/valve-network/horizon6.dzn -o results/valve-network
+minizinc -s --solver dexter ../data/vrplc/vrplc_service.mzn ../data/vrplc/vrplc9_5_10_s2.dzn -o results/vrplc
+minizinc -s --solver dexter ../data/yumi-static/yumi-static.mzn ../data/yumi-static/p_4_GG_GG_yumi_grid_setup_7_7.dzn -o results/yumi-static
