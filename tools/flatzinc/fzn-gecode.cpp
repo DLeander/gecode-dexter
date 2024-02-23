@@ -33,7 +33,10 @@
 
 #include <iostream>
 #include <fstream>
+
+#include <gecode/flatzinc/plugin.hh>
 #include <gecode/flatzinc.hh>
+#include <gecode/flatzinc/fzn-pbs.hh>
 
 using namespace std;
 using namespace Gecode;
@@ -57,6 +60,7 @@ int main(int argc, char** argv) {
   FlatZinc::Printer p;
   FlatZinc::FlatZincSpace* fg = nullptr;
   Rnd rnd(opt.seed());
+
   try {
     if (!strcmp(filename, "-")) {
       fg = FlatZinc::parse(cin, p, std::cerr, nullptr, rnd);
@@ -64,7 +68,10 @@ int main(int argc, char** argv) {
       fg = FlatZinc::parse(filename, p, std::cerr, nullptr, rnd);
     }
 
-    if (fg) {
+    if (fg && opt.usePBS()){
+      fg->runPBS(std::cout, p, opt, t_total);
+    }
+    else if (fg) {
       fg->createBranchers(p, fg->solveAnnotations(), opt,
                           false, std::cerr);
       fg->shrinkArrays(p);

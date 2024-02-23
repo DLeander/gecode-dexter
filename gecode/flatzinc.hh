@@ -39,7 +39,7 @@
 #define GECODE_FLATZINC_HH
 
 #include <iostream>
-
+#include <memory>
 #include <gecode/kernel.hh>
 #include <gecode/int.hh>
 #ifdef GECODE_HAS_SET_VARS
@@ -88,6 +88,7 @@
 #include <gecode/flatzinc/conexpr.hh>
 #include <gecode/flatzinc/ast.hh>
 #include <gecode/flatzinc/varspec.hh>
+#include <gecode/flatzinc/fzn-pbs.hh>
 
 /**
  * \namespace Gecode::FlatZinc
@@ -99,7 +100,7 @@
  */
 
 namespace Gecode { namespace FlatZinc {
-
+  // class FznPbs;
   /**
    * \brief Output support class for %FlatZinc interpreter
    *
@@ -247,6 +248,8 @@ namespace Gecode { namespace FlatZinc {
       Gecode::Driver::UnsignedIntOption _nogoods_limit; ///< Depth limit for extracting no-goods
       Gecode::Driver::BoolOption        _interrupt; ///< Whether to catch SIGINT
       Gecode::Driver::DoubleOption      _step;        ///< Step option
+      Gecode::Driver::BoolOption        _use_pbs; //< Whether to use PBS or default BAB ADDED
+      Gecode::Driver::IntOption        _assets; //< How many assets to use for PBS
       //@}
 
       /// \name Execution options
@@ -287,6 +290,9 @@ namespace Gecode { namespace FlatZinc {
       _interrupt("interrupt","whether to catch Ctrl-C (true) or not (false)",
                  true),
       _step("step","step distance for float optimization",0.0),
+      _use_pbs("use-pbs", "whether to use portfolio-based-search or not", false), // ADDED
+      _assets("assets","the number of assets to use with portfolio-based search", 8), // ADDED
+
       _mode("mode","how to execute script",Gecode::SM_SOLUTION),
       _stat("s","emit statistics"),
       _output("o","file to send output to")
@@ -314,8 +320,8 @@ namespace Gecode { namespace FlatZinc {
       add(_step);
       add(_restart); add(_r_base); add(_r_scale); add(_r_limit);
       add(_nogoods); add(_nogoods_limit);
-      add(_mode); add(_stat);
-      add(_output);
+      add(_mode); add(_stat); add(_use_pbs); add(_assets);
+      add(_output); 
 #ifdef GECODE_HAS_CPPROFILER
       add(_profiler);
 #endif
@@ -340,6 +346,7 @@ namespace Gecode { namespace FlatZinc {
       Gecode::BaseOptions::help();
     }
 
+    bool usePBS(void) const { return _use_pbs.value(); } // ADDED
     int solutions(void) const { return _solutions.value(); }
     bool allSolutions(void) const { return _allSolutions.value(); }
     double threads(void) const { return _threads.value(); }
@@ -415,7 +422,6 @@ namespace Gecode { namespace FlatZinc {
   extern Rnd defrnd;
 
   class FlatZincSpaceInitData;
-
   /**
    * \brief A space that can be initialized with a %FlatZinc model
    *
@@ -427,6 +433,9 @@ namespace Gecode { namespace FlatZinc {
       MIN, //< Solve as minimization problem
       MAX  //< Solve as maximization problem
     };
+    int getintVarCount() const { return intVarCount; }
+    int getboolVarCount() const { return boolVarCount; }
+    int getsetVarCount() const { return setVarCount; }
   protected:
     /// Initialisation data (only used for posting constraints)
     FlatZincSpaceInitData* _initData;
@@ -473,9 +482,14 @@ namespace Gecode { namespace FlatZinc {
     void
     runMeta(std::ostream& out, const Printer& p,
             const FlatZincOptions& opt, Gecode::Support::Timer& t_total);
+
     void
     branchWithPlugin(AST::Node* ann);
   public:
+
+    // The controller, used for obtaining the current best solution.
+    std::shared_ptr<FznPbs> pbs_control;
+
     /// The integer variables
     Gecode::IntVarArray iv;
     /// The introduced integer variables
@@ -611,9 +625,10 @@ namespace Gecode { namespace FlatZinc {
     /// Post that integer variable \a var should be maximized
     void maximize(int var, bool isInt, AST::Array* annotation);
 
-    /// Run the search
     void run(std::ostream& out, const Printer& p,
              const FlatZincOptions& opt, Gecode::Support::Timer& t_total);
+
+    void runPBS(std::ostream& out, FlatZinc::Printer& p, FlatZincOptions& opt, Gecode::Support::Timer& t_total);
 
     /// Produce output on \a out using \a p
     void print(std::ostream& out, const Printer& p) const;

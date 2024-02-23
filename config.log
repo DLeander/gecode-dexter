@@ -927,11 +927,7 @@ on Dexter
 
 config.status:941: creating Makefile
 config.status:941: creating tools/flatzinc/mzn-gecode
-config.status:941: creating tools/flatzinc/gecode.msc
-config.status:941: creating tools/flatzinc/gecode-gist.msc
-config.status:941: creating doxygen.conf
-config.status:941: creating doxygen.hh
-config.status:941: creating gecode/support/config.hpp
+config.status:927: error: cannot find input file: `tools/flatzinc/gecode.msc.in'
 
 ## ---------------- ##
 ## Cache variables. ##
@@ -1212,4 +1208,4 @@ target_alias=''
 #define GECODE_VERSION_NUMBER 600300
 #define GECODE_FLATZINC_VERSION "1.6"
 
-configure: exit 0
+configure: exit 1

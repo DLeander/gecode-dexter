@@ -39,6 +39,7 @@
 #include <gecode/flatzinc/registry.hh>
 #include <gecode/flatzinc/plugin.hh>
 #include <gecode/flatzinc/branch.hh>
+#include <gecode/flatzinc/fzn-pbs.hh>
 
 #include <gecode/search.hh>
 
@@ -869,6 +870,7 @@ namespace Gecode { namespace FlatZinc {
     (void) floatVars;
 
     intVarCount = 0;
+    pbs_control = nullptr;
     iv = IntVarArray(*this, intVars);
     iv_introduced = std::vector<bool>(2*intVars);
     iv_boolalias = alloc<int>(intVars+(intVars==0?1:0));
@@ -1741,9 +1743,11 @@ namespace Gecode { namespace FlatZinc {
   void
   FlatZincSpace::runEngine(std::ostream& out, const Printer& p,
                            const FlatZincOptions& opt, Support::Timer& t_total) {
+    
     if (opt.restart()==RM_NONE) {
       runMeta<Engine,Driver::EngineToMeta>(out,p,opt,t_total);
-    } else {
+    } 
+    else {
       runMeta<Engine,RBS>(out,p,opt,t_total);
     }
   }
@@ -1825,19 +1829,20 @@ namespace Gecode { namespace FlatZinc {
 
 #endif
 
+
   template<template<class> class Engine,
            template<class,template<class> class> class Meta>
   void
   FlatZincSpace::runMeta(std::ostream& out, const Printer& p,
                          const FlatZincOptions& opt, Support::Timer& t_total) {
-#ifdef GECODE_HAS_GIST
-    if (opt.mode() == SM_GIST) {
-      FZPrintingInspector<FlatZincSpace> pi(p);
-      FZPrintingComparator<FlatZincSpace> pc(p);
-      (void) GistEngine<Engine<FlatZincSpace> >::explore(this,opt,&pi,&pc);
-      return;
-    }
-#endif
+    #ifdef GECODE_HAS_GIST
+        if (opt.mode() == SM_GIST) {
+          FZPrintingInspector<FlatZincSpace> pi(p);
+          FZPrintingComparator<FlatZincSpace> pc(p);
+          (void) GistEngine<Engine<FlatZincSpace> >::explore(this,opt,&pi,&pc);
+          return;
+        }
+    #endif
     StatusStatistics sstat;
     unsigned int n_p = 0;
     Support::Timer t_solve;
@@ -1971,7 +1976,6 @@ namespace Gecode { namespace FlatZinc {
       "Branching with plugins not supported (requires Qt support)");
   }
 #endif
-
   void
   FlatZincSpace::run(std::ostream& out, const Printer& p,
                       const FlatZincOptions& opt, Support::Timer& t_total) {
@@ -1986,23 +1990,63 @@ namespace Gecode { namespace FlatZinc {
     }
   }
 
+  void FlatZincSpace::runPBS(std::ostream& out, FlatZinc::Printer& p, FlatZincOptions& opt, Support::Timer& t_total) {
+    const int assets = 2;
+    FznPbs fg_pbs(this, assets);
+    switch (_method) {
+    case MIN:
+    case MAX:
+      fg_pbs.controller(out, p, opt, t_total);
+      break;
+    case SAT:
+      // runEngine<DFS>(out,p,opt,t_total);
+      break;
+    }
+  }
+
   void
   FlatZincSpace::constrain(const Space& s) {
+    FznPbs* control = this->pbs_control.get();
     if (_optVarIsInt) {
-      if (_method == MIN)
-        rel(*this, iv[_optVar], IRT_LE,
-                   static_cast<const FlatZincSpace*>(&s)->iv[_optVar].val());
-      else if (_method == MAX)
-        rel(*this, iv[_optVar], IRT_GR,
-                   static_cast<const FlatZincSpace*>(&s)->iv[_optVar].val());
-    } else {
+      // If PBS, update global bounds.
+      if (control != nullptr && control->best_sol.load() != nullptr){
+        if (_method == MIN){
+          rel(*this, iv[_optVar], IRT_LE, control->best_sol.load()->iv[_optVar].val());
+        }
+        else if (_method == MAX){
+          rel(*this, iv[_optVar], IRT_GR, control->best_sol.load()->iv[_optVar].val());
+        } 
+      }
+      // If not PBS, update local bounds.
+      else{
+        if (_method == MIN){
+          rel(*this, iv[_optVar], IRT_LE, static_cast<const FlatZincSpace*>(&s)->iv[_optVar].val());
+        }
+        else if (_method == MAX){
+          rel(*this, iv[_optVar], IRT_GR, static_cast<const FlatZincSpace*>(&s)->iv[_optVar].val());
+        } 
+      }
+    } 
+    else {
 #ifdef GECODE_HAS_FLOAT_VARS
-      if (_method == MIN)
-        rel(*this, fv[_optVar], FRT_LE,
-                   static_cast<const FlatZincSpace*>(&s)->fv[_optVar].val()-step);
-      else if (_method == MAX)
-        rel(*this, fv[_optVar], FRT_GR,
-                   static_cast<const FlatZincSpace*>(&s)->fv[_optVar].val()+step);
+      if (control != nullptr && control->best_sol.load() != nullptr){
+        if (_method == MIN){
+          rel(*this, fv[_optVar], FRT_LE, control->best_sol.load()->fv[_optVar].val()-step);
+        }
+        else if (_method == MAX){
+          rel(*this, fv[_optVar], FRT_GR, control->best_sol.load()->fv[_optVar].val()+step);
+        } 
+      }
+      else{
+        if (_method == MIN){
+          rel(*this, fv[_optVar], FRT_LE, static_cast<const FlatZincSpace*>(&s)->fv[_optVar].val()-step);
+        }
+          
+        else if (_method == MAX){
+          rel(*this, fv[_optVar], FRT_GR, static_cast<const FlatZincSpace*>(&s)->fv[_optVar].val()+step);
+        }
+      }
+
 #endif
     }
   }

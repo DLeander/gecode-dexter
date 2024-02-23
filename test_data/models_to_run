@@ -7,3 +7,4 @@ minizinc -s --solver dexter ../data/unit-commitment/Unit-Commitment.mzn ../data/
 minizinc -s --solver dexter ../data/valve-network/valve-network.mzn ../data/valve-network/horizon6.dzn -o results/valve-network
 minizinc -s --solver dexter ../data/vrplc/vrplc_service.mzn ../data/vrplc/vrplc9_5_10_s2.dzn -o results/vrplc
 minizinc -s --solver dexter ../data/yumi-static/yumi-static.mzn ../data/yumi-static/p_4_GG_GG_yumi_grid_setup_7_7.dzn -o results/yumi-static
+minizinc -s --solver dexter ../data/pennies-opt/pennies.mzn ../data/pennies-opt/n5.dzn -o results/pennies-opt

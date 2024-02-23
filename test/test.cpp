@@ -439,7 +439,7 @@ namespace Test {
     }
   };
 
-  /// Run all the tests with the supplied options i parallel.
+  /// Run all the tests with the supplied options in parallel.
   int run_tests_parallel(const std::vector<Base*>& tests, const Options& options) {
     using namespace Gecode::Support;
     RandomGenerator seed_sequence(options.seed);
