@@ -27,6 +27,8 @@ FznPbs::FznPbs(FlatZinc::FlatZincSpace* fg, const int assets) : fg(fg), assets(a
     running_threads = 2;
     // Initialize global_objective given method:
     method = fg->method();
+
+    shared_controller = std::shared_ptr<FznPbs>(this);
 }
 
 FznPbs::~FznPbs() {
@@ -137,6 +139,7 @@ Search::Options FznPbs::setupAssetSearchOptions(FlatZincSpace* fg, FlatZincOptio
 void FznPbs::setupPortfolioAssets(int asset, FlatZinc::Printer& p, FlatZincOptions& fopt) {
     // Set up the portfolio assets.
     asset_spaces[asset] = static_cast<FlatZinc::FlatZincSpace*>(fg->clone());
+    asset_spaces[asset]->pbs_control = shared_controller;
 
     // Set controller as shared pointer to every flatzincspace
     // Copy iv,bv,sv_introduced vector from fg, as it does not follow the clone.

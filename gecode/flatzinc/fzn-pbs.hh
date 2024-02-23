@@ -11,6 +11,7 @@
 #include <gecode/search.hh>
 #include <gecode/flatzinc/search-engine-base.hh>
 
+#include <memory>
 #include <vector>
 #include <array>
 #include <string>
@@ -70,6 +71,8 @@ public:
 
     // The asset that finished the search and found the solution.
     int finished_asset;
+
+    std::shared_ptr<FznPbs> shared_controller;
 
 private:
     // Waits for all threads to be done.
