@@ -636,7 +636,6 @@ namespace Gecode { namespace FlatZinc {
       yylex_destroy(pp.yyscanner);
     return pp.hadError ? NULL : pp.fg;
   }
-
 }}
 
 

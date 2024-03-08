@@ -47,6 +47,99 @@ namespace Gecode { namespace Driver {
    * \brief Stop object based on nodes, failures, and time
    *
    */
+  class PBSCombinedStop : public Search::Stop {
+    private:
+      Search::NodeStop* ns; ///< Used node stop object
+      Search::FailStop* fs; ///< Used fail stop object
+      Search::TimeStop* ts; ///< Used time stop object
+      Search::RestartStop* rs; ///< Used restart stop object
+      std::atomic<bool>& search_finished; ///< True if solution has been found.
+      GECODE_DRIVER_EXPORT
+      static bool sigint;   ///< Whether search was interrupted using Ctrl-C
+      /// Initialize stop object
+      PBSCombinedStop(unsigned long long int node, unsigned long long int fail, double time, unsigned long long int restart, std::atomic<bool>& search_finished)
+        : ns((node > 0ULL) ? new Search::NodeStop(node) : nullptr),
+          fs((fail > 0ULL) ? new Search::FailStop(fail) : nullptr),
+          ts((time > 0.0)  ? new Search::TimeStop(time) : nullptr),
+          rs((restart > 0.0) ? new Search::RestartStop(restart) : nullptr),
+          search_finished(search_finished) {
+        sigint = false;
+      }
+    public:
+      /// Reason why search has been stopped
+      enum {
+        SR_NODE = 1 << 0, ///< Node limit reached
+        SR_FAIL = 1 << 1, ///< Fail limit reached
+        SR_TIME = 1 << 2, ///< Time limit reached
+        SR_RESTART = 1 << 3, ///< Time limit reached
+        SR_INT  = 1 << 4,  ///< Interrupted by user
+        SR_SOLUTION = 1 << 5 ///< Solution found
+      };
+      /// Test whether search must be stopped
+      virtual bool stop(const Search::Statistics& s, const Search::Options& o) {
+        // if (search_finished.load()) {
+        //   std::cerr << "sol is true." << std::endl;
+        // }
+        return
+          sigint ||
+          (search_finished.load()) ||
+          ((ns != nullptr) && ns->stop(s,o)) ||
+          ((fs != nullptr) && fs->stop(s,o)) ||
+          ((ts != nullptr) && ts->stop(s,o)) ||
+          ((rs != nullptr) && rs->stop(s,o));
+      }
+      /// Report reason why search has been stopped
+      int reason(const Search::Statistics& s, const Search::Options& o) {
+        return
+          (((ns != nullptr) && ns->stop(s,o)) ? SR_NODE : 0) |
+          (((fs != nullptr) && fs->stop(s,o)) ? SR_FAIL : 0) |
+          (((ts != nullptr) && ts->stop(s,o)) ? SR_TIME : 0) |
+          (((rs != nullptr) && rs->stop(s,o)) ? SR_RESTART : 0) |
+          (sigint                          ? SR_INT  : 0) |
+          (search_finished                  ? SR_SOLUTION : 0);
+      }
+      /// Create appropriate stop-object
+      static Search::Stop*
+      create(unsigned long long int node, unsigned long long int fail, double time, unsigned long long int restart, bool intr, std::atomic<bool>& search_finished) {
+        if (!intr && (node == 0ULL) && (fail == 0ULL) && (time == 0.0) && (restart == 0ULL))
+          return nullptr;
+        else
+          return new PBSCombinedStop(node,fail,time,restart,search_finished);
+      }
+  #ifdef GECODE_THREADS_WINDOWS
+      /// Handler for catching Ctrl-C
+      static BOOL interrupt(DWORD t) noexcept {
+        if (t == CTRL_C_EVENT) {
+          sigint = true;
+          installCtrlHandler(false,true);
+          return true;
+        }
+        return false;
+      }
+  #else
+      /// Handler for catching Ctrl-C
+      static void
+      interrupt(int) {
+        sigint = true;
+        installCtrlHandler(false,true);
+      }
+  #endif
+      /// Install handler for catching Ctrl-C
+      static void installCtrlHandler(bool install, bool force=false) {
+        if (force || !sigint) {
+          #ifdef GECODE_THREADS_WINDOWS
+                  SetConsoleCtrlHandler( (PHANDLER_ROUTINE) interrupt, install);
+          #else
+                  std::signal(SIGINT, install ? interrupt : SIG_DFL);
+          #endif
+        }
+      }
+      /// Destructor
+      ~PBSCombinedStop(void) {
+        delete ns; delete fs; delete ts; delete rs;
+      }
+  };
+
   class CombinedStop : public Search::Stop {
   private:
     Search::NodeStop* ns; ///< Used node stop object

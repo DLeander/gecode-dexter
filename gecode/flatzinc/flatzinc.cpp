@@ -781,6 +781,7 @@ namespace Gecode { namespace FlatZinc {
 #ifdef GECODE_HAS_FLOAT_VARS
       step(f.step),
 #endif
+      pbs_current_best_sol(f.pbs_current_best_sol),
       needAuxVars(f.needAuxVars) {
       _optVar = f._optVar;
       _optVarIsInt = f._optVarIsInt;
@@ -858,8 +859,8 @@ namespace Gecode { namespace FlatZinc {
   :  _initData(new FlatZincSpaceInitData),
     intVarCount(-1), boolVarCount(-1), floatVarCount(-1), setVarCount(-1),
     _optVar(-1), _optVarIsInt(true), _lns(0), _lnsInitialSolution(0),
-    _random(random),
-    _solveAnnotations(nullptr), needAuxVars(true) {
+    _random(random), _solveAnnotations(nullptr), 
+    pbs_current_best_sol(nullptr), needAuxVars(true) {
     branchInfo.init();
   }
 
@@ -870,7 +871,6 @@ namespace Gecode { namespace FlatZinc {
     (void) floatVars;
 
     intVarCount = 0;
-    pbs_control = nullptr;
     iv = IntVarArray(*this, intVars);
     iv_introduced = std::vector<bool>(2*intVars);
     iv_boolalias = alloc<int>(intVars+(intVars==0?1:0));
@@ -1990,13 +1990,12 @@ namespace Gecode { namespace FlatZinc {
     }
   }
 
-  void FlatZincSpace::runPBS(std::ostream& out, FlatZinc::Printer& p, FlatZincOptions& opt, Support::Timer& t_total) {
-    const int assets = 2;
-    FznPbs fg_pbs(this, assets);
+  void FlatZincSpace::runPBS(std::ostream& out, FlatZinc::Printer& p, FlatZincOptions& opt, Support::Timer& t_total, const int assets) {
+    FznPbs fg_pbs(this, assets, p);
     switch (_method) {
     case MIN:
     case MAX:
-      fg_pbs.controller(out, p, opt, t_total);
+      fg_pbs.controller(out, opt, t_total);
       break;
     case SAT:
       // runEngine<DFS>(out,p,opt,t_total);
@@ -2006,18 +2005,23 @@ namespace Gecode { namespace FlatZinc {
 
   void
   FlatZincSpace::constrain(const Space& s) {
-    FznPbs* control = this->pbs_control.get();
+    // If PBS, update global bounds.
+    FlatZincSpace* best_sol = nullptr;
+    if (pbs_current_best_sol != nullptr){
+        best_sol = pbs_current_best_sol->load();
+    }
+
     if (_optVarIsInt) {
-      // If PBS, update global bounds.
-      if (control != nullptr && control->best_sol.load() != nullptr){
+      if (best_sol != nullptr){
+        int val = best_sol->iv[best_sol->optVar()].val();
         if (_method == MIN){
-          rel(*this, iv[_optVar], IRT_LE, control->best_sol.load()->iv[_optVar].val());
+          rel(*this, iv[_optVar], IRT_LE, val);
         }
         else if (_method == MAX){
-          rel(*this, iv[_optVar], IRT_GR, control->best_sol.load()->iv[_optVar].val());
+          rel(*this, iv[_optVar], IRT_GR, val);
         } 
       }
-      // If not PBS, update local bounds.
+      // If not PBS or no solution has been found, update local bounds.
       else{
         if (_method == MIN){
           rel(*this, iv[_optVar], IRT_LE, static_cast<const FlatZincSpace*>(&s)->iv[_optVar].val());
@@ -2026,15 +2030,16 @@ namespace Gecode { namespace FlatZinc {
           rel(*this, iv[_optVar], IRT_GR, static_cast<const FlatZincSpace*>(&s)->iv[_optVar].val());
         } 
       }
-    } 
+    }
     else {
 #ifdef GECODE_HAS_FLOAT_VARS
-      if (control != nullptr && control->best_sol.load() != nullptr){
+      if (best_sol != nullptr && false){
+        Gecode::FloatVal val = best_sol->fv[best_sol->optVar()].val();
         if (_method == MIN){
-          rel(*this, fv[_optVar], FRT_LE, control->best_sol.load()->fv[_optVar].val()-step);
+          rel(*this, fv[_optVar], FRT_LE, val-step);
         }
         else if (_method == MAX){
-          rel(*this, fv[_optVar], FRT_GR, control->best_sol.load()->fv[_optVar].val()+step);
+          rel(*this, fv[_optVar], FRT_GR, val+step);
         } 
       }
       else{
@@ -2870,8 +2875,11 @@ namespace Gecode { namespace FlatZinc {
                    const Gecode::FloatVarArray& fv
 #endif
                    ) const {
-    if (_output == nullptr)
+    if (_output == nullptr){
+      out << "No output" << endl;
       return;
+    }
+      
     for (unsigned int i=0; i< _output->a.size(); i++) {
       AST::Node* ai = _output->a[i];
       if (ai->isArray()) {

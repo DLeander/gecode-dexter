@@ -57,41 +57,59 @@ int main(int argc, char** argv) {
   const char* filename = argv[1];
   opt.name(filename);
 
-  FlatZinc::Printer p;
   FlatZinc::FlatZincSpace* fg = nullptr;
   Rnd rnd(opt.seed());
-
+  FlatZinc::Printer p;
   try {
-    if (!strcmp(filename, "-")) {
-      fg = FlatZinc::parse(cin, p, std::cerr, nullptr, rnd);
-    } else {
-      fg = FlatZinc::parse(filename, p, std::cerr, nullptr, rnd);
-    }
-
-    if (fg && opt.usePBS()){
-      fg->runPBS(std::cout, p, opt, t_total);
-    }
-    else if (fg) {
-      fg->createBranchers(p, fg->solveAnnotations(), opt,
-                          false, std::cerr);
-      fg->shrinkArrays(p);
-      if (opt.output()) {
-        std::ofstream os(opt.output());
-        if (!os.good()) {
-          std::cerr << "Could not open file " << opt.output() << " for output."
-                    << std::endl;
-          exit(EXIT_FAILURE);
-        }
-        fg->run(os, p, opt, t_total);
-        os.close();
-      } else {
-        fg->run(std::cout, p, opt, t_total);
+    if (opt.usePBS()) {
+      // TODO : Make this a parameter or depend on the number of threads.
+      const int assets = 3;
+      if (!strcmp(filename, "-")) {
+        fg = FlatZinc::parse(cin, p, std::cerr, nullptr, rnd);
+      } 
+      else {
+        fg = FlatZinc::parse(filename, p, std::cerr, nullptr, rnd);
       }
-    } else {
-      exit(EXIT_FAILURE);
+
+      if (fg){
+        fg->runPBS(std::cout, p, opt, t_total, assets);
+      }
+      else{
+        exit(EXIT_FAILURE);
+      }
+
+      delete fg;
     }
-    delete fg;
-  } catch (FlatZinc::Error& e) {
+    else {
+      if (!strcmp(filename, "-")) {
+        fg = FlatZinc::parse(cin, p, std::cerr, nullptr, rnd);
+      } 
+      else {
+        fg = FlatZinc::parse(filename, p, std::cerr, nullptr, rnd);
+      }
+      if (fg) {
+        fg->createBranchers(p, fg->solveAnnotations(), opt,
+                            false, std::cerr);
+        fg->shrinkArrays(p);
+        if (opt.output()) {
+          std::ofstream os(opt.output());
+          if (!os.good()) {
+            std::cerr << "Could not open file " << opt.output() << " for output."
+                      << std::endl;
+            exit(EXIT_FAILURE);
+          }
+          fg->run(os, p, opt, t_total);
+          os.close();
+        } else {
+          fg->run(std::cout, p, opt, t_total);
+        }
+      } else {
+        exit(EXIT_FAILURE);
+      }
+      delete fg;
+    }
+  } 
+  catch (FlatZinc::Error& e) {
     std::cerr << "Error: " << e.toString() << std::endl;
     return 1;
   }

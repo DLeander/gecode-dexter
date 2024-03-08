@@ -94,6 +94,7 @@ namespace Gecode { namespace Driver {
   }
 
   bool CombinedStop::sigint;
+  bool PBSCombinedStop::sigint;
 
 }}
 

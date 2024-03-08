@@ -22,17 +22,29 @@ using namespace std;
 using namespace Gecode;
 using namespace Gecode::FlatZinc;
 
-FznPbs::FznPbs(FlatZinc::FlatZincSpace* fg, const int assets) : fg(fg), assets(assets), asset_spaces(assets), solution_found(false), assets_solve_times(assets), assets_status_stats(assets), assets_num_propagators(assets), best_sol(nullptr), finished_asset(-1){
+FznPbs::FznPbs(FlatZinc::FlatZincSpace* fg, const int assets, FlatZinc::Printer& p)
+    : fg(fg), assets(assets), 
+      asset_spaces(assets), 
+      asset_engines(assets), 
+      asset_best_solutions(assets), 
+      p(p), 
+      search_finished(false), 
+      assets_solve_times(assets), 
+      assets_status_stats(assets), 
+      assets_num_propagators(assets), 
+      best_sol(nullptr), 
+      finished_asset(-1)
+    {
     execution_done_wait_started = false;
-    running_threads = 2;
+    running_threads = assets;
     // Initialize global_objective given method:
     method = fg->method();
-
-    shared_controller = std::shared_ptr<FznPbs>(this);
 }
 
 FznPbs::~FznPbs() {
     for (int i = 0; i < assets; i++) {
+        delete asset_best_solutions[i];
+        delete asset_engines[i];
         delete asset_spaces[i];
     }
 }
@@ -48,35 +60,81 @@ void FznPbs::await_runners_completed() {
 }
 
 // Print the statistics of the search.
-void FznPbs::solutionStatistics(FlatZincSpace* fg, BaseEngine* se, Support::Timer t_solve, StatusStatistics sstat, int n_p, std::ostream& out, Support::Timer& t_total) {
+void FznPbs::solutionStatistics(FlatZincSpace* fg, BaseEngine* se, Support::Timer t_solve, StatusStatistics sstat, int n_p, std::ostream& out, Support::Timer& t_total, bool allAssetStat = false) {
     Gecode::Search::Statistics stat = se->statistics();
     double totalTime = (t_total.stop() / 1000.0);
     double solveTime = (t_solve.stop() / 1000.0);
     double initTime = totalTime - solveTime;
-    out << std::endl
-        << "%%%mzn-stat: initTime=" << initTime
-        << std::endl;
-    out << "%%%mzn-stat: solveTime=" << solveTime
-        << std::endl;
-    // out << "%%%mzn-stat: solutions="
-    //     << std::abs(fopt.solutions - findSol) << std::endl
-    out << "%%%mzn-stat: variables="
-        << (fg->getintVarCount() + fg->getboolVarCount() + fg->getsetVarCount()) << std::endl
-        << "%%%mzn-stat: propagators=" << n_p << std::endl
-        << "%%%mzn-stat: propagations=" << sstat.propagate+stat.propagate << std::endl
-        << "%%%mzn-stat: nodes=" << stat.node << std::endl
-        << "%%%mzn-stat: failures=" << stat.fail << std::endl
-        << "%%%mzn-stat: restarts=" << stat.restart << std::endl
-        << "%%%mzn-stat: peakDepth=" << stat.depth << std::endl
-        << "%%%mzn-stat-end" << std::endl
-        << std::endl;
+
+    if (allAssetStat){
+        out << std::endl
+            << "%%%mzn-stat: initTime=" << initTime
+            << std::endl;
+        out << "%%%mzn-stat: solveTime=" << solveTime
+            << std::endl;
+        out << "%%%mzn-stat: finished asset="
+            << finished_asset << std::endl;
+        out << "%%%mzn-stat: variables="
+            << (fg->getintVarCount() + fg->getboolVarCount() + fg->getsetVarCount()) << std::endl
+            << "%%%mzn-stat: propagators=" << n_p << std::endl
+            << "%%%mzn-stat: propagations=" << sstat.propagate+stat.propagate << std::endl
+            << "%%%mzn-stat: nodes=" << stat.node << std::endl
+            << "%%%mzn-stat: failures=" << stat.fail << std::endl
+            << "%%%mzn-stat: restarts=" << stat.restart << std::endl
+            << "%%%mzn-stat: peakDepth=" << stat.depth << std::endl
+            << "%%%mzn-stat-end" << std::endl
+            << std::endl;
+
+        for (int asset = 0; asset < assets; asset++){
+            if (asset == finished_asset){
+                continue;
+            }
+            stat = asset_engines[asset]->statistics();
+            n_p = assets_num_propagators[asset];
+            out << std::endl
+                << "%%%mzn-stat: initTime=" << initTime
+                << std::endl;
+            out << "%%%mzn-stat: solveTime=" << solveTime
+                << std::endl;
+            out << "%%%mzn-stat: unfinished asset="
+                << asset << std::endl;
+            out << "%%%mzn-stat: variables="
+                << (fg->getintVarCount() + fg->getboolVarCount() + fg->getsetVarCount()) << std::endl
+                << "%%%mzn-stat: propagators=" << n_p << std::endl
+                << "%%%mzn-stat: propagations=" << sstat.propagate+stat.propagate << std::endl
+                << "%%%mzn-stat: nodes=" << stat.node << std::endl
+                << "%%%mzn-stat: failures=" << stat.fail << std::endl
+                << "%%%mzn-stat: restarts=" << stat.restart << std::endl
+                << "%%%mzn-stat: peakDepth=" << stat.depth << std::endl
+                << "%%%mzn-stat-end" << std::endl
+                << std::endl;
+        }
+    }
+    else{
+        out << std::endl
+            << "%%%mzn-stat: initTime=" << initTime
+            << std::endl;
+        out << "%%%mzn-stat: solveTime=" << solveTime
+            << std::endl;
+        out << "%%%mzn-stat: finished asset="
+            << finished_asset << std::endl;
+        out << "%%%mzn-stat: variables="
+            << (fg->getintVarCount() + fg->getboolVarCount() + fg->getsetVarCount()) << std::endl
+            << "%%%mzn-stat: propagators=" << n_p << std::endl
+            << "%%%mzn-stat: propagations=" << sstat.propagate+stat.propagate << std::endl
+            << "%%%mzn-stat: nodes=" << stat.node << std::endl
+            << "%%%mzn-stat: failures=" << stat.fail << std::endl
+            << "%%%mzn-stat: restarts=" << stat.restart << std::endl
+            << "%%%mzn-stat: peakDepth=" << stat.depth << std::endl
+            << "%%%mzn-stat-end" << std::endl
+            << std::endl;
+    }
 }
 
 // Set up the search options for the different searches.
-Search::Options FznPbs::setupAssetSearchOptions(FlatZincSpace* fg, FlatZincOptions& fopt, FlatZinc::Printer& p, unsigned int c_d, unsigned int a_d, double threads, bool use_rbs = false, unsigned int restart_type = 1, double restart_base = 1.5, unsigned int restart_scale = 250){
+Search::Options FznPbs::setupAssetSearchOptions(FlatZincSpace* fg, FlatZincOptions& fopt, FlatZinc::Printer& p, unsigned int c_d, unsigned int a_d, double threads, string brancher, int asset, bool use_rbs = false, unsigned int restart_type = 1, double restart_base = 1.5, unsigned int restart_scale = 250){
     Search::Options search_options;
-    // Inherit from CombinedStop som kollar solution_found också.
-    search_options.stop = Driver::CombinedStop::create(fopt.node(), fopt.fail(), fopt.time(), fopt.restart_limit(), true);
+    search_options.stop = Driver::PBSCombinedStop::create(fopt.node(), fopt.fail(), fopt.time(), fopt.restart_limit(), true, search_finished);
     search_options.c_d = c_d;
     search_options.a_d = a_d;
 
@@ -98,6 +156,15 @@ Search::Options FznPbs::setupAssetSearchOptions(FlatZincSpace* fg, FlatZincOptio
     search_options.threads = threads;
     search_options.nogoods_limit = fopt.nogoods() ? fopt.nogoods_limit() : 0;
 
+    AST::Array* branch_strat = fg->solveAnnotations();
+    if (brancher != ""){
+        if (AST::Atom* s = dynamic_cast<AST::Atom*>(branch_strat)){
+            s->id = brancher;
+            branch_strat = dynamic_cast<AST::Array*>(s);
+        }
+    }
+
+
     // If not RBS but asset is to use it:
     if (fopt.restart() == RM_NONE && use_rbs){
         fopt.restart(RestartMode(restart_type));
@@ -105,28 +172,37 @@ Search::Options FznPbs::setupAssetSearchOptions(FlatZincSpace* fg, FlatZincOptio
         fopt.restart_scale(restart_scale);
         
         // Create the branchers. (Needs to be here due to non-rbs options and assets that may utilize rbs.)
-        fg->createBranchers(p, fg->solveAnnotations(), fopt, false, std::cerr);
-        fg->shrinkArrays(p);
+        fg->createBranchers(p, branch_strat, fopt, false, std::cerr);
+        if (asset == assets){
+            fg->shrinkArrays(p);
+        }
+       
 
         search_options.cutoff  = new Search::CutoffAppend(new Search::CutoffConstant(0), 1, Driver::createCutoff(fopt));
 
         // Set fopt back to RM_NONE.
         fopt.restart(RM_NONE);
     }
-    // If default option is RBS:
-    else if (fopt.restart() != RM_NONE && use_rbs){
+    // If default option is RBS but asset is not to use it:
+    else if (fopt.restart() != RM_NONE && !use_rbs){
         int restart_type = fopt.restart();
         fopt.restart(RM_NONE);
-        fg->createBranchers(p, fg->solveAnnotations(), fopt, false, std::cerr);
-        fg->shrinkArrays(p);
+
+        fg->createBranchers(p, branch_strat, fopt, false, std::cerr);
+        if (asset == assets){
+            fg->shrinkArrays(p);
+        }
+        
         fopt.restart(RestartMode(restart_type));
 
         search_options.cutoff = new Search::CutoffAppend(new Search::CutoffConstant(0), 1, Driver::createCutoff(fopt));
     }
-    // If not RBS:
+    // Else default:
     else{
-        fg->createBranchers(p, fg->solveAnnotations(), fopt, false, std::cerr);
-        fg->shrinkArrays(p);
+        fg->createBranchers(p, branch_strat, fopt, false, std::cerr);
+        if (asset == assets){
+            fg->shrinkArrays(p);
+        }
 
         search_options.cutoff = new Search::CutoffAppend(new Search::CutoffConstant(0), 1, Driver::createCutoff(fopt));
     }
@@ -139,55 +215,54 @@ Search::Options FznPbs::setupAssetSearchOptions(FlatZincSpace* fg, FlatZincOptio
 void FznPbs::setupPortfolioAssets(int asset, FlatZinc::Printer& p, FlatZincOptions& fopt) {
     // Set up the portfolio assets.
     asset_spaces[asset] = static_cast<FlatZinc::FlatZincSpace*>(fg->clone());
-    asset_spaces[asset]->pbs_control = shared_controller;
+    asset_spaces[asset]->pbs_current_best_sol = &best_sol;
 
-    // Set controller as shared pointer to every flatzincspace
     // Copy iv,bv,sv_introduced vector from fg, as it does not follow the clone.
-    asset_spaces[asset]->iv_introduced = std::vector<bool>(fg->iv_introduced);
-    asset_spaces[asset]->bv_introduced = std::vector<bool>(fg->bv_introduced);
-    asset_spaces[asset]->sv_introduced = std::vector<bool>(fg->sv_introduced);
+    asset_spaces[asset]->iv_introduced = fg->iv_introduced;
+    asset_spaces[asset]->bv_introduced = fg->bv_introduced;
+    asset_spaces[asset]->sv_introduced = fg->sv_introduced;
 
     Search::Options search_options;
-    switch (asset)
+    switch (Asset(asset))
     // Depending on what asset it is, set up the engine for the asset and the specific brancher.
     {
     // Base asset, is the same as the one given by the user.
-    case 0:
-        search_options = setupAssetSearchOptions(asset_spaces[asset], fopt, p, fopt.c_d(), fopt.a_d(), fopt.threads(), static_cast<bool>(fopt.restart()));
-        asset_engines.push_back(new BABEngine(asset_spaces[asset], search_options));
+    case USER:
+        search_options = setupAssetSearchOptions(asset_spaces[asset], fopt, p, fopt.c_d(), fopt.a_d(), fopt.threads(), "", asset, false);
+        asset_engines[asset] = new BABEngine(asset_spaces[asset], search_options);
         break;
     // Second asset (LNS for now)
-    case 1:
-        search_options = setupAssetSearchOptions(asset_spaces[asset], fopt, p, fopt.c_d(), fopt.a_d(), fopt.threads(), true, 1, 1.5, 250);
-        asset_engines.push_back(new RBSEngine(asset_spaces[asset], search_options));
+    case LNS_USER:
+        search_options = setupAssetSearchOptions(asset_spaces[asset], fopt, p, fopt.c_d(), fopt.a_d(), fopt.threads(), "", asset, true, 1, 1.5, 250);
+        asset_engines[asset] = new RBSEngine(asset_spaces[asset], search_options);
         break;
+    // Third asset opposite branchin (for now)
+    case USER_OPPOSITE:
+        search_options = setupAssetSearchOptions(asset_spaces[asset], fopt, p, fopt.c_d(), fopt.a_d(), fopt.threads(), "largest", asset, false);
+        asset_engines[asset] = new BABEngine(asset_spaces[asset], search_options);
+        break;
+
     default:
         break;
     }
 }
 
 // The controller that creates the workers and controls the searches.
-void FznPbs::controller(std::ostream& out, FlatZinc::Printer& p, FlatZincOptions& fopt, Support::Timer& t_total) {
+void FznPbs::controller(std::ostream& out, FlatZincOptions& fopt, Support::Timer& t_total) {
     // Make search space clone-able by calling status on it. If it fails, then the model is unsatisfiable.
     if (fg->status() == SS_FAILED) {
         out << "=====UNSATISFIABLE=====" << std::endl;
         return;
     }
 
-    fg->status();
-
-    // Set up each asset for the portfolio.
     for (int asset = 0; asset < assets; asset++) {
         setupPortfolioAssets(asset, p, fopt);
-    }
-
-    for (int asset = 0; asset < assets; asset++) {
         Gecode::Support::Thread::run(new SearchExecutor(*this, asset, out, fopt, p));
     }
     await_runners_completed();
 
     // Print the best or final solution:
-    FlatZincSpace* sol = asset_spaces[finished_asset];
+    FlatZincSpace* sol = best_sol.load();
     BaseEngine* se = asset_engines[finished_asset];
     if (sol) {
         sol->print(out, p);
@@ -207,10 +282,8 @@ void FznPbs::controller(std::ostream& out, FlatZinc::Printer& p, FlatZincOptions
 
     // If to print Statistics:
     if (fopt.mode() == SM_STAT) {
-        solutionStatistics(sol, se, assets_solve_times[finished_asset], assets_status_stats[finished_asset], assets_num_propagators[finished_asset], out, t_total);
+        solutionStatistics(sol, se, assets_solve_times[finished_asset], assets_status_stats[finished_asset], assets_num_propagators[finished_asset], out, t_total, fopt.fullStatistics());
     }
-
-    delete sol;
 }
 
 
@@ -221,7 +294,6 @@ void FznPbs::controller(std::ostream& out, FlatZinc::Printer& p, FlatZincOptions
 SearchExecutor::SearchExecutor(FznPbs& control, int asset, std::ostream& out, FlatZincOptions& fopt, FlatZinc::Printer& p)
     : control(control), fg(control.asset_spaces[asset]), se(control.asset_engines[asset]), out(out), fopt(fopt), p(p), asset(asset) {}
 
-// FlatZincSpace::constrain(const Space& s) { för att uppdatera bounds
 void SearchExecutor::run(void){
     // Start the search timer.
     control.assets_solve_times[asset].start();
@@ -236,18 +308,23 @@ void SearchExecutor::run(void){
         return;
     }
 
+    bool printAll = fopt.allSolutions();
 
     // Run the search
     FlatZincSpace* sol = nullptr;
+    bool solWasBestSol = false;
     while (FlatZincSpace* next_sol = se->next()) {
-        // delete sol;
+        // If last solution was not the current best solution, delete it.
+        if (!solWasBestSol && sol != nullptr){
+            delete sol;
+        }
         sol = next_sol;
+        solWasBestSol = false;
 
-        // If one asset finished, stop looking for more solutions.
-        if (control.solution_found.load()) {
+        // If one asset finished, stop looking for more solutions. TODO: Make sure that search did not finish due to LNS restart limit reached etc.
+        if (control.search_finished.load()) {
             break;
         }
-
 
         int optVar = sol->optVar();
         while(true){
@@ -258,9 +335,14 @@ void SearchExecutor::run(void){
                     // Critical Section
                     FlatZincSpace* expected = nullptr;
                     bool success = control.best_sol.compare_exchange_strong(expected, sol);
+                    if (printAll){
+                        sol->print(out, p);
+                        out << "----------" << std::endl;
+                    }
                     control.best_space_mutex.unlock();
-
+                    
                     if (success){
+                        solWasBestSol = true;
                         break;
                     }
             }
@@ -272,9 +354,15 @@ void SearchExecutor::run(void){
                         FlatZincSpace* expected = control.best_sol.load();
                         if (expected->iv[optVar].val() < sol->iv[optVar].val()){
                             bool success = control.best_sol.compare_exchange_strong(expected, sol);
+                            solWasBestSol = true;
                             assert(success);
                         }
+
                         // Memory leak from expected when swapped.
+                        // if (printAll){
+                            sol->print(out, p);
+                            out << "----------" << std::endl;
+                        // }
                         control.best_space_mutex.unlock();
                     }
                 }
@@ -285,9 +373,15 @@ void SearchExecutor::run(void){
                         FlatZincSpace* expected = control.best_sol.load();
                         if (expected->iv[optVar].val() > sol->iv[optVar].val()){
                             bool success = control.best_sol.compare_exchange_strong(expected, sol);
+                            solWasBestSol = true;
                             assert(success);
                         }
+                        // if (printAll){
+                            sol->print(out, p);
+                            out << "----------" << std::endl;
+                        // }
                         control.best_space_mutex.unlock();
+
                     }
                 }
                 break;
@@ -295,15 +389,12 @@ void SearchExecutor::run(void){
         }
     }
     control.assets_solve_times[asset].stop();
+    control.asset_best_solutions[asset] = sol;
 
-    // If optimal solution was found, print it out.
-    if (!control.solution_found.exchange(true)){
+    // The first asset to finish will be the final best solution.
+    if (!control.search_finished.exchange(true)){
         control.finished_asset = asset;
-        FlatZincSpace* old_space = control.asset_spaces[asset];
-        control.asset_spaces[asset] = static_cast<FlatZincSpace*>(sol->clone());
-        delete old_space;
     }
 
-    // delete sol;
     control.thread_done();
 }

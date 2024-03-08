@@ -1,3 +1,2 @@
 1. While inside step(), there is no way for an engine to know if another engine has finished, so it might get stuck.
 2. Memory leaks.
-3. Unsure if bounds are actually updated. 

@@ -249,6 +249,7 @@ namespace Gecode { namespace FlatZinc {
       Gecode::Driver::BoolOption        _interrupt; ///< Whether to catch SIGINT
       Gecode::Driver::DoubleOption      _step;        ///< Step option
       Gecode::Driver::BoolOption        _use_pbs; //< Whether to use PBS or default BAB ADDED
+      Gecode::Driver::BoolOption        _full_s; //< Whether to use PBS or default BAB ADDED
       Gecode::Driver::IntOption        _assets; //< How many assets to use for PBS
       //@}
 
@@ -291,6 +292,7 @@ namespace Gecode { namespace FlatZinc {
                  true),
       _step("step","step distance for float optimization",0.0),
       _use_pbs("use-pbs", "whether to use portfolio-based-search or not", false), // ADDED
+      _full_s("full-s", "whether to print statistics of all assets", false), // ADDED
       _assets("assets","the number of assets to use with portfolio-based search", 8), // ADDED
 
       _mode("mode","how to execute script",Gecode::SM_SOLUTION),
@@ -320,7 +322,7 @@ namespace Gecode { namespace FlatZinc {
       add(_step);
       add(_restart); add(_r_base); add(_r_scale); add(_r_limit);
       add(_nogoods); add(_nogoods_limit);
-      add(_mode); add(_stat); add(_use_pbs); add(_assets);
+      add(_mode); add(_stat); add(_use_pbs); add(_full_s); add(_assets);
       add(_output); 
 #ifdef GECODE_HAS_CPPROFILER
       add(_profiler);
@@ -347,6 +349,7 @@ namespace Gecode { namespace FlatZinc {
     }
 
     bool usePBS(void) const { return _use_pbs.value(); } // ADDED
+    bool fullStatistics(void) const { return _full_s.value(); } // ADDED
     int solutions(void) const { return _solutions.value(); }
     bool allSolutions(void) const { return _allSolutions.value(); }
     double threads(void) const { return _threads.value(); }
@@ -487,9 +490,6 @@ namespace Gecode { namespace FlatZinc {
     branchWithPlugin(AST::Node* ann);
   public:
 
-    // The controller, used for obtaining the current best solution.
-    std::shared_ptr<FznPbs> pbs_control;
-
     /// The integer variables
     Gecode::IntVarArray iv;
     /// The introduced integer variables
@@ -591,6 +591,8 @@ namespace Gecode { namespace FlatZinc {
     /// Step by which a next solution has to have lower cost
     Gecode::FloatNum step;
 #endif
+    // The current best solution, used in constrain between all assets in pbs. ADDED
+    std::atomic<FlatZincSpace*>* pbs_current_best_sol;
     /// Whether the introduced variables still need to be copied
     bool needAuxVars;
     /// Construct empty space
@@ -628,7 +630,7 @@ namespace Gecode { namespace FlatZinc {
     void run(std::ostream& out, const Printer& p,
              const FlatZincOptions& opt, Gecode::Support::Timer& t_total);
 
-    void runPBS(std::ostream& out, FlatZinc::Printer& p, FlatZincOptions& opt, Gecode::Support::Timer& t_total);
+    void runPBS(std::ostream& out, FlatZinc::Printer& p, FlatZincOptions& opt, Gecode::Support::Timer& t_total, const int assets);
 
     /// Produce output on \a out using \a p
     void print(std::ostream& out, const Printer& p) const;
@@ -802,7 +804,6 @@ namespace Gecode { namespace FlatZinc {
   FlatZincSpace* parse(std::istream& is,
                        Printer& p, std::ostream& err = std::cerr,
                        FlatZincSpace* fzs=nullptr, Rnd& rnd=defrnd);
-
 }}
 
 #endif
