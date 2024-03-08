@@ -164,21 +164,20 @@ Search::Options FznPbs::setupAssetSearchOptions(FlatZincSpace* fg, FlatZincOptio
         }
     }
 
+    if (fopt.interrupt()) Driver::CombinedStop::installCtrlHandler(true);
 
     // If not RBS but asset is to use it:
     if (fopt.restart() == RM_NONE && use_rbs){
         fopt.restart(RestartMode(restart_type));
         fopt.restart_base(restart_base);
         fopt.restart_scale(restart_scale);
-        
+
+        search_options.cutoff = new Search::CutoffAppend(new Search::CutoffConstant(0), 1, Driver::createCutoff(fopt));
         // Create the branchers. (Needs to be here due to non-rbs options and assets that may utilize rbs.)
         fg->createBranchers(p, branch_strat, fopt, false, std::cerr);
         if (asset == assets){
             fg->shrinkArrays(p);
         }
-       
-
-        search_options.cutoff  = new Search::CutoffAppend(new Search::CutoffConstant(0), 1, Driver::createCutoff(fopt));
 
         // Set fopt back to RM_NONE.
         fopt.restart(RM_NONE);
@@ -187,6 +186,7 @@ Search::Options FznPbs::setupAssetSearchOptions(FlatZincSpace* fg, FlatZincOptio
     else if (fopt.restart() != RM_NONE && !use_rbs){
         int restart_type = fopt.restart();
         fopt.restart(RM_NONE);
+        search_options.cutoff = new Search::CutoffAppend(new Search::CutoffConstant(0), 1, Driver::createCutoff(fopt));
 
         fg->createBranchers(p, branch_strat, fopt, false, std::cerr);
         if (asset == assets){
@@ -194,20 +194,15 @@ Search::Options FznPbs::setupAssetSearchOptions(FlatZincSpace* fg, FlatZincOptio
         }
         
         fopt.restart(RestartMode(restart_type));
-
-        search_options.cutoff = new Search::CutoffAppend(new Search::CutoffConstant(0), 1, Driver::createCutoff(fopt));
     }
     // Else default:
     else{
+        search_options.cutoff = new Search::CutoffAppend(new Search::CutoffConstant(0), 1, Driver::createCutoff(fopt));
         fg->createBranchers(p, branch_strat, fopt, false, std::cerr);
         if (asset == assets){
             fg->shrinkArrays(p);
         }
-
-        search_options.cutoff = new Search::CutoffAppend(new Search::CutoffConstant(0), 1, Driver::createCutoff(fopt));
     }
-
-    if (fopt.interrupt()) Driver::CombinedStop::installCtrlHandler(true);
 
     return search_options;
 }
