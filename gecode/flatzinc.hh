@@ -88,7 +88,7 @@
 #include <gecode/flatzinc/conexpr.hh>
 #include <gecode/flatzinc/ast.hh>
 #include <gecode/flatzinc/varspec.hh>
-#include <gecode/flatzinc/fzn-pbs.hh>
+#include <gecode/flatzinc/branchmodifier.hh>
 
 /**
  * \namespace Gecode::FlatZinc
@@ -100,7 +100,6 @@
  */
 
 namespace Gecode { namespace FlatZinc {
-  // class FznPbs;
   /**
    * \brief Output support class for %FlatZinc interpreter
    *
@@ -627,8 +626,8 @@ namespace Gecode { namespace FlatZinc {
     /// Post that integer variable \a var should be maximized
     void maximize(int var, bool isInt, AST::Array* annotation);
 
-    void run(std::ostream& out, const Printer& p,
-             const FlatZincOptions& opt, Gecode::Support::Timer& t_total);
+    void run(std::ostream& out, Printer& p,
+             FlatZincOptions& opt, Gecode::Support::Timer& t_total);
 
     void runPBS(std::ostream& out, FlatZinc::Printer& p, FlatZincOptions& opt, Gecode::Support::Timer& t_total, const int assets);
 
@@ -673,12 +672,13 @@ namespace Gecode { namespace FlatZinc {
      * The seed for random branchers is given by the \a seed parameter.
      *
      */
-    void createBranchers(Printer& p, AST::Node* ann,
-                         FlatZincOptions& opt, bool ignoreUnknown,
-                         std::ostream& err = std::cerr);
+    void createBranchers(Printer& p, AST::Node* ann, FlatZincOptions& opt, bool ignoreUnknown, BranchModifier& bm, std::ostream& err = std::cerr);
 
     /// Return the solve item annotations
     AST::Array* solveAnnotations(void) const;
+
+    // Set the solve item annotations for a space.
+    void setSolveAnnotations(AST::Array* solveAnnotations);
 
     /// Information for printing branches
     BranchInformation branchInfo;

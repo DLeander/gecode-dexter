@@ -36,7 +36,6 @@
 
 #include <gecode/flatzinc/plugin.hh>
 #include <gecode/flatzinc.hh>
-#include <gecode/flatzinc/fzn-pbs.hh>
 
 using namespace std;
 using namespace Gecode;
@@ -77,7 +76,6 @@ int main(int argc, char** argv) {
       else{
         exit(EXIT_FAILURE);
       }
-
       delete fg;
     }
     else {
@@ -88,9 +86,6 @@ int main(int argc, char** argv) {
         fg = FlatZinc::parse(filename, p, std::cerr, nullptr, rnd);
       }
       if (fg) {
-        fg->createBranchers(p, fg->solveAnnotations(), opt,
-                            false, std::cerr);
-        fg->shrinkArrays(p);
         if (opt.output()) {
           std::ofstream os(opt.output());
           if (!os.good()) {
