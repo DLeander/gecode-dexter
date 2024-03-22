@@ -89,6 +89,7 @@
 #include <gecode/flatzinc/ast.hh>
 #include <gecode/flatzinc/varspec.hh>
 #include <gecode/flatzinc/branchmodifier.hh>
+#include <gecode/flatzinc/lnsstrategies.hh>
 
 /**
  * \namespace Gecode::FlatZinc
@@ -435,9 +436,15 @@ namespace Gecode { namespace FlatZinc {
       MIN, //< Solve as minimization problem
       MAX  //< Solve as maximization problem
     };
+    enum LNSType {
+      RANDOM, //< Standard LNS
+      PG //< Propagation Guided
+    };
+
     int getintVarCount() const { return intVarCount; }
     int getboolVarCount() const { return boolVarCount; }
     int getsetVarCount() const { return setVarCount; }
+    void setLNSType(LNSType lns_type) { _lnsType = lns_type; }
   protected:
     /// Initialisation data (only used for posting constraints)
     FlatZincSpaceInitData* _initData;
@@ -470,6 +477,10 @@ namespace Gecode { namespace FlatZinc {
     /// Annotations on the solve item
     AST::Array* _solveAnnotations;
 
+    LNSType _lnsType;
+
+    LNStrategies _lnsStrategy;
+
     /// Copy constructor
     FlatZincSpace(FlatZincSpace&);
   private:
@@ -489,6 +500,8 @@ namespace Gecode { namespace FlatZinc {
     branchWithPlugin(AST::Node* ann);
   public:
 
+    // std::vector<IntVar> 
+
     /// The integer variables
     Gecode::IntVarArray iv;
     /// The introduced integer variables
@@ -496,6 +509,8 @@ namespace Gecode { namespace FlatZinc {
 
     /// The integer variables used in LNS
     Gecode::IntVarArray iv_lns;
+
+    int num_non_introduced_vars;
 
     /* === Experimental `on_restart` support === */
     class OnRestartHandle : public SharedHandle {
@@ -673,6 +688,11 @@ namespace Gecode { namespace FlatZinc {
      *
      */
     void createBranchers(Printer& p, AST::Node* ann, FlatZincOptions& opt, bool ignoreUnknown, BranchModifier& bm, std::ostream& err = std::cerr);
+
+    /// @brief If relax and reconstruct is not set and asset in PBS is to use LNS, then select candidate variables to use in LNS given constraints of the model.
+    /// @return arguments for createBranchers method if LNS is to be used without relax and reconstruct. 
+    void getPBSLNSBestArgs();
+    void storeConstraintInformation(std::vector<ConExpr*>& ces);
 
     /// Return the solve item annotations
     AST::Array* solveAnnotations(void) const;

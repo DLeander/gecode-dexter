@@ -5,7 +5,7 @@
 // #include <gecode/flatzinc/plugin.hh>
 #include <gecode/search.hh>
 #include <gecode/flatzinc/branch.hh>
-#include <gecode/flatzinc/search-engine-base.hh>
+#include <gecode/flatzinc/searchenginebase.hh>
 #include <gecode/flatzinc/branchmodifier.hh>
 
 #include <array>

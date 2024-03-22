@@ -812,6 +812,7 @@ namespace Gecode { namespace FlatZinc {
       branchInfo = f.branchInfo;
       iv.update(*this, f.iv);
       iv_lns.update(*this, f.iv_lns);
+      num_non_introduced_vars = f.num_non_introduced_vars;
       intVarCount = f.intVarCount;
 
       on_restart_iv.update(*this, f.on_restart_iv);
@@ -1035,6 +1036,8 @@ namespace Gecode { namespace FlatZinc {
 
   void
   FlatZincSpace::postConstraints(std::vector<ConExpr*>& ces) {
+    storeConstraintInformation(ces);
+
     ConExprOrder ceo;
     std::sort(ces.begin(), ces.end(), ceo);
 
@@ -1065,6 +1068,64 @@ namespace Gecode { namespace FlatZinc {
         }
       }
   }
+
+  void FlatZincSpace::storeConstraintInformation(std::vector<ConExpr*>& ces){
+    num_non_introduced_vars = 0;
+    // The best vars. The vars used in _lns if relax and reconstruct is not used.
+    AST::Array* best_vars = nullptr;
+    AST::Array* temp_vars = nullptr;
+    // The current best value given constraint times variable value. Used to select the best combination for LNS without relax and reconstruct.
+    int currentBest = 0;
+    int temp = 0;
+    for (ConExpr* ce : ces){
+      // If a better candidate for LNS has been found, update the best_vars and currentBest variables.
+      if (temp > currentBest){
+        currentBest = temp;
+        best_vars = temp_vars;
+      }
+
+      // Go through every possible constraint and find the best fit for LNS.
+      if (ce->id == "fzn_all_different_int" || ce->id == "fzn_alldifferent_except_0"){
+        temp = 10*ce->args->a[0]->getArray()->a.size();
+        temp_vars = ce->args->a[0]->getArray();
+        num_non_introduced_vars += ce->args->a[0]->getArray()->a.size();
+      }
+      // TODO: ADD ALL CONSTRAINTS AND COME UP WITH VALUES TO DECIDE WHAT CONSTRAINT-VARIABLES TO USE FOR LNS.
+      
+    }
+
+    if (best_vars){
+      iv_lns = IntVarArray(*this, best_vars->a.size());
+      for (long unsigned int i = 0; i < best_vars->a.size(); i++){
+        iv_lns[i] = iv[best_vars->a[i]->getIntVar()];
+      }
+      _lns = 60;
+    }
+    
+  }
+
+  // void FlatZincSpace::getPBSLNSBestArgs() {
+  //   int start = 0;
+  //   int finish = 0;
+  //   for (long unsigned int i = 0; i < constraintNamesPerVariable.size(); i++){
+  //     if (constraintNamesPerVariable[i] == "fzn_all_different_int") {
+  //       finish = start + constraintNamesPerVariableChunks[i];
+  //       break;
+  //     }
+  //     start = constraintNamesPerVariableChunks[i];
+      
+  //   }
+
+  //   iv_lns = IntVarArray(*this, finish-start);
+  //   int iv_lns_index = 0;
+  //   for (int j = start; j < finish; j++){
+  //     iv_lns[iv_lns_index] = iv[j];
+  //     iv_lns_index++;
+  //   }
+
+  //   // TODO: Not have constant.
+  //   _lns = 60;
+  // }
 
   void
   FlatZincSpace::createBranchers(Printer&p, AST::Node* ann, FlatZincOptions& opt, bool ignoreUnknown, BranchModifier& bm, std::ostream& err) {
@@ -1110,7 +1171,7 @@ namespace Gecode { namespace FlatZinc {
       fv_searched[i] = false;
 #endif
 
-    _lns = 0;
+    // _lns = 0;
     if (ann) {
       std::vector<AST::Node*> flatAnn;
       if (ann->isArray()) {
@@ -1140,10 +1201,9 @@ namespace Gecode { namespace FlatZinc {
           opt.restart_scale(call->args->getInt());
         } else if (flatAnn[i]->isCall("restart_none")) {
           opt.restart(RM_NONE);
-        } else if (flatAnn[i]->isCall("relax_and_reconstruct")) {
+        } else if (flatAnn[i]->isCall("relax_and_reconstruct") && _lnsType == RANDOM) {
           if (_lns != 0)
-            throw FlatZinc::Error("FlatZinc",
-            "Only one relax_and_reconstruct annotation allowed");
+            throw FlatZinc::Error("FlatZinc", "Only one relax_and_reconstruct annotation allowed");
           AST::Call *call = flatAnn[i]->getCall("relax_and_reconstruct");
           AST::Array* args;
           if (call->args->getArray()->a.size()==2) {
@@ -2262,26 +2322,21 @@ namespace Gecode { namespace FlatZinc {
       }
     }
 
-    if ((mi.type() == MetaInfo::RESTART) && (mi.restart() != 0) &&
-        (_lns > 0) && (mi.last()==nullptr) && (_lnsInitialSolution.size()>0)) {
-      for (unsigned int i=iv_lns.size(); i--;) {
-        if (_random(99U) <= _lns) {
-          rel(*this, iv_lns[i], IRT_EQ, _lnsInitialSolution[i]);
-        }
+    // Depending on the type of LNS, apply it and return false.
+    switch (_lnsType) {
+      case RANDOM:
+      {
+        return _lnsStrategy.randomLNS(*this, mi, _lnsInitialSolution, _lns, iv_lns, _random);
       }
-      return false;
-    } else if ((mi.type() == MetaInfo::RESTART) && (mi.restart() != 0) &&
-               (_lns > 0) && mi.last()) {
-      const FlatZincSpace& last =
-        static_cast<const FlatZincSpace&>(*mi.last());
-      for (unsigned int i=iv_lns.size(); i--;) {
-        if (_random(99U) <= _lns) {
-          rel(*this, iv_lns[i], IRT_EQ, last.iv_lns[i]);
-        }
+      case PG:
+      {
+        return _lnsStrategy.pgLNS(*this, mi, iv, num_non_introduced_vars, _random);
       }
-      return false;
+      default:
+      {
+        return true;
+      }
     }
-    return true;
   }
 
   Space*

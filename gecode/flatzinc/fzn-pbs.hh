@@ -26,7 +26,8 @@ public:
     enum Asset {
       USER, //< First asset is the user asset.
       LNS_USER, //< Second asset is the user asset with LNS.
-      USER_OPPOSITE  //< Third asset is the user asset with opposite branching.
+      USER_OPPOSITE,  //< Third asset is the user asset with opposite branching.
+      PGLNS //< Propagation guided LNS.
     };
     // Methods
     FznPbs(FlatZinc::FlatZincSpace* fg, const int assets, Printer& p); // constructor
@@ -83,7 +84,7 @@ private:
     // Gives the statistics of the solution. (TODO: Make it possible to output from all engines and/or spaces)
     void solutionStatistics(FlatZincSpace* fg, BaseEngine* se, Support::Timer t_solve, StatusStatistics sstat, int n_p, std::ostream& out, Support::Timer& t_total, bool allAssetStat);
     // Set up the options for a search engine.
-    Search::Options setupAssetSearchOptions(FlatZincSpace* fg, FlatZincOptions& fopt, FlatZinc::Printer& p, unsigned int c_d, unsigned int a_d, double threads, int asset, BranchModifier& bm, bool use_rbs, unsigned int restart_type, double restart_base, unsigned int restart_scale);
+    Search::Options setupAssetSearchOptions(FlatZincSpace* fg, FlatZincOptions& fopt, FlatZinc::Printer& p, unsigned int c_d, unsigned int a_d, double threads, int asset, BranchModifier& bm, bool use_rbs, FlatZinc::FlatZincSpace::LNSType lns_type, unsigned int restart_type, double restart_base, unsigned int restart_scale);
 
     // Variables
     /// Flag indicating some thread is waiting on the execution to be done.

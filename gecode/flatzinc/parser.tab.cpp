@@ -634,6 +634,10 @@ namespace Gecode { namespace FlatZinc {
 
     if (pp.yyscanner)
       yylex_destroy(pp.yyscanner);
+
+    // Set the constraints in fg.
+    // pp.fg->usedConstraints = pp.constraints;
+    // pp.fg->usedDomainConstraints = pp.domainConstraints;
     return pp.hadError ? NULL : pp.fg;
   }
 }}
@@ -2310,20 +2314,18 @@ yyreduce:
         ParserState* pp = static_cast<ParserState*>(parm);
         bool print = (yyvsp[-1].argVec) != NULL && (yyvsp[-1].argVec)->hasAtom("output_var");
         bool funcDep = (yyvsp[-1].argVec) != NULL && (yyvsp[-1].argVec)->hasAtom("is_defined_var");
-        yyassert(pp,
-          pp->symbols.put((yyvsp[-2].sValue), se_iv(pp->intvars.size())),
-          "Duplicate symbol");
+        yyassert(pp, pp->symbols.put((yyvsp[-2].sValue), se_iv(pp->intvars.size())), "Duplicate symbol");
         if (print) {
           pp->output(std::string((yyvsp[-2].sValue)), new AST::IntVar(pp->intvars.size()));
         }
         if ((yyvsp[0].oArg)()) {
           AST::Node* arg = (yyvsp[0].oArg).some();
           if (arg->isInt()) {
-            pp->intvars.push_back(varspec((yyvsp[-2].sValue),
-              new IntVarSpec(arg->getInt(),!print,funcDep)));
+            pp->intvars.push_back(varspec((yyvsp[-2].sValue), new IntVarSpec(arg->getInt(),!print,funcDep)));
+            // pp->intvartoconstraint.push_back(yyvsp[-1].sValue);
           } else if (arg->isIntVar()) {
-            pp->intvars.push_back(varspec((yyvsp[-2].sValue),
-              new IntVarSpec(Alias(arg->getIntVar()),!print,funcDep)));
+            pp->intvars.push_back(varspec((yyvsp[-2].sValue), new IntVarSpec(Alias(arg->getIntVar()),!print,funcDep)));
+            // pp->intvartoconstraint.push_back(yyvsp[-1].sValue);
           } else {
             yyassert(pp, false, "Invalid var int initializer");
           }
@@ -2332,8 +2334,8 @@ yyreduce:
                                 new AST::IntVar(pp->intvars.size()-1), (yyvsp[-4].oSet));
           delete arg;
         } else {
-          pp->intvars.push_back(varspec((yyvsp[-2].sValue),
-            new IntVarSpec((yyvsp[-4].oSet),!print,funcDep)));
+          pp->intvars.push_back(varspec((yyvsp[-2].sValue), new IntVarSpec((yyvsp[-4].oSet),!print,funcDep)));
+          // pp->intvartoconstraint.push_back(yyvsp[-1].sValue);
         }
         delete (yyvsp[-1].argVec); free((yyvsp[-2].sValue));
       }
@@ -2537,6 +2539,7 @@ yyreduce:
                       ivsv->introduced = false;
                     vars[i] = pp->intvars.size();
                     pp->intvars.push_back(varspec((yyvsp[-2].sValue), ivsv));
+                    // pp->intvartoconstraint.push_back(yyvsp[-1].sValue);
                   }
                   if (!pp->hadError && (yyvsp[-4].oSet)()) {
                     Option<AST::SetLit*> opt =
@@ -2557,6 +2560,7 @@ yyreduce:
                   IntVarSpec* ispec = new IntVarSpec(dom,!print,false);
                   vars[i] = pp->intvars.size();
                   pp->intvars.push_back(varspec((yyvsp[-2].sValue), ispec));
+                  // pp->intvartoconstraint.push_back(yyvsp[-1].sValue);
                 }
               }
               if ((yyvsp[-4].oSet)()) delete (yyvsp[-4].oSet).some();
@@ -3404,16 +3408,14 @@ yyreduce:
                 ivs1->upperBound = Option<AST::SetLit*>::none();
               }
             }
-          } else if ( (cid=="int_le" || cid=="int_lt" || cid=="int_ge" || cid=="int_gt"  ||
-                       cid=="int_eq" || cid=="int_ne") &&
-                      ((yyvsp[-2].argVec)->a[0]->isInt() || (yyvsp[-2].argVec)->a[1]->isInt()) ) {
+          } else if ( (cid=="int_le" || cid=="int_lt" || cid=="int_ge" || cid=="int_gt"  || cid=="int_eq" || cid=="int_ne") && ((yyvsp[-2].argVec)->a[0]->isInt() || (yyvsp[-2].argVec)->a[1]->isInt()) ) {
             pp->domainConstraints.push_back(new ConExpr((yyvsp[-4].sValue), (yyvsp[-2].argVec), (yyvsp[0].argVec)));
           } else if ( cid=="set_in" && ((yyvsp[-2].argVec)->a[0]->isSet() || (yyvsp[-2].argVec)->a[1]->isSet()) ) {
             pp->domainConstraints.push_back(new ConExpr((yyvsp[-4].sValue), (yyvsp[-2].argVec), (yyvsp[0].argVec)));
           } else {
             pp->constraints.push_back(new ConExpr((yyvsp[-4].sValue), (yyvsp[-2].argVec), (yyvsp[0].argVec)));
           }
-        }
+        } 
         free((yyvsp[-4].sValue));
       }
 #line 3421 "gecode/flatzinc/parser.tab.cpp"
@@ -3838,8 +3840,7 @@ yyreduce:
             break;
           case ST_INT:
           case ST_FLOAT:
-            pp->intvars.push_back(varspec("OBJ_CONST_INTRODUCED",
-              new IntVarSpec(0,true,false)));
+            pp->intvars.push_back(varspec("OBJ_CONST_INTRODUCED", new IntVarSpec(0,true,false)));
             (yyval.iValue) = pp->intvars.size()-1;
             break;
           default:
@@ -3864,8 +3865,7 @@ yyreduce:
 #line 2046 "./gecode/flatzinc/parser.yxx"
       {
         ParserState *pp = static_cast<ParserState*>(parm);
-        pp->intvars.push_back(varspec("OBJ_CONST_INTRODUCED",
-          new IntVarSpec(0,true,false)));
+        pp->intvars.push_back(varspec("OBJ_CONST_INTRODUCED", new IntVarSpec(0,true,false)));
         (yyval.iValue) = pp->intvars.size()-1;
       }
 #line 3873 "gecode/flatzinc/parser.tab.cpp"
@@ -3875,8 +3875,7 @@ yyreduce:
 #line 2053 "./gecode/flatzinc/parser.yxx"
       {
         ParserState *pp = static_cast<ParserState*>(parm);
-        pp->intvars.push_back(varspec("OBJ_CONST_INTRODUCED",
-          new IntVarSpec(0,true,false)));
+        pp->intvars.push_back(varspec("OBJ_CONST_INTRODUCED", new IntVarSpec(0,true,false)));
         (yyval.iValue) = pp->intvars.size()-1;
       }
 #line 3884 "gecode/flatzinc/parser.tab.cpp"

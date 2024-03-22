@@ -817,11 +817,11 @@ endif
 # FLATZINC
 #
 
-FLATZINCSRC0 = flatzinc.cpp registry.cpp branch.cpp fzn-pbs.cpp branchmodifier.cpp
+FLATZINCSRC0 = flatzinc.cpp registry.cpp branch.cpp fzn-pbs.cpp branchmodifier.cpp lnsstrategies.cpp
 FLATZINC_GENSRC0 = parser.tab.cpp lexer.yy.cpp
 FLATZINCHDR0 = ast.hh conexpr.hh option.hh parser.hh \
 	plugin.hh registry.hh symboltable.hh varspec.hh \
-	branch.hh branch.hpp lastval.hh complete.hh fzn-pbs.hh searchenginebase.hh branchmodifier.hh
+	branch.hh branch.hpp lastval.hh complete.hh fzn-pbs.hh searchenginebase.hh branchmodifier.hh lnsstrategies.hh
 
 FLATZINCSRC = $(FLATZINCSRC0:%=gecode/flatzinc/%)
 FLATZINC_GENSRC = $(FLATZINC_GENSRC0:%=gecode/flatzinc/%)

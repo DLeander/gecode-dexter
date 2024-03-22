@@ -1,3 +1,4 @@
-output ["perm = ",showDzn(perm),";\n"];
-set of int: N = 1..4;
+output ["perm = ",showDzn(perm),";\n","x = ",showDzn(x),";\n"];
+int: x;
+set of int: N = 1..12;
 array [N] of int: perm;

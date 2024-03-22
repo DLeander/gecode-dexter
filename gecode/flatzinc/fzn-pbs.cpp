@@ -133,7 +133,7 @@ void FznPbs::solutionStatistics(FlatZincSpace* fg, BaseEngine* se, Support::Time
 }
 
 // Set up the search options for the different searches.
-Search::Options FznPbs::setupAssetSearchOptions(FlatZincSpace* fg, FlatZincOptions& fopt, FlatZinc::Printer& p, unsigned int c_d, unsigned int a_d, double threads, int asset, BranchModifier& bm, bool use_rbs = false, unsigned int restart_type = 1, double restart_base = 1.5, unsigned int restart_scale = 250){
+Search::Options FznPbs::setupAssetSearchOptions(FlatZincSpace* fg, FlatZincOptions& fopt, FlatZinc::Printer& p, unsigned int c_d, unsigned int a_d, double threads, int asset, BranchModifier& bm, bool use_rbs = false, FlatZinc::FlatZincSpace::LNSType lns_type = FlatZinc::FlatZincSpace::LNSType::RANDOM, unsigned int restart_type = 1, double restart_base = 1.5, unsigned int restart_scale = 250){
     
     Search::Options search_options;
     search_options.stop = Driver::PBSCombinedStop::create(fopt.node(), fopt.fail(), fopt.time(), fopt.restart_limit(), true, search_finished);
@@ -159,6 +159,11 @@ Search::Options FznPbs::setupAssetSearchOptions(FlatZincSpace* fg, FlatZincOptio
     search_options.nogoods_limit = fopt.nogoods() ? fopt.nogoods_limit() : 0;
 
     if (fopt.interrupt()) Driver::PBSCombinedStop::installCtrlHandler(true);
+
+    // Set the type of LNS in the FlatZinc space given parameter.
+    if (use_rbs){
+        fg->setLNSType(lns_type);
+    }
 
     // If not RBS but asset is to use it:
     if (fopt.restart() == RM_NONE && use_rbs){
@@ -214,9 +219,13 @@ void FznPbs::setupPortfolioAssets(int asset, FlatZinc::Printer& p, FlatZincOptio
     // Base asset, the same as the one given by the user.
     case USER:
     {
+        // BranchModifier bm(false);
+        // search_options = setupAssetSearchOptions(asset_spaces[asset], fopt, p, fopt.c_d(), fopt.a_d(), fopt.threads(), asset, bm);
+        // asset_engines[asset] = new BABEngine(asset_spaces[asset], search_options);
+        // break;
         BranchModifier bm(false);
-        search_options = setupAssetSearchOptions(asset_spaces[asset], fopt, p, fopt.c_d(), fopt.a_d(), fopt.threads(), asset, bm);
-        asset_engines[asset] = new BABEngine(asset_spaces[asset], search_options);
+        search_options = setupAssetSearchOptions(asset_spaces[asset], fopt, p, fopt.c_d(), fopt.a_d(), fopt.threads(), asset, bm, true, FlatZinc::FlatZincSpace::LNSType::PG);
+        asset_engines[asset] = new RBSEngine(asset_spaces[asset], search_options);
         break;
     }
     // Second asset, LNS with base options. (LNS for now)
@@ -234,6 +243,14 @@ void FznPbs::setupPortfolioAssets(int asset, FlatZinc::Printer& p, FlatZincOptio
         BranchModifier bm(true);
         search_options = setupAssetSearchOptions(asset_spaces[asset], fopt, p, fopt.c_d(), fopt.a_d(), fopt.threads(), asset, bm);
         asset_engines[asset] = new BABEngine(asset_spaces[asset], search_options);
+        break;
+    }
+    // Propagation Guided LNS.
+    case PGLNS:
+    {
+        BranchModifier bm(false);
+        search_options = setupAssetSearchOptions(asset_spaces[asset], fopt, p, fopt.c_d(), fopt.a_d(), fopt.threads(), asset, bm, true, FlatZinc::FlatZincSpace::LNSType::PG);
+        asset_engines[asset] = new RBSEngine(asset_spaces[asset], search_options);
         break;
     }
     default:
@@ -276,7 +293,7 @@ void FznPbs::controller(std::ostream& out, FlatZincOptions& fopt, Support::Timer
         out << "=====UNKNOWN=====" << std::endl;
     }
 
-    // If to print Statistics:
+    // If print Statistics:
     if (fopt.mode() == SM_STAT) {
         solutionStatistics(sol, se, asset_solve_times[finished_asset], asset_status_stats[finished_asset], asset_num_propagators[finished_asset], out, t_total, fopt.fullStatistics());
     }
@@ -347,6 +364,7 @@ void AssetExecutor::run(void){
                     }
             }
             else{
+                // TODO: Does not handle float yet.
                 if (control.method == FlatZincSpace::MAX){
                     if (control_best_sol->iv[optVar].val() < sol->iv[optVar].val()){
                         control.best_space_mutex.lock();
