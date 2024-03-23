@@ -635,9 +635,6 @@ namespace Gecode { namespace FlatZinc {
     if (pp.yyscanner)
       yylex_destroy(pp.yyscanner);
 
-    // Set the constraints in fg.
-    // pp.fg->usedConstraints = pp.constraints;
-    // pp.fg->usedDomainConstraints = pp.domainConstraints;
     return pp.hadError ? NULL : pp.fg;
   }
 }}
@@ -2322,10 +2319,8 @@ yyreduce:
           AST::Node* arg = (yyvsp[0].oArg).some();
           if (arg->isInt()) {
             pp->intvars.push_back(varspec((yyvsp[-2].sValue), new IntVarSpec(arg->getInt(),!print,funcDep)));
-            // pp->intvartoconstraint.push_back(yyvsp[-1].sValue);
           } else if (arg->isIntVar()) {
             pp->intvars.push_back(varspec((yyvsp[-2].sValue), new IntVarSpec(Alias(arg->getIntVar()),!print,funcDep)));
-            // pp->intvartoconstraint.push_back(yyvsp[-1].sValue);
           } else {
             yyassert(pp, false, "Invalid var int initializer");
           }
@@ -2335,7 +2330,6 @@ yyreduce:
           delete arg;
         } else {
           pp->intvars.push_back(varspec((yyvsp[-2].sValue), new IntVarSpec((yyvsp[-4].oSet),!print,funcDep)));
-          // pp->intvartoconstraint.push_back(yyvsp[-1].sValue);
         }
         delete (yyvsp[-1].argVec); free((yyvsp[-2].sValue));
       }
@@ -2539,7 +2533,6 @@ yyreduce:
                       ivsv->introduced = false;
                     vars[i] = pp->intvars.size();
                     pp->intvars.push_back(varspec((yyvsp[-2].sValue), ivsv));
-                    // pp->intvartoconstraint.push_back(yyvsp[-1].sValue);
                   }
                   if (!pp->hadError && (yyvsp[-4].oSet)()) {
                     Option<AST::SetLit*> opt =
@@ -2560,7 +2553,6 @@ yyreduce:
                   IntVarSpec* ispec = new IntVarSpec(dom,!print,false);
                   vars[i] = pp->intvars.size();
                   pp->intvars.push_back(varspec((yyvsp[-2].sValue), ispec));
-                  // pp->intvartoconstraint.push_back(yyvsp[-1].sValue);
                 }
               }
               if ((yyvsp[-4].oSet)()) delete (yyvsp[-4].oSet).some();

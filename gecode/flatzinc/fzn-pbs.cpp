@@ -219,13 +219,9 @@ void FznPbs::setupPortfolioAssets(int asset, FlatZinc::Printer& p, FlatZincOptio
     // Base asset, the same as the one given by the user.
     case USER:
     {
-        // BranchModifier bm(false);
-        // search_options = setupAssetSearchOptions(asset_spaces[asset], fopt, p, fopt.c_d(), fopt.a_d(), fopt.threads(), asset, bm);
-        // asset_engines[asset] = new BABEngine(asset_spaces[asset], search_options);
-        // break;
         BranchModifier bm(false);
-        search_options = setupAssetSearchOptions(asset_spaces[asset], fopt, p, fopt.c_d(), fopt.a_d(), fopt.threads(), asset, bm, true, FlatZinc::FlatZincSpace::LNSType::PG);
-        asset_engines[asset] = new RBSEngine(asset_spaces[asset], search_options);
+        search_options = setupAssetSearchOptions(asset_spaces[asset], fopt, p, fopt.c_d(), fopt.a_d(), fopt.threads(), asset, bm);
+        asset_engines[asset] = new BABEngine(asset_spaces[asset], search_options);
         break;
     }
     // Second asset, LNS with base options. (LNS for now)
@@ -252,6 +248,7 @@ void FznPbs::setupPortfolioAssets(int asset, FlatZinc::Printer& p, FlatZincOptio
         search_options = setupAssetSearchOptions(asset_spaces[asset], fopt, p, fopt.c_d(), fopt.a_d(), fopt.threads(), asset, bm, true, FlatZinc::FlatZincSpace::LNSType::PG);
         asset_engines[asset] = new RBSEngine(asset_spaces[asset], search_options);
         break;
+        
     }
     default:
         break;

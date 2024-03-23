@@ -1071,9 +1071,9 @@ namespace Gecode { namespace FlatZinc {
 
   void FlatZincSpace::storeConstraintInformation(std::vector<ConExpr*>& ces){
     num_non_introduced_vars = 0;
-    // The best vars. The vars used in _lns if relax and reconstruct is not used.
-    AST::Array* best_vars = nullptr;
-    AST::Array* temp_vars = nullptr;
+    // The best vars (given arguments to constraints). The vars used in _lns if relax and reconstruct is not used.
+    std::vector<AST::Array*> best_vars_vec;
+    std::vector<AST::Array*> temp_vars_vec;
     // The current best value given constraint times variable value. Used to select the best combination for LNS without relax and reconstruct.
     int currentBest = 0;
     int temp = 0;
@@ -1081,51 +1081,189 @@ namespace Gecode { namespace FlatZinc {
       // If a better candidate for LNS has been found, update the best_vars and currentBest variables.
       if (temp > currentBest){
         currentBest = temp;
-        best_vars = temp_vars;
+        best_vars_vec = temp_vars_vec;
+        temp_vars_vec.clear();
       }
 
-      // Go through every possible constraint and find the best fit for LNS.
+      // Go through every constraint in the model and find the best fit for LNS.
       if (ce->id == "fzn_all_different_int" || ce->id == "fzn_alldifferent_except_0"){
-        temp = 10*ce->args->a[0]->getArray()->a.size();
-        temp_vars = ce->args->a[0]->getArray();
-        num_non_introduced_vars += ce->args->a[0]->getArray()->a.size();
+        temp_vars_vec.push_back(ce->args->a[0]->getArray());
+        temp = 1000 + temp_vars_vec[0]->a.size();
+        num_non_introduced_vars += temp_vars_vec[0]->a.size();
       }
-      // TODO: ADD ALL CONSTRAINTS AND COME UP WITH VALUES TO DECIDE WHAT CONSTRAINT-VARIABLES TO USE FOR LNS.
-      
+      else if (ce->id == "fzn_bin_packing_load"){
+        temp_vars_vec.push_back(ce->args->a[0]->getArray());
+        temp_vars_vec.push_back(ce->args->a[1]->getArray());
+        temp = 1000 + temp_vars_vec[0]->a.size() + temp_vars_vec[1]->a.size();
+        num_non_introduced_vars += temp_vars_vec[0]->a.size() + temp_vars_vec[1]->a.size();
+      }
+      else if (ce->id == "fzn_bin_packing_capa" || ce->id == "fzn_bin_packing"){
+        temp_vars_vec.push_back(ce->args->a[1]->getArray());
+        temp = 1000 + temp_vars_vec[0]->a.size();
+        num_non_introduced_vars += temp_vars_vec[0]->a.size();
+      }
+      else if (ce->id == "fzn_circuit"){
+        temp_vars_vec.push_back(ce->args->a[0]->getArray());
+        temp = 1000 + temp_vars_vec[0]->a.size();
+        num_non_introduced_vars += temp_vars_vec[0]->a.size();
+      }
+      else if (ce->id == "fzn_cumulatives"){
+        temp_vars_vec.push_back(ce->args->a[0]->getArray());
+        temp_vars_vec.push_back(ce->args->a[1]->getArray());
+        temp_vars_vec.push_back(ce->args->a[2]->getArray());
+        temp_vars_vec.push_back(ce->args->a[3]->getArray());
+        temp = 1000 + temp_vars_vec[0]->a.size() + temp_vars_vec[1]->a.size() + temp_vars_vec[2]->a.size() + temp_vars_vec[3]->a.size();
+        num_non_introduced_vars += temp_vars_vec[0]->a.size() + temp_vars_vec[1]->a.size() + temp_vars_vec[2]->a.size() + temp_vars_vec[3]->a.size();  
+      }
+      else if (ce->id == "fzn_cumulative_opt" || ce->id == "cumulative"){
+        temp_vars_vec.push_back(ce->args->a[0]->getArray());
+        temp_vars_vec.push_back(ce->args->a[1]->getArray());
+        temp_vars_vec.push_back(ce->args->a[2]->getArray());
+        temp = 1000 + temp_vars_vec[0]->a.size() + temp_vars_vec[1]->a.size() + temp_vars_vec[2]->a.size();
+        num_non_introduced_vars += temp_vars_vec[0]->a.size() + temp_vars_vec[1]->a.size() + temp_vars_vec[2]->a.size();  
+      }
+      else if (ce->id == "fzn_diffn"){
+        temp_vars_vec.push_back(ce->args->a[0]->getArray());
+        temp_vars_vec.push_back(ce->args->a[1]->getArray());
+        temp_vars_vec.push_back(ce->args->a[2]->getArray());
+        temp_vars_vec.push_back(ce->args->a[3]->getArray());
+        temp = 1000 + temp_vars_vec[0]->a.size() + temp_vars_vec[1]->a.size() + temp_vars_vec[2]->a.size() + temp_vars_vec[3]->a.size();
+        num_non_introduced_vars += temp_vars_vec[0]->a.size() + temp_vars_vec[1]->a.size() + temp_vars_vec[2]->a.size() + temp_vars_vec[3]->a.size();  
+      }
+      else if (ce->id == "fzn_global_cardinality_closed" || ce->id == "fzn_global_cardinality"){
+        temp_vars_vec.push_back(ce->args->a[0]->getArray());
+        temp_vars_vec.push_back(ce->args->a[2]->getArray());
+        temp = 1000 + temp_vars_vec[0]->a.size() + temp_vars_vec[1]->a.size();
+        num_non_introduced_vars += temp_vars_vec[0]->a.size() + temp_vars_vec[1]->a.size();
+      }
+      else if (ce->id == "fzn_global_cardinality_low_up" || ce->id == "fzn_global_cardinality_low_up_closed"){
+        temp_vars_vec.push_back(ce->args->a[0]->getArray());
+        temp = 1000 + temp_vars_vec[0]->a.size();
+        num_non_introduced_vars += temp_vars_vec[0]->a.size();
+      }
+      else if (ce->id == "fzn_disjunctive_strict_opt" || ce->id == "fzn_disjunctive_strict"){
+        temp_vars_vec.push_back(ce->args->a[0]->getArray());
+        temp_vars_vec.push_back(ce->args->a[1]->getArray());
+        temp = 1000 + temp_vars_vec[0]->a.size() + temp_vars_vec[1]->a.size();
+        num_non_introduced_vars += temp_vars_vec[0]->a.size() + temp_vars_vec[1]->a.size();
+      }
+      else if (ce->id == "fzn_inverse"){
+        temp_vars_vec.push_back(ce->args->a[0]->getArray());
+        temp_vars_vec.push_back(ce->args->a[1]->getArray());
+        temp = 750 + temp_vars_vec[0]->a.size() + temp_vars_vec[1]->a.size();
+        num_non_introduced_vars += temp_vars_vec[0]->a.size() + temp_vars_vec[1]->a.size();
+      }
+      else if (ce->id == "fzn_decreasing_int"){
+        temp_vars_vec.push_back(ce->args->a[0]->getArray());
+        temp = 750 + temp_vars_vec[0]->a.size();
+        num_non_introduced_vars += temp_vars_vec[0]->a.size();
+      }
+      else if (ce->id == "fzn_table_int_reif" || ce->id == "fzn_table_int"){
+        temp_vars_vec.push_back(ce->args->a[0]->getArray());
+        temp = 750 + temp_vars_vec[0]->a.size();
+        num_non_introduced_vars += temp_vars_vec[0]->a.size();
+      }
+      else if (ce->id == "fzn_increasing_int"){
+        temp_vars_vec.push_back(ce->args->a[0]->getArray());
+        temp = 750 + temp_vars_vec[0]->a.size();
+        num_non_introduced_vars += temp_vars_vec[0]->a.size();
+      }
+      else if (ce->id == "fzn_sort"){
+        temp_vars_vec.push_back(ce->args->a[0]->getArray());
+        temp_vars_vec.push_back(ce->args->a[1]->getArray());
+        temp = 500 + temp_vars_vec[0]->a.size() + temp_vars_vec[1]->a.size();
+        num_non_introduced_vars += temp_vars_vec[0]->a.size() + temp_vars_vec[1]->a.size();
+      }
+      else if (ce->id == "fzn_value_precede_int"){
+        temp_vars_vec.push_back(ce->args->a[2]->getArray());
+        temp = 500 + temp_vars_vec[0]->a.size();
+        num_non_introduced_vars += temp_vars_vec[0]->a.size();
+      }
+      else if (ce->id == "fzn_count_eq_reif" || ce->id == "fzn_count_eq"){
+        temp_vars_vec.push_back(ce->args->a[0]->getArray());
+        temp = 500 + temp_vars_vec[0]->a.size();
+        num_non_introduced_vars += temp_vars_vec[0]->a.size();
+      }
+      else if (ce->id == "fzn_regular"){
+        temp_vars_vec.push_back(ce->args->a[0]->getArray());
+        temp_vars_vec.push_back(ce->args->a[3]->getArray());
+        temp = 500 + temp_vars_vec[0]->a.size() + temp_vars_vec[1]->a.size();
+        num_non_introduced_vars += temp_vars_vec[0]->a.size() + temp_vars_vec[1]->a.size();
+      }
+      else if (ce->id == "fzn_nvalue"){
+        temp_vars_vec.push_back(ce->args->a[1]->getArray());
+        temp = 500 + temp_vars_vec[0]->a.size();
+        num_non_introduced_vars += temp_vars_vec[0]->a.size();
+      }
+      else if (ce->id == "fzn_at_least_int"){
+        temp_vars_vec.push_back(ce->args->a[1]->getArray());
+        temp = 310 + temp_vars_vec[0]->a.size();
+        num_non_introduced_vars += temp_vars_vec[0]->a.size();
+      }
+      else if (ce->id == "fzn_roots"){
+        temp_vars_vec.push_back(ce->args->a[0]->getArray());
+        temp = 300 + temp_vars_vec[0]->a.size();
+        num_non_introduced_vars += temp_vars_vec[0]->a.size();
+      }
+      else if (ce->id == "fzn_range"){
+        temp_vars_vec.push_back(ce->args->a[0]->getArray());
+        temp = 300 + temp_vars_vec[0]->a.size();
+        num_non_introduced_vars += temp_vars_vec[0]->a.size();
+      }
+      else if (ce->id == "fzn_lex_less_int" || ce->id == "fzn_lex_lesseq_int"){
+        temp_vars_vec.push_back(ce->args->a[0]->getArray());
+        temp_vars_vec.push_back(ce->args->a[1]->getArray());
+        temp = 300 + temp_vars_vec[0]->a.size() + temp_vars_vec[1]->a.size();
+        num_non_introduced_vars += temp_vars_vec[0]->a.size() + temp_vars_vec[1]->a.size();
+      }
+      else if (ce->id == "fzn_int_set_channel"){
+        temp_vars_vec.push_back(ce->args->a[0]->getArray());
+        temp = 300 + temp_vars_vec[0]->a.size();
+        num_non_introduced_vars += temp_vars_vec[0]->a.size();
+      }
+      else if (ce->id == "fzn_member_int_reif" || ce->id == "fzn_member_int"){
+        temp_vars_vec.push_back(ce->args->a[0]->getArray());
+        temp = 300 + temp_vars_vec[0]->a.size();
+        num_non_introduced_vars += temp_vars_vec[0]->a.size();
+      }
+      else if (ce->id == "fzn_at_most_int"){
+        temp_vars_vec.push_back(ce->args->a[1]->getArray());
+        temp = 300 + temp_vars_vec[0]->a.size();
+        num_non_introduced_vars += temp_vars_vec[0]->a.size();
+      }
+      else if (ce->id == "fzn_all_equal_int"){
+        temp_vars_vec.push_back(ce->args->a[0]->getArray());
+        temp = 200 + temp_vars_vec[0]->a.size();
+        num_non_introduced_vars += temp_vars_vec[0]->a.size();
+      }
+      else if (ce->id == "fzn_among"){
+        temp_vars_vec.push_back(ce->args->a[1]->getArray());
+        temp = 100 + temp_vars_vec[0]->a.size();
+        num_non_introduced_vars += temp_vars_vec[0]->a.size();
+      }
     }
 
-    if (best_vars){
-      iv_lns = IntVarArray(*this, best_vars->a.size());
-      for (long unsigned int i = 0; i < best_vars->a.size(); i++){
-        iv_lns[i] = iv[best_vars->a[i]->getIntVar()];
+    if (best_vars_vec.size() > 0){
+      // Get total number of vars:
+      int total_vars = 0;
+      for (long unsigned int i = 0; i < best_vars_vec.size(); i++){
+        total_vars += best_vars_vec[i]->a.size();
+      }
+
+      // Allocate iv_lns size.
+      iv_lns = IntVarArray(*this, total_vars);
+
+      int iv_lns_index = 0;
+      // Add the selected variables to iv_lns.
+      for (AST::Array* vars : best_vars_vec){
+        for (long unsigned int i = 0; i < vars->a.size(); i++){
+          iv_lns[iv_lns_index] = iv[vars->a[i]->getIntVar()];
+          iv_lns_index++;
+        }
       }
       _lns = 60;
     }
-    
   }
-
-  // void FlatZincSpace::getPBSLNSBestArgs() {
-  //   int start = 0;
-  //   int finish = 0;
-  //   for (long unsigned int i = 0; i < constraintNamesPerVariable.size(); i++){
-  //     if (constraintNamesPerVariable[i] == "fzn_all_different_int") {
-  //       finish = start + constraintNamesPerVariableChunks[i];
-  //       break;
-  //     }
-  //     start = constraintNamesPerVariableChunks[i];
-      
-  //   }
-
-  //   iv_lns = IntVarArray(*this, finish-start);
-  //   int iv_lns_index = 0;
-  //   for (int j = start; j < finish; j++){
-  //     iv_lns[iv_lns_index] = iv[j];
-  //     iv_lns_index++;
-  //   }
-
-  //   // TODO: Not have constant.
-  //   _lns = 60;
-  // }
 
   void
   FlatZincSpace::createBranchers(Printer&p, AST::Node* ann, FlatZincOptions& opt, bool ignoreUnknown, BranchModifier& bm, std::ostream& err) {
@@ -1430,6 +1568,7 @@ namespace Gecode { namespace FlatZinc {
         }
       }
     }
+
     int introduced = 0;
     int funcdep = 0;
     int searched = 0;
