@@ -64,7 +64,7 @@ bool LNStrategies::pgLNS(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int nu
       // Set up the variables for the propagation guided LNS.
       std::deque<PGLNSInfo> pglns_info;
       vector<int> domainSizes(num_non_introduced_vars);
-      bool guided = false;
+      // bool guided = false;
       int index;
       PGLNSInfo pglns_info_elem;
       IntVar curr_var;
@@ -74,7 +74,7 @@ bool LNStrategies::pgLNS(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int nu
         test = 0;
 
         if (pglns_info.size() == 0){
-          index = random(iv.size());
+          index = random(num_non_introduced_vars);
           curr_var = iv[index];
           if (curr_var.assigned()){
             continue;
@@ -96,7 +96,6 @@ bool LNStrategies::pgLNS(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int nu
         // Force value accordinly, and propagate.
         rel(fzs, curr_var, IRT_EQ, last.iv[index]);
         fzs.status();
-        // CHECK FAILURE and STAT
         
         // Add the variables that were propagated to pglns_info.
         for (int i = 0; i < num_non_introduced_vars; ++i) {
@@ -105,6 +104,8 @@ bool LNStrategies::pgLNS(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int nu
             pglns_info.push_back({iv[i], i, diff});
           }
         }
+        // Clear the deque from last iteration (as their diffs might not be valid anymore).
+        pglns_info.clear();
         // Sort the variables and indexes in iv according to the difference in domain size in pglns_info.
         std::sort(pglns_info.begin(), pglns_info.end(), [](const PGLNSInfo& a, const PGLNSInfo& b) {
           return a.domainDiff > b.domainDiff;
@@ -113,15 +114,9 @@ bool LNStrategies::pgLNS(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int nu
         for (int i = 0; i < num_non_introduced_vars; ++i) {
             test += std::log(iv[i].size());
         }
-        guided = true;
       }
 
-      if (guided){
-        return false;
-      }
-      else{
-        return true;
-      }
+      return false;
     }
     return true;
 }
@@ -138,8 +133,8 @@ bool LNStrategies::revpgLNS(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int
       // Set up the variables for the propagation guided LNS.
       std::deque<PGLNSInfo> pglns_info;
       vector<int> domainSizes(num_non_introduced_vars);
-      bool guided = false;
-      int index = -1;
+      // bool guided = false;
+      int index;
       PGLNSInfo pglns_info_elem;
       IntVar curr_var;
       const FlatZincSpace& last = static_cast<const FlatZincSpace&>(*mi.last());
@@ -148,7 +143,7 @@ bool LNStrategies::revpgLNS(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int
         test = 0;
 
         if (pglns_info.size() == 0){
-          index = random(iv.size());
+          index = random(num_non_introduced_vars);
           curr_var = iv[index];
           if (curr_var.assigned()){
             continue;
@@ -161,12 +156,6 @@ bool LNStrategies::revpgLNS(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int
           index = pglns_info_elem.ivIndex;
 
           pglns_info.pop_front();
-        }
-
-        // if curr var is not selected, break.
-        if (index == -1){
-          guided = true;
-          break;
         }
 
         // Get the domain size before the propagation
@@ -184,6 +173,8 @@ bool LNStrategies::revpgLNS(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int
             pglns_info.push_back({iv[i], i, diff});
           }
         }
+        // Clear the deque from last iteration (as their diffs might not be valid anymore).
+        pglns_info.clear();
         // Sort the variables and indexes in iv according to the difference in domain size in pglns_info.
         std::sort(pglns_info.begin(), pglns_info.end(), [](const PGLNSInfo& a, const PGLNSInfo& b) {
           return a.domainDiff < b.domainDiff;
@@ -192,16 +183,61 @@ bool LNStrategies::revpgLNS(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int
         for (int i = 0; i < num_non_introduced_vars; ++i) {
             test += std::log(iv[i].size());
         }
-        guided = true;
-        index = -1;
       }
 
-      if (guided){
-        return false;
-      }
-      else{
-        return true;
-      }
+      return false;
     }
     return true;
+}
+
+// AFC Guided LNS Strategy
+// AFC of a variable is the sum of all propagators depending on the variable + its degree
+bool LNStrategies::afcLNS(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv){
+  if ((mi.type() == MetaInfo::RESTART) && (mi.restart() != 0) && (mi.last())){
+    const FlatZincSpace& last = static_cast<const FlatZincSpace&>(*mi.last());
+    double avg_afc = 0;
+    // Sum up the afc values of the variables in iv and divide by the number of variables.
+    for (int i = 0; i < 12; ++i) {
+      avg_afc += last.iv[i].afc();
+      cerr << avg_afc << endl;
+    }
+    avg_afc = avg_afc / 12;
+
+    // For each variable in iv, if the afc value is greater than the average afc value, fix the variable from the previous solution.
+    for (int i = 0; i < 12; ++i) {
+      if (iv[i].afc() > avg_afc){
+        rel(fzs, iv[i], IRT_EQ, last.iv[i]);
+      }
+    }
+    return false;
+  }
+  return true;
+}
+
+// Randomized AFC Guided LNS Strategy
+// bool LNStrategies::randAFCLNS(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, Rnd random){
+//   if ((mi.type() == MetaInfo::RESTART) && (mi.restart() != 0) && (mi.last())){
+//     const FlatZincSpace& last = static_cast<const FlatZincSpace&>(*mi.last());
+//     double avg_afc = 0;
+//     // Sum up the afc values of the variables in iv and divide by the number of variables.
+//     for (int i = 0; i < 12; ++i) {
+//       avg_afc += last.iv[i].afc();
+//     }
+//     avg_afc = avg_afc / 12;
+
+//     // For each variable in iv, if the afc value is greater than the average afc value, fix the variable from the previous solution.
+//     for (int i = 0; i < 12; ++i) {
+//       if (iv[i].afc() > avg_afc){
+//         if (random(99U) <= lns) {
+//           rel(fzs, iv_lns[i], IRT_EQ, last.iv[i]);
+//         }
+//       }
+//     }
+//     return false;
+//   }
+//   return true;
+// }
+
+bool objrelaxLNS(){
+  // objrelaxLNS implementation
 }

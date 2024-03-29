@@ -34,6 +34,7 @@ public:
     bool randomLNS(FlatZincSpace& fzs, MetaInfo mi, IntSharedArray& initialSolution, unsigned int lns, IntVarArgs iv_lns, Rnd random);
     bool pgLNS(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int num_non_introduced_vars, Rnd random);
     bool revpgLNS(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int num_non_introduced_vars, Rnd random);
+    bool afcLNS(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv);
 
 };
 

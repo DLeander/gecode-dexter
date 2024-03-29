@@ -82,7 +82,7 @@ namespace Gecode { namespace Driver {
         // }
         return
           sigint ||
-          (search_finished.load()) ||
+          (search_finished.load(std::memory_order_relaxed)) ||
           ((ns != nullptr) && ns->stop(s,o)) ||
           ((fs != nullptr) && fs->stop(s,o)) ||
           ((ts != nullptr) && ts->stop(s,o)) ||

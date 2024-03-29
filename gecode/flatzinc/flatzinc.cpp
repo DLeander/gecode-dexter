@@ -797,6 +797,7 @@ namespace Gecode { namespace FlatZinc {
     : Space(f),
       _initData(nullptr), _random(f._random),
       _solveAnnotations(nullptr),
+      _lnsType(f._lnsType),
       restart_data(f.restart_data),
       iv_boolalias(nullptr),
 #ifdef GECODE_HAS_FLOAT_VARS
@@ -808,10 +809,12 @@ namespace Gecode { namespace FlatZinc {
       _optVarIsInt = f._optVarIsInt;
       _method = f._method;
       _lns = f._lns;
+      default_lns = f.default_lns;
       _lnsInitialSolution = f._lnsInitialSolution;
       branchInfo = f.branchInfo;
       iv.update(*this, f.iv);
       iv_lns.update(*this, f.iv_lns);
+      iv_lns_default.update(*this, f.iv_lns_default);
       num_non_introduced_vars = f.num_non_introduced_vars;
       intVarCount = f.intVarCount;
 
@@ -1084,7 +1087,7 @@ namespace Gecode { namespace FlatZinc {
         best_vars_vec = temp_vars_vec;
         temp_vars_vec.clear();
       }
-
+      // Check domain of variables == size of vars in all_diff, then it is important
       // Go through every constraint in the model and find the best fit for LNS.
       if (ce->id == "fzn_all_different_int" || ce->id == "fzn_alldifferent_except_0"){
         temp_vars_vec.push_back(ce->args->a[0]->getArray());
@@ -1251,17 +1254,17 @@ namespace Gecode { namespace FlatZinc {
       }
 
       // Allocate iv_lns size.
-      iv_lns = IntVarArray(*this, total_vars);
+      iv_lns_default = IntVarArray(*this, total_vars);
 
       int iv_lns_index = 0;
       // Add the selected variables to iv_lns.
       for (AST::Array* vars : best_vars_vec){
         for (long unsigned int i = 0; i < vars->a.size(); i++){
-          iv_lns[iv_lns_index] = iv[vars->a[i]->getIntVar()];
+          iv_lns_default[iv_lns_index] = iv[vars->a[i]->getIntVar()];
           iv_lns_index++;
         }
       }
-      _lns = 60;
+      default_lns = 60;
     }
   }
 
@@ -1309,7 +1312,7 @@ namespace Gecode { namespace FlatZinc {
       fv_searched[i] = false;
 #endif
 
-    // _lns = 0;
+    _lns = 0;
     if (ann) {
       std::vector<AST::Node*> flatAnn;
       if (ann->isArray()) {
@@ -1567,6 +1570,11 @@ namespace Gecode { namespace FlatZinc {
           }
         }
       }
+    }
+    // If relax and reconstruct is not set: Use default values set in storeConstraintInformation.:
+    if (_lns == 0){
+      iv_lns = iv_lns_default;
+      _lns = default_lns;
     }
 
     int introduced = 0;
@@ -2218,11 +2226,11 @@ namespace Gecode { namespace FlatZinc {
   }
 
   void FlatZincSpace::runPBS(std::ostream& out, FlatZinc::Printer& p, FlatZincOptions& opt, Support::Timer& t_total, const int assets) {
-    FznPbs fg_pbs(this, assets, p);
+    PBSController pbs(this, assets, p);
     switch (_method) {
     case MIN:
     case MAX:
-      fg_pbs.controller(out, opt, t_total);
+      pbs.controller(out, opt, t_total);
       break;
     case SAT:
       // runEngine<DFS>(out,p,opt,t_total);
@@ -2240,12 +2248,11 @@ namespace Gecode { namespace FlatZinc {
 
     if (_optVarIsInt) {
       if (best_sol != nullptr){
-        int val = best_sol->iv[best_sol->optVar()].val();
         if (_method == MIN){
-          rel(*this, iv[_optVar], IRT_LE, val);
+          rel(*this, iv[_optVar], IRT_LE, best_sol->iv[best_sol->optVar()].val());
         }
         else if (_method == MAX){
-          rel(*this, iv[_optVar], IRT_GR, val);
+          rel(*this, iv[_optVar], IRT_GR, best_sol->iv[best_sol->optVar()].val());
         } 
       }
       // If not PBS or no solution has been found, update local bounds.
@@ -2465,11 +2472,20 @@ namespace Gecode { namespace FlatZinc {
     switch (_lnsType) {
       case RANDOM:
       {
+        // cerr << "Random LNS" << endl;
         return _lnsStrategy.randomLNS(*this, mi, _lnsInitialSolution, _lns, iv_lns, _random);
       }
       case PG:
       {
         return _lnsStrategy.pgLNS(*this, mi, iv, num_non_introduced_vars, _random);
+      }
+      case rPG:
+      {
+        return _lnsStrategy.revpgLNS(*this, mi, iv, num_non_introduced_vars, _random);
+      }
+      case AFCLNS:
+      {
+        return _lnsStrategy.afcLNS(*this, mi, iv);
       }
       default:
       {

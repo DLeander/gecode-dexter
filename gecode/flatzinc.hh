@@ -438,7 +438,9 @@ namespace Gecode { namespace FlatZinc {
     };
     enum LNSType {
       RANDOM, //< Standard LNS
-      PG //< Propagation Guided
+      PG, //< Propagation Guided LNS
+      rPG, //< Reversed Propagation Guided LNS
+      AFCLNS //< AFC guided LNS
     };
 
     int getintVarCount() const { return intVarCount; }
@@ -467,6 +469,7 @@ namespace Gecode { namespace FlatZinc {
 
     /// Percentage of variables to keep in LNS (or 0 for no LNS)
     unsigned int _lns;
+    unsigned int default_lns;
 
     /// Initial solution to start the LNS (or nullptr for no LNS)
     IntSharedArray _lnsInitialSolution;
@@ -509,6 +512,7 @@ namespace Gecode { namespace FlatZinc {
 
     /// The integer variables used in LNS
     Gecode::IntVarArray iv_lns;
+    Gecode::IntVarArray iv_lns_default;
 
     int num_non_introduced_vars;
 

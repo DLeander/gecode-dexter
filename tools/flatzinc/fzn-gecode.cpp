@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
   try {
     if (opt.usePBS()) {
       // TODO : Make this a parameter or depend on the number of threads.
-      const int assets = 4;
+      const int assets = 2;
       if (!strcmp(filename, "-")) {
         fg = FlatZinc::parse(cin, p, std::cerr, nullptr, rnd);
       } 
