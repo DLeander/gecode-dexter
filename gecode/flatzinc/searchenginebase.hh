@@ -81,7 +81,7 @@ private:
 // Derived class for RBS search engine
 class RBSEngine : public BaseEngine {
 public:
-    RBSEngine(FlatZincSpace* space, const Search::Options& options)
+    RBSEngine(FlatZincSpace* space, const Search::Options& options, std::atomic<bool>* optimum_found)
         : engine(space, options) {}
 
     FlatZincSpace* next() override {

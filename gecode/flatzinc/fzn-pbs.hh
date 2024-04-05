@@ -360,6 +360,45 @@ class LNSAsset : public BaseAsset {
         long unsigned int shaving_start;
 };
 
+class RRLNSAsset : public BaseAsset {
+    public:
+        RRLNSAsset(PBSController& control, FlatZincSpace* fg, FlatZincOptions& fopt, FlatZinc::Printer& p, std::ostream &out, unsigned int asset_id, std::atomic<FlatZincSpace*>& best_sol, std::atomic<bool>& optimum_found, unsigned int c_d, unsigned int a_d, double threads)
+        : control(control), optimum_found(optimum_found), best_sol(best_sol), fg(fg), fopt(fopt), p(p), out(out), c_d(c_d), a_d(a_d), threads(threads), asset_id(asset_id)  {setupAsset();};
+
+        void setupAsset() override;
+        void run() override;
+
+        FlatZincSpace* getCurrentBestSol() override { return current_best; }
+        Support::Timer* getTSolve() override { return &t_solve; }
+        StatusStatistics getSStat() override { return sstat; }
+        int getNP() const override { return n_p; }
+
+        std::atomic<bool>& getopt() const override { return optimum_found; }
+
+        void setNP(int n_p) override { this->n_p = n_p; }
+        void setSStat(StatusStatistics sstat) override { this->sstat = sstat; }
+
+    private:
+        PBSController& control;
+        FlatZincSpace* current_best;
+        Support::Timer t_solve;
+        StatusStatistics sstat;
+        int n_p;
+        // Flag indicating that the final best solution has been found.
+        std::atomic<bool>& optimum_found;
+        // The best solution found given objective value.
+        std::atomic<FlatZincSpace*>& best_sol;
+        FlatZincSpace* fg;
+        FlatZincOptions& fopt;
+        FlatZinc::Printer& p;
+        std::ostream &out;
+        unsigned int c_d;
+        unsigned int a_d;
+        double threads;
+        unsigned int asset_id;
+        std::vector<std::unique_ptr<BaseAsset>> round_robin_assets;
+};
+
 class ShavingAsset : public BaseAsset {
     public:
         ShavingAsset(PBSController& control, FlatZincSpace* fg, Gecode::FlatZinc::Printer &p, FlatZincOptions& fopt, std::ostream &out, unsigned int asset_id, 
@@ -466,7 +505,7 @@ private:
     // Variables
     /// Flag indicating some thread is waiting on the execution to be done.
     std::atomic<bool> execution_done_wait_started;
-    /// Event for signalling that execution is done.
+    /// Event for signaling that execution is done.
     Gecode::Support::Event execution_done_event;
     /// The number of test runners that are to be set up.
     std::atomic<int> running_threads;

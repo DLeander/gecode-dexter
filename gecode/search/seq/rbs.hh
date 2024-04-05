@@ -51,11 +51,14 @@ namespace Gecode { namespace Search { namespace Seq {
     Stop* m_stop;
     /// Whether the engine was stopped
     bool e_stopped;
+    /// Whether portfolio based search has found a solution.
+    std::atomic<bool>* optimum_found;
     /// Accumulated statistics for the meta engine
     Statistics m_stat;
   public:
     /// Stop the meta engine if indicated by the stop object \a s
     RestartStop(Stop* s);
+    RestartStop(Stop* s, std::atomic<bool>* optimum_found);
     /// Return true if meta engine must be stopped
     virtual bool stop(const Statistics& s, const Options& o);
     /// Set current limit for the engine to \a l fails

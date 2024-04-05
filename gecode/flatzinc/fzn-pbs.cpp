@@ -132,8 +132,8 @@ void PBSController::setupPortfolioAssets(int asset, FlatZinc::Printer& p, FlatZi
     switch (AssetType(asset))
     {
     case USER:
-        // assets[asset] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset, best_sol, optimum_found, false, FlatZinc::FlatZincSpace::LNSType::AFCLNS, fopt.c_d(), fopt.a_d(), fopt.threads(), RM_CONSTANT, 1.5, 250));
-        assets[asset] = (std::make_unique<DFSAsset>(*this, fg, fopt, p, out, asset, best_sol, optimum_found, false, fopt.c_d(), fopt.a_d(), fopt.threads()));
+        assets[asset] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset, best_sol, optimum_found, false, FlatZinc::FlatZincSpace::LNSType::OBJREL, fopt.c_d(), fopt.a_d(), fopt.threads(), RM_CONSTANT, 1.5, 250));
+        // assets[asset] = (std::make_unique<DFSAsset>(*this, fg, fopt, p, out, asset, best_sol, optimum_found, false, fopt.c_d(), fopt.a_d(), fopt.threads()));
         break;
     case LNS_USER:
         assets[asset] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset, best_sol, optimum_found, false, FlatZinc::FlatZincSpace::LNSType::RANDOM, fopt.c_d(), fopt.a_d(), fopt.threads(), RM_CONSTANT, 1.5, 250));
@@ -170,9 +170,10 @@ void PBSController::controller(std::ostream& out, FlatZincOptions& fopt, Support
         out << "=====UNSATISFIABLE=====" << std::endl;
         return;
     }
-
     for (int asset = 0; asset < num_assets; asset++) {
         setupPortfolioAssets(asset, p, fopt, out, num_assets);
+    }
+    for (int asset = 0; asset < num_assets; asset++) {
         assets[asset]->run();
     }
     await_runners_completed();
@@ -225,23 +226,17 @@ void AssetExecutor::runSearch(){
 
     BaseEngine* se = asset->getSE();
 
-    // cerr << "best sol: " << control.best_sol << endl;
-    // cerr << "optcon: " << &control.optimum_found << endl;
-    // cerr << "optass " << &asset->getopt() << endl;
+
     // Run the search
     FlatZincSpace* sol = nullptr;
     bool solWasBestSol = false;
-    cerr << "starting search for assedt: " << asset_id << endl;
     while (FlatZincSpace* next_sol = se->next()) {
-        cerr << "found solution for assedt: " << asset_id << "curropt: " << next_sol->iv[next_sol->optVar()].val() << endl;
         // If last solution was not the current best solution, delete it.
         if (!solWasBestSol && sol != nullptr){
             delete sol;
             sol = nullptr;
         }
         // If one asset finished, stop looking for more solutions. TODO: Make sure that search did not finish due to LNS restart limit reached etc.
-        // cerr << "Asset: " << asset_id << " value: " << control.optimum_found.load() << endl;
-        // cerr << "Asset: " << asset_id << " value: " << control.optimum_found.load() << endl;
 
         sol = next_sol;
         solWasBestSol = false;
@@ -250,23 +245,23 @@ void AssetExecutor::runSearch(){
             FlatZincSpace* control_best_sol = control.best_sol.load();
 
             if (control_best_sol == nullptr){
-                    control.best_space_mutex.lock();
-                    // Critical Section
-                    FlatZincSpace* expected = nullptr;
-                    bool success = control.best_sol.compare_exchange_strong(expected, sol);
-                    if (success){
-                        solWasBestSol = true;
-                        control.all_best_solutions.push_back(sol);
-                        if (printAll){
-                            sol->print(out, p);
-                            out << "----------" << std::endl;
-                        }
+                control.best_space_mutex.lock();
+                // Critical Section
+                FlatZincSpace* expected = nullptr;
+                bool success = control.best_sol.compare_exchange_strong(expected, sol);
+                if (success){
+                    solWasBestSol = true;
+                    control.all_best_solutions.push_back(sol);
+                    if (printAll){
+                        sol->print(out, p);
+                        out << "----------" << std::endl;
                     }
-                    control.best_space_mutex.unlock();
-                    
-                    if (success){
-                        break;
-                    }
+                }
+                control.best_space_mutex.unlock();
+                
+                if (success){
+                    break;
+                }
             }
             else{
                 // TODO: Does not handle float yet.
@@ -310,22 +305,17 @@ void AssetExecutor::runSearch(){
                 break;
             }
         }
-        cerr << "while-loop end: " << asset_id << endl; 
-        // Apply the relations to make asset take advantage of shaving.
+        // Apply nq constraints to make asset take advantage of shaving.
         long unsigned int size = control.get_forbidden_literals().size();
-        cerr << size << endl;
-        for (long unsigned int i = asset->getShavingStart(); i < size; i++){
-            control.get_forbidden_literals()[i].var.nq(asset->getFZS(), control.get_forbidden_literals()[i].value);
-        }
-        if (size > 0){
-            asset->setShavingStart(size-1);
+        if (size > asset->getShavingStart()){
+            for (long unsigned int i = asset->getShavingStart(); i < size; i++){
+                control.get_forbidden_literals()[i].var.nq(asset->getFZS(), control.get_forbidden_literals()[i].value);
+            }
         }
     }
     asset->getTSolve()->stop();
-    cerr << "search over for assedt: " << asset_id << endl;
     // The first asset to finish will be the final best solution.
-    if (!control.optimum_found.exchange(true, std::memory_order_release)){
-        cerr << "optimum found: " << asset_id << endl;
+    if (!control.optimum_found.exchange(true)){
         control.finished_asset = asset_id;
     }
     else if (!solWasBestSol){
@@ -334,6 +324,10 @@ void AssetExecutor::runSearch(){
     }
 
     control.thread_done();
+}
+
+void RRLNSAsset::run(){
+    // Go through and run each asset in the round robin for some fixed amount of time? Store the number of sols for each asset, best asset keeps on running until search finishes.
 }
 
 void AssetExecutor::runShaving(){
@@ -381,6 +375,9 @@ void DFSAsset::setupAsset(){
     fzs->setSolveAnnotations(fg->solveAnnotations());
     // Set the shared current best solutions between assets for each asset.
     fzs->pbs_current_best_sol = &best_sol;
+    // Make space know if optimum has been found.
+    fzs->optimum_found = &optimum_found;
+
     // Copy iv,bv,sv_introduced vector from fg, as it does not follow the cloning process.
     fzs->iv_introduced = fg->iv_introduced;
     fzs->bv_introduced = fg->bv_introduced;
@@ -390,17 +387,6 @@ void DFSAsset::setupAsset(){
     search_options.stop = Driver::PBSCombinedStop::create(fopt.node(), fopt.fail(), fopt.time(), 0, true, optimum_found);
     search_options.c_d = c_d;
     search_options.a_d = a_d;
-
-    #ifdef GECODE_HAS_CPPROFILER
-        if (fopt.profiler_port()) {
-            FlatZincGetInfo* getInfo = nullptr;
-
-            if (fopt.profiler_info()) getInfo = new FlatZincGetInfo(p);
-            
-            search_options.tracer = new CPProfilerSearchTracer(fopt.profiler_id(), fopt.name(), fopt.profiler_port(), getInfo);
-        }
-
-    #endif
 
     #ifdef GECODE_HAS_FLOAT_VARS
         fzs->step = fopt.step();
@@ -416,7 +402,6 @@ void DFSAsset::setupAsset(){
         fopt.restart(RM_NONE);
     }
     search_options.cutoff = new Search::CutoffAppend(new Search::CutoffConstant(0), 1, Driver::createCutoff(fopt));
-    // Create the branchers. (Needs to be here due to non-rbs options and assets that may utilize rbs.)
     fzs->createBranchers(p, fzs->solveAnnotations(), fopt, false, bm, std::cerr);
     
     se = new BABEngine(fzs, search_options);
@@ -428,6 +413,9 @@ void LNSAsset::setupAsset(){
     fzs->setSolveAnnotations(fg->solveAnnotations());
     // Set the shared current best solutions between assets for each asset.
     fzs->pbs_current_best_sol = &best_sol;
+    // Make space know if optimum has been found.
+    fzs->optimum_found = &optimum_found;
+
     // Copy iv,bv,sv_introduced vector from fg, as it does not follow the cloning process.
     fzs->iv_introduced = fg->iv_introduced;
     fzs->bv_introduced = fg->bv_introduced;
@@ -437,17 +425,6 @@ void LNSAsset::setupAsset(){
     search_options.stop = Driver::PBSCombinedStop::create(fopt.node(), fopt.fail(), fopt.time(), fopt.restart_limit(), true, optimum_found);
     search_options.c_d = c_d;
     search_options.a_d = a_d;
-
-    #ifdef GECODE_HAS_CPPROFILER
-        if (fopt.profiler_port()) {
-            FlatZincGetInfo* getInfo = nullptr;
-
-            if (fopt.profiler_info()) getInfo = new FlatZincGetInfo(p);
-            
-            search_options.tracer = new CPProfilerSearchTracer(fopt.profiler_id(), fopt.name(), fopt.profiler_port(), getInfo);
-        }
-
-    #endif
 
     #ifdef GECODE_HAS_FLOAT_VARS
         fzs->step = fopt.step();
@@ -468,14 +445,22 @@ void LNSAsset::setupAsset(){
         search_options.cutoff = new Search::CutoffAppend(new Search::CutoffConstant(0), 1, Driver::createCutoff(fopt));
         // Create the branchers. (Needs to be here due to non-rbs options and assets that may utilize rbs.)
         fzs->createBranchers(p, fzs->solveAnnotations(), fopt, false, bm, std::cerr);
-        fopt.restart(RM_NONE);
+        // fopt.restart(RM_NONE);
     }
     else{
         search_options.cutoff = new Search::CutoffAppend(new Search::CutoffConstant(0), 1, Driver::createCutoff(fopt));
         fzs->createBranchers(p, fzs->solveAnnotations(), fopt, false, bm, std::cerr);
     }
     
-    se = new RBSEngine(fzs, search_options);
+    se = new RBSEngine(fzs, search_options, &optimum_found);
+}
+
+void RRLNSAsset::setupAsset(){
+    // Fill the round_robin_assets vector with all types of LNS assets.
+    round_robin_assets.push_back(std::make_unique<LNSAsset>(control, fg, fopt, p, out, asset_id, best_sol, optimum_found, false, FlatZinc::FlatZincSpace::LNSType::RANDOM, c_d, a_d, threads, RM_CONSTANT, 1.5, 250));
+    round_robin_assets.push_back(std::make_unique<LNSAsset>(control, fg, fopt, p, out, asset_id, best_sol, optimum_found, false, FlatZinc::FlatZincSpace::LNSType::PG, c_d, a_d, threads, RM_CONSTANT, 1.5, 250));
+    round_robin_assets.push_back(std::make_unique<LNSAsset>(control, fg, fopt, p, out, asset_id, best_sol, optimum_found, false, FlatZinc::FlatZincSpace::LNSType::rPG, c_d, a_d, threads, RM_CONSTANT, 1.5, 250));
+    round_robin_assets.push_back(std::make_unique<LNSAsset>(control, fg, fopt, p, out, asset_id, best_sol, optimum_found, false, FlatZinc::FlatZincSpace::LNSType::OBJREL, c_d, a_d, threads, RM_CONSTANT, 1.5, 250));
 }
 
 void ShavingAsset::setupAsset(){
@@ -498,7 +483,6 @@ void ShavingAsset::run_shaving_pass(PBSController& control, StatusStatistics sta
     sorter->sort_variables(queue, root);
     while (!queue.empty()) {
         if (control.optimum_found.load()) {
-            cerr << "shaving out" << endl;
             control.thread_done();
             return;
         }
@@ -507,7 +491,6 @@ void ShavingAsset::run_shaving_pass(PBSController& control, StatusStatistics sta
 
         for (auto literal : literal_extractor(vd, root)) {
             if (control.optimum_found.load()) {
-                cerr << "shaving out" << endl;
                 control.thread_done();
                 return;
             }
@@ -529,6 +512,5 @@ void ShavingAsset::run_shaving_pass(PBSController& control, StatusStatistics sta
 
         sorter->sort_variables(queue, root);
     }
-    cerr << "shaving out1111" << endl;
     control.thread_done();
 }

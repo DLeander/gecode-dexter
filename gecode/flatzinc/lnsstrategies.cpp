@@ -214,30 +214,16 @@ bool LNStrategies::afcLNS(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv){
   return true;
 }
 
-// Randomized AFC Guided LNS Strategy
-// bool LNStrategies::randAFCLNS(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, Rnd random){
-//   if ((mi.type() == MetaInfo::RESTART) && (mi.restart() != 0) && (mi.last())){
-//     const FlatZincSpace& last = static_cast<const FlatZincSpace&>(*mi.last());
-//     double avg_afc = 0;
-//     // Sum up the afc values of the variables in iv and divide by the number of variables.
-//     for (int i = 0; i < 12; ++i) {
-//       avg_afc += last.iv[i].afc();
-//     }
-//     avg_afc = avg_afc / 12;
+bool LNStrategies::objrelaxLNS(FlatZincSpace& fzs, MetaInfo mi, unsigned int lns, IntVarArgs iv_lns_obj_relax, Rnd random){
+  if ((mi.type() == MetaInfo::RESTART) && (mi.restart() != 0) && (lns > 0) && mi.last()) {
+    const FlatZincSpace& last = static_cast<const FlatZincSpace&>(*mi.last());
+    for (unsigned int i=iv_lns_obj_relax.size(); i--;) {
+      if (random(99U) <= lns) {
+        rel(fzs, iv_lns_obj_relax[i], IRT_EQ, last.iv_lns_obj_relax[i]);
+      }
+    }
+    return false;
+  }
 
-//     // For each variable in iv, if the afc value is greater than the average afc value, fix the variable from the previous solution.
-//     for (int i = 0; i < 12; ++i) {
-//       if (iv[i].afc() > avg_afc){
-//         if (random(99U) <= lns) {
-//           rel(fzs, iv_lns[i], IRT_EQ, last.iv[i]);
-//         }
-//       }
-//     }
-//     return false;
-//   }
-//   return true;
-// }
-
-bool objrelaxLNS(){
-  // objrelaxLNS implementation
+  return true;
 }

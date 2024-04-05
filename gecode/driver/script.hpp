@@ -77,12 +77,9 @@ namespace Gecode { namespace Driver {
       };
       /// Test whether search must be stopped
       virtual bool stop(const Search::Statistics& s, const Search::Options& o) {
-        // if (search_finished.load()) {
-        //   std::cerr << "sol is true." << std::endl;
-        // }
         return
           sigint ||
-          (search_finished.load(std::memory_order_relaxed)) ||
+          (search_finished.load()) ||
           ((ns != nullptr) && ns->stop(s,o)) ||
           ((fs != nullptr) && fs->stop(s,o)) ||
           ((ts != nullptr) && ts->stop(s,o)) ||

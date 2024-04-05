@@ -49,6 +49,9 @@
 #include <sstream>
 #include <limits>
 #include <unordered_set>
+#include <numeric>
+#include <cmath>
+#include <algorithm>
 
 
 namespace std {
@@ -804,6 +807,7 @@ namespace Gecode { namespace FlatZinc {
       step(f.step),
 #endif
       pbs_current_best_sol(f.pbs_current_best_sol),
+      optimum_found(f.optimum_found),
       needAuxVars(f.needAuxVars) {
       _optVar = f._optVar;
       _optVarIsInt = f._optVarIsInt;
@@ -815,6 +819,7 @@ namespace Gecode { namespace FlatZinc {
       iv.update(*this, f.iv);
       iv_lns.update(*this, f.iv_lns);
       iv_lns_default.update(*this, f.iv_lns_default);
+      iv_lns_obj_relax.update(*this, f.iv_lns_obj_relax);
       num_non_introduced_vars = f.num_non_introduced_vars;
       intVarCount = f.intVarCount;
 
@@ -885,7 +890,7 @@ namespace Gecode { namespace FlatZinc {
     intVarCount(-1), boolVarCount(-1), floatVarCount(-1), setVarCount(-1),
     _optVar(-1), _optVarIsInt(true), _lns(0), _lnsInitialSolution(0),
     _random(random), _solveAnnotations(nullptr), 
-    pbs_current_best_sol(nullptr), needAuxVars(true) {
+    pbs_current_best_sol(nullptr), optimum_found(nullptr), needAuxVars(true) {
     branchInfo.init();
   }
 
@@ -1039,7 +1044,7 @@ namespace Gecode { namespace FlatZinc {
 
   void
   FlatZincSpace::postConstraints(std::vector<ConExpr*>& ces) {
-    storeConstraintInformation(ces);
+    constraints = ces;
 
     ConExprOrder ceo;
     std::sort(ces.begin(), ces.end(), ceo);
@@ -1053,9 +1058,10 @@ namespace Gecode { namespace FlatZinc {
       } catch (AST::TypeError& e) {
           throw FlatZinc::Error("Type error", e.what(), ce.ann);
       }
-      delete ces[i];
-      ces[i] = nullptr;
+      // delete ces[i];
+      // ces[i] = nullptr;
     }
+
   }
 
   void flattenAnnotations(AST::Array* ann, std::vector<AST::Node*>& out) {
@@ -1072,7 +1078,7 @@ namespace Gecode { namespace FlatZinc {
       }
   }
 
-  void FlatZincSpace::storeConstraintInformation(std::vector<ConExpr*>& ces){
+  void FlatZincSpace::storeConstraintInformation(){
     num_non_introduced_vars = 0;
     // The best vars (given arguments to constraints). The vars used in _lns if relax and reconstruct is not used.
     std::vector<AST::Array*> best_vars_vec;
@@ -1080,13 +1086,76 @@ namespace Gecode { namespace FlatZinc {
     // The current best value given constraint times variable value. Used to select the best combination for LNS without relax and reconstruct.
     int currentBest = 0;
     int temp = 0;
-    for (ConExpr* ce : ces){
+    for (ConExpr* ce : constraints){
       // If a better candidate for LNS has been found, update the best_vars and currentBest variables.
       if (temp > currentBest){
         currentBest = temp;
         best_vars_vec = temp_vars_vec;
         temp_vars_vec.clear();
       }
+
+
+      // Check if constraint is of type int_lin_eq and is defined var in compiled fzn file for the use of Objective Relaxation LNS.
+      if (ce->id == "int_lin_eq" && ce->ann != nullptr && ce->ann->a.size() > 0){
+        if (ce->ann != nullptr && ce->ann->getArray()->a[0]->isCall("defines_var")){
+          AST::Call* call = ce->ann->getArray()->a[0]->getCall("defines_var");
+          AST::Node* var = call->args;
+
+          if (var->getIntVar() == _optVar){
+            AST::Array* coef;
+            AST::Array* vars;
+            // Make sure integers are stored in coef and variables in vars. (Might be the case that first argument is always coefficients.)
+            if (ce->args->a[0]->getArray()->a[0]->isInt()){
+              coef = ce->args->a[0]->getArray();
+              vars = ce->args->a[1]->getArray();
+            }
+            else{
+              coef = ce->args->a[1]->getArray();
+              vars = ce->args->a[0]->getArray();
+            }
+
+            // Two different cases: All coefficients are similar or some coefficients are larger than other.
+            // Loop starts at 1 since the first entry is the objective value itself, and freezing that variable breaks the point of the search.
+            double mean = std::accumulate(coef->a.begin()+1, coef->a.end(), 0.0, [](double acc, AST::Node* b) { return acc + std::abs(b->getInt()); }) / (coef->a.size()-1);
+            double sq_sum = std::accumulate(coef->a.begin()+1, coef->a.end(), 0.0, [](double sum, AST::Node* b) { int val = b->getInt(); return sum + val * val; });
+            double stdev = std::sqrt((sq_sum / (coef->a.size()-1)) - (mean * mean));
+
+            // Case 1: coefficients are similar (a standard deviation smaller than 1)
+            int num_relevant_vars = 0;
+            if (stdev < 1){
+              for (unsigned long int i = 1; i < vars->a.size(); i++){
+                if (vars->a[i]->isIntVar()){
+                  num_relevant_vars++;
+                }
+              }
+              iv_lns_obj_relax = IntVarArray(*this, num_relevant_vars);
+              for (unsigned long int i = 1; i < vars->a.size(); i++){
+                if (vars->a[i]->isIntVar()){
+                  // cerr << iv.size() << " " << vars->a[i]->getIntVar() << " " << num_relevant_vars << endl;
+                  iv_lns_obj_relax[i-1] = iv[vars->a[i]->getIntVar()];
+                }
+              }
+            }
+            // Case 2: Some coefficients are larger than other, keep those non-fixed and make those with smaller mean freezeable, to relax the objective.
+            else{
+              for (unsigned long int i = 1; i < vars->a.size(); i++){
+                if (vars->a[i]->isIntVar() && coef->a[i]->getInt() < mean){
+                  num_relevant_vars++;
+                }
+              }
+              iv_lns_obj_relax = IntVarArray(*this, num_relevant_vars);
+              for (unsigned long int i = 1; i < vars->a.size(); i++){
+                if (vars->a[i]->isIntVar() && coef->a[i]->getInt() < mean){
+                  iv_lns_obj_relax[i-1] = iv[vars->a[i]->getIntVar()];
+                }
+              }
+
+            }
+          }
+        }
+      }
+
+
       // Check domain of variables == size of vars in all_diff, then it is important
       // Go through every constraint in the model and find the best fit for LNS.
       if (ce->id == "fzn_all_different_int" || ce->id == "fzn_alldifferent_except_0"){
@@ -1265,6 +1334,12 @@ namespace Gecode { namespace FlatZinc {
         }
       }
       default_lns = 60;
+    }
+
+    // Delete constraint information as they are no longer useable.
+    for (ConExpr* ce : constraints){
+      delete ce;
+      ce = nullptr;
     }
   }
 
@@ -1571,7 +1646,7 @@ namespace Gecode { namespace FlatZinc {
         }
       }
     }
-    // If relax and reconstruct is not set: Use default values set in storeConstraintInformation.:
+    // If relax and reconstruct is not set: Use default values set in storeConstraintInformation:
     if (_lns == 0){
       iv_lns = iv_lns_default;
       _lns = default_lns;
@@ -2226,6 +2301,7 @@ namespace Gecode { namespace FlatZinc {
   }
 
   void FlatZincSpace::runPBS(std::ostream& out, FlatZinc::Printer& p, FlatZincOptions& opt, Support::Timer& t_total, const int assets) {
+    storeConstraintInformation();
     PBSController pbs(this, assets, p);
     switch (_method) {
     case MIN:
@@ -2468,6 +2544,29 @@ namespace Gecode { namespace FlatZinc {
       }
     }
 
+    // if (restart_data.initialized() && !restart_data().mark_complete && optimum_found != nullptr && optimum_found->load()){
+    //     cerr << "HEJ" << endl;
+    //     restart_data().mark_complete = true;
+    //     return true;
+    // }
+
+    if (mi.type() == MetaInfo::RESTART){
+      unsigned long long int sols = mi.solution();
+      unsigned long long int fails = mi.fail();
+
+      // Update the LNS keep percentage: If more sols than fails, lower the keep percentage, otherwise increase it.
+      // THINKING: Many solutions will lead to a decrease in keep percentage, making it possible to explore the nghibourhood more exhaustivly.
+      //           Few solutions will lead to an increase in keep percentage, making it possible to explore more of the search space, and get out of failing branchers.
+      if (fails > sols && fails > 0 && sols > 0){
+        _lns = std::max(10.0, ceil(_lns - sols/fails));
+      }
+      else if (fails > 0 && sols > 0){
+        _lns = std::min(90.0, ceil(_lns + sols/fails));
+      }
+      cerr << _lns << endl;
+      
+    }
+
     // Depending on the type of LNS, apply it and return false.
     switch (_lnsType) {
       case RANDOM:
@@ -2486,6 +2585,11 @@ namespace Gecode { namespace FlatZinc {
       case AFCLNS:
       {
         return _lnsStrategy.afcLNS(*this, mi, iv);
+      }
+      case OBJREL:
+      {
+        // cerr << iv_lns_obj_relax.size() << endl;
+        return _lnsStrategy.objrelaxLNS(*this, mi, _lns, iv_lns_obj_relax, _random);
       }
       default:
       {

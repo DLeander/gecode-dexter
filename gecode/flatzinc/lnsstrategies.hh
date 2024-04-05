@@ -35,6 +35,7 @@ public:
     bool pgLNS(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int num_non_introduced_vars, Rnd random);
     bool revpgLNS(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int num_non_introduced_vars, Rnd random);
     bool afcLNS(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv);
+    bool objrelaxLNS(FlatZincSpace& fzs, MetaInfo mi, unsigned int lns, IntVarArgs iv_lns_obj_relax, Rnd random);
 
 };
 

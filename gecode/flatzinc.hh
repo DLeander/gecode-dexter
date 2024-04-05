@@ -440,7 +440,8 @@ namespace Gecode { namespace FlatZinc {
       RANDOM, //< Standard LNS
       PG, //< Propagation Guided LNS
       rPG, //< Reversed Propagation Guided LNS
-      AFCLNS //< AFC guided LNS
+      AFCLNS, //< AFC guided LNS
+      OBJREL //< Objective relax LNS
     };
 
     int getintVarCount() const { return intVarCount; }
@@ -484,6 +485,8 @@ namespace Gecode { namespace FlatZinc {
 
     LNStrategies _lnsStrategy;
 
+    std::vector<ConExpr*> constraints;
+
     /// Copy constructor
     FlatZincSpace(FlatZincSpace&);
   private:
@@ -513,6 +516,7 @@ namespace Gecode { namespace FlatZinc {
     /// The integer variables used in LNS
     Gecode::IntVarArray iv_lns;
     Gecode::IntVarArray iv_lns_default;
+    Gecode::IntVarArray iv_lns_obj_relax;
 
     int num_non_introduced_vars;
 
@@ -611,6 +615,7 @@ namespace Gecode { namespace FlatZinc {
 #endif
     // The current best solution, used in constrain between all assets in pbs. ADDED
     std::atomic<FlatZincSpace*>* pbs_current_best_sol;
+    std::atomic<bool>* optimum_found;
     /// Whether the introduced variables still need to be copied
     bool needAuxVars;
     /// Construct empty space
@@ -696,7 +701,7 @@ namespace Gecode { namespace FlatZinc {
     /// @brief If relax and reconstruct is not set and asset in PBS is to use LNS, then select candidate variables to use in LNS given constraints of the model.
     /// @return arguments for createBranchers method if LNS is to be used without relax and reconstruct. 
     void getPBSLNSBestArgs();
-    void storeConstraintInformation(std::vector<ConExpr*>& ces);
+    void storeConstraintInformation();
 
     /// Return the solve item annotations
     AST::Array* solveAnnotations(void) const;
