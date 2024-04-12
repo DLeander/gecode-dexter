@@ -22,7 +22,7 @@ using namespace Gecode::FlatZinc;
 
 class BranchModifier {
 public:
-    BranchModifier(bool do_opposite_branching);  // Constructor
+    BranchModifier(bool do_opposite_branching, bool initial_branch_by_afc);  // Constructor
     ~BranchModifier(); // Destructor
 
     bool do_opposite_branching;  // Flag to indicate if opposite branching is enabled.
@@ -44,6 +44,10 @@ public:
     TieBreak<FloatVarBranch> def_float_varsel;
     FloatValBranch def_float_valsel;
 #endif
+
+    bool initial_branch_by_afc;
+
+    AST::Node* createBranchingAnnotation(std::vector<int> vars);
 
     // Return the opposite the current branching strategy for integer (if possible)
     IntValBranch doOppositeBranchingIntVal(string id, std::string& r0, std::string& r1, Rnd rnd);

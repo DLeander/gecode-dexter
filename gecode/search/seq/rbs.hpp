@@ -36,7 +36,11 @@ namespace Gecode { namespace Search { namespace Seq {
 
   forceinline
   RestartStop::RestartStop(Stop* s)
-    : l(0U), m_stop(s), e_stopped(false) {}
+    : l(0U), m_stop(s), e_stopped(false), optimum_found(nullptr) {}
+
+  forceinline
+  RestartStop::RestartStop(Stop* s, std::atomic<bool>* optimum_found)
+    : l(0U), m_stop(s), e_stopped(false), optimum_found(optimum_found) {}
 
   forceinline void
   RestartStop::limit(const Search::Statistics& s, unsigned long long int l0) {
@@ -59,6 +63,10 @@ namespace Gecode { namespace Search { namespace Seq {
   RestartStop::metastatistics(void) const {
     return m_stat;
   }
+
+  // forceinline
+  // PBSRestartStop::PBSRestartStop(Stop* stop, std::atomic<bool>* optimum_found)
+  //   : m_stop(static_cast<RestartStop*>(stop)), optimum_found(optimum_found) {}
 
 
   forceinline

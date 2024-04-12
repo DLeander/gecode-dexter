@@ -39,11 +39,10 @@ namespace Gecode { namespace Search { namespace Seq {
   rbsstop(Stop* stop) {
     return new RestartStop(stop);
   }
-
+  
   Stop*
-  pbsrbsstop(Stop* stop, std::atomic<bool>* optimum_found) {
-    return nullptr;
-    // return new PBSRestartStop(stop, optimum_found);
+  rbsstop(Stop* stop, std::atomic<bool>* optimum_found) {
+    return new RestartStop(stop, optimum_found);
   }
 
   Engine*
@@ -51,8 +50,6 @@ namespace Gecode { namespace Search { namespace Seq {
             const Search::Statistics& stat, const Options& opt, bool best) {
     return new RBS(master,static_cast<RestartStop*>(stop), slave, stat,opt,best);
   }
-
-
 }}}
 
 // STATISTICS: search-seq

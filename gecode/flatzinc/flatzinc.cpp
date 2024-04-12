@@ -817,6 +817,7 @@ namespace Gecode { namespace FlatZinc {
       _lnsInitialSolution = f._lnsInitialSolution;
       branchInfo = f.branchInfo;
       iv.update(*this, f.iv);
+      iv_initial_branching = f.iv_initial_branching;
       iv_lns.update(*this, f.iv_lns);
       iv_lns_default.update(*this, f.iv_lns_default);
       iv_lns_obj_relax.update(*this, f.iv_lns_obj_relax);
@@ -1086,6 +1087,53 @@ namespace Gecode { namespace FlatZinc {
     // The current best value given constraint times variable value. Used to select the best combination for LNS without relax and reconstruct.
     int currentBest = 0;
     int temp = 0;
+
+    // Go through every variable in the model and find the best fit for LNS.
+    int tot_afc = 0;
+    double afc_sq_sum = 0;
+    for (int i = 0; i < iv.size(); i++){
+      tot_afc += iv[i].afc();
+      afc_sq_sum += iv[i].afc() * iv[i].afc();
+    }
+    double afc_mean = tot_afc / iv.size();
+    double afc_stdev = std::sqrt((afc_sq_sum / iv.size()) - (afc_mean * afc_mean));
+
+    int num_lns_vars = 0;
+    if (afc_stdev < 1){
+      for (int i = 0; i < iv.size(); i++){
+        if (iv[i].afc() > 0){
+          num_lns_vars++;
+        }
+      }
+      iv_lns_default = IntVarArray(*this, num_lns_vars);
+      int j = 0;
+      for (int i = 0; i < iv.size(); i++){
+        if (iv[i].afc() > 0){
+          iv_lns_default[j] = iv[i];
+          iv_initial_branching.push_back(i);
+          j++;
+        }
+      }
+    }
+    else{
+      for (int i = 0; i < iv.size(); i++){
+        // Only freeze variables with a high afc, since freezing those variables help in the search because 
+        // they are the most constrained and failed variables and will help the other variables find solutions.
+        if (iv[i].afc() > afc_mean){
+          num_lns_vars++;
+        }
+      }
+      iv_lns_default = IntVarArray(*this, num_lns_vars);
+      int j = 0;
+      for (int i = 0; i < iv.size(); i++){
+        if (iv[i].afc() > afc_mean){
+          iv_initial_branching.push_back(i);
+          iv_lns_default[j] = iv[i];
+          j++;
+        }
+      }
+    }
+
     for (ConExpr* ce : constraints){
       // If a better candidate for LNS has been found, update the best_vars and currentBest variables.
       if (temp > currentBest){
@@ -1104,15 +1152,8 @@ namespace Gecode { namespace FlatZinc {
           if (var->getIntVar() == _optVar){
             AST::Array* coef;
             AST::Array* vars;
-            // Make sure integers are stored in coef and variables in vars. (Might be the case that first argument is always coefficients.)
-            if (ce->args->a[0]->getArray()->a[0]->isInt()){
-              coef = ce->args->a[0]->getArray();
-              vars = ce->args->a[1]->getArray();
-            }
-            else{
-              coef = ce->args->a[1]->getArray();
-              vars = ce->args->a[0]->getArray();
-            }
+            coef = ce->args->a[0]->getArray();
+            vars = ce->args->a[1]->getArray();
 
             // Two different cases: All coefficients are similar or some coefficients are larger than other.
             // Loop starts at 1 since the first entry is the objective value itself, and freezing that variable breaks the point of the search.
@@ -1315,26 +1356,28 @@ namespace Gecode { namespace FlatZinc {
       }
     }
 
-    if (best_vars_vec.size() > 0){
-      // Get total number of vars:
-      int total_vars = 0;
-      for (long unsigned int i = 0; i < best_vars_vec.size(); i++){
-        total_vars += best_vars_vec[i]->a.size();
-      }
+    // if (best_vars_vec.size() > 0){
+    //   // Get total number of vars:
+    //   int total_vars = 0;
+    //   for (long unsigned int i = 0; i < best_vars_vec.size(); i++){
+    //     total_vars += best_vars_vec[i]->a.size();
+    //   }
 
-      // Allocate iv_lns size.
-      iv_lns_default = IntVarArray(*this, total_vars);
+    //   // Allocate iv_lns size.
+    //   iv_lns_default = IntVarArray(*this, total_vars);
 
-      int iv_lns_index = 0;
-      // Add the selected variables to iv_lns.
-      for (AST::Array* vars : best_vars_vec){
-        for (long unsigned int i = 0; i < vars->a.size(); i++){
-          iv_lns_default[iv_lns_index] = iv[vars->a[i]->getIntVar()];
-          iv_lns_index++;
-        }
-      }
-      default_lns = 60;
-    }
+    //   int iv_lns_index = 0;
+    //   // Add the selected variables to iv_lns.
+    //   for (AST::Array* vars : best_vars_vec){
+    //     for (long unsigned int i = 0; i < vars->a.size(); i++){
+    //       cerr << iv[vars->a[i]->getIntVar()].afc() << endl;
+    //       iv_lns_default[iv_lns_index] = iv[vars->a[i]->getIntVar()];
+    //       iv_lns_index++;
+    //     }
+    //   }
+      
+    // }
+    default_lns = 60;
 
     // Delete constraint information as they are no longer useable.
     for (ConExpr* ce : constraints){
@@ -1388,12 +1431,23 @@ namespace Gecode { namespace FlatZinc {
 #endif
 
     _lns = 0;
-    if (ann) {
+    if (ann || bm.initial_branch_by_afc) {
       std::vector<AST::Node*> flatAnn;
-      if (ann->isArray()) {
-        flattenAnnotations(ann->getArray()  , flatAnn);
-      } else {
-        flatAnn.push_back(ann);
+      if (ann){
+        if (ann->isArray()) {
+          flattenAnnotations(ann->getArray(), flatAnn);
+        } else {
+          flatAnn.push_back(ann);
+        }
+      }
+      if (bm.initial_branch_by_afc){
+        AST::Node* bm_ann = bm.createBranchingAnnotation(iv_initial_branching);
+        if (bm_ann->isArray()){
+          flattenAnnotations(bm_ann->getArray(), flatAnn);
+        }
+        else{
+          flatAnn.push_back(bm_ann);
+        }
       }
 
       for (unsigned int i=0; i<flatAnn.size(); i++) {
@@ -2285,7 +2339,7 @@ namespace Gecode { namespace FlatZinc {
   FlatZincSpace::run(std::ostream& out, Printer& p,
                       FlatZincOptions& opt, Support::Timer& t_total) {
     
-    BranchModifier bm(false);
+    BranchModifier bm(false, false);
     this->createBranchers(p, this->solveAnnotations(), opt, false, bm);
     this->shrinkArrays(p);
 
@@ -2544,27 +2598,21 @@ namespace Gecode { namespace FlatZinc {
       }
     }
 
-    // if (restart_data.initialized() && !restart_data().mark_complete && optimum_found != nullptr && optimum_found->load()){
-    //     cerr << "HEJ" << endl;
-    //     restart_data().mark_complete = true;
-    //     return true;
-    // }
-
     if (mi.type() == MetaInfo::RESTART){
       unsigned long long int sols = mi.solution();
       unsigned long long int fails = mi.fail();
 
+
       // Update the LNS keep percentage: If more sols than fails, lower the keep percentage, otherwise increase it.
-      // THINKING: Many solutions will lead to a decrease in keep percentage, making it possible to explore the nghibourhood more exhaustivly.
-      //           Few solutions will lead to an increase in keep percentage, making it possible to explore more of the search space, and get out of failing branchers.
+      // THINKING: Many solutions will lead to a increase in keep percentage, making it possible to explore the neighbourhood more exhaustivly.
+      //           Few solutions will lead to an decrease in keep percentage, making it possible to explore more of the search space, and get out of failing branchers.
       if (fails > sols && fails > 0 && sols > 0){
         _lns = std::max(10.0, ceil(_lns - sols/fails));
       }
       else if (fails > 0 && sols > 0){
         _lns = std::min(90.0, ceil(_lns + sols/fails));
       }
-      cerr << _lns << endl;
-      
+      // cerr << _lns << endl;  
     }
 
     // Depending on the type of LNS, apply it and return false.
@@ -2582,13 +2630,8 @@ namespace Gecode { namespace FlatZinc {
       {
         return _lnsStrategy.revpgLNS(*this, mi, iv, num_non_introduced_vars, _random);
       }
-      case AFCLNS:
-      {
-        return _lnsStrategy.afcLNS(*this, mi, iv);
-      }
       case OBJREL:
       {
-        // cerr << iv_lns_obj_relax.size() << endl;
         return _lnsStrategy.objrelaxLNS(*this, mi, _lns, iv_lns_obj_relax, _random);
       }
       default:

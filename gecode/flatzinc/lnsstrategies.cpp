@@ -88,6 +88,8 @@ bool LNStrategies::pgLNS(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int nu
 
           pglns_info.pop_front();
         }
+        // Clear the deque from last iteration (as their diffs might not be valid anymore).
+        pglns_info.clear();
 
         // Get the domain size before the propagation
         for (int i = 0; i < num_non_introduced_vars; ++i) {
@@ -104,8 +106,7 @@ bool LNStrategies::pgLNS(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int nu
             pglns_info.push_back({iv[i], i, diff});
           }
         }
-        // Clear the deque from last iteration (as their diffs might not be valid anymore).
-        pglns_info.clear();
+        
         // Sort the variables and indexes in iv according to the difference in domain size in pglns_info.
         std::sort(pglns_info.begin(), pglns_info.end(), [](const PGLNSInfo& a, const PGLNSInfo& b) {
           return a.domainDiff > b.domainDiff;
@@ -157,6 +158,8 @@ bool LNStrategies::revpgLNS(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int
 
           pglns_info.pop_front();
         }
+        // Clear the deque from last iteration (as their diffs might not be valid anymore).
+        pglns_info.clear();
 
         // Get the domain size before the propagation
         for (int i = 0; i < num_non_introduced_vars; ++i) {
@@ -173,8 +176,6 @@ bool LNStrategies::revpgLNS(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int
             pglns_info.push_back({iv[i], i, diff});
           }
         }
-        // Clear the deque from last iteration (as their diffs might not be valid anymore).
-        pglns_info.clear();
         // Sort the variables and indexes in iv according to the difference in domain size in pglns_info.
         std::sort(pglns_info.begin(), pglns_info.end(), [](const PGLNSInfo& a, const PGLNSInfo& b) {
           return a.domainDiff < b.domainDiff;

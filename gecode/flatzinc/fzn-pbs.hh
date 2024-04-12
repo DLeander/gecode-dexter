@@ -252,53 +252,60 @@ class BaseAsset {
         virtual void setupAsset() = 0;
         virtual void run() = 0;
         virtual FlatZincSpace* getFZS() = 0;
-        virtual FlatZincSpace* getCurrentBestSol() = 0;
         virtual BaseEngine* getSE() = 0;
-        virtual Support::Timer* getTSolve() = 0;
         virtual StatusStatistics getSStat() = 0;
         virtual int getNP() const = 0;
         virtual long unsigned int getShavingStart() const = 0;
-
-        virtual std::atomic<bool>& getopt() const = 0;
+        virtual double getSolveTime() const = 0;
+        virtual FlatZinc::FlatZincSpace::LNSType getLNSType() const = 0;
+        virtual string getAssetTypeStr() const = 0;
         
+
         virtual void setNP(int n_p) = 0;
         virtual void setSStat(StatusStatistics sstat) = 0;
         virtual void setShavingStart(long unsigned int start) = 0;
+        virtual void setAssetTypeStr(string type) = 0;
+
+        virtual void increaseSolveTime(double time) = 0;
 };
 
 class DFSAsset : public BaseAsset {
     public:
-        DFSAsset(PBSController& control, FlatZincSpace* fg, FlatZincOptions& fopt, FlatZinc::Printer& p, std::ostream &out, unsigned int asset_id, std::atomic<FlatZincSpace*>& best_sol, std::atomic<bool>& optimum_found, bool branchmod, unsigned int c_d, unsigned int a_d, double threads)
-        : optimum_found(optimum_found), best_sol(best_sol), fg(fg), fopt(fopt), p(p), c_d(c_d), a_d(a_d), threads(threads), bm(branchmod), executor(new AssetExecutor(control, this, out, fopt, p, asset_id, true)), shaving_start(0) {setupAsset();};
+        DFSAsset(PBSController& control, FlatZincSpace* fg, FlatZincOptions& fopt, FlatZinc::Printer& p, std::ostream &out, unsigned int asset_id, bool opposite_branching, bool initial_branch_by_afc, unsigned int c_d, unsigned int a_d, double threads)
+        : control(control), fg(fg), fopt(fopt), p(p), c_d(c_d), a_d(a_d), threads(threads), bm(opposite_branching, initial_branch_by_afc), executor(new AssetExecutor(control, this, out, fopt, p, asset_id, true)), shaving_start(0), solve_time(0) {setupAsset();};
+
+        ~DFSAsset() override {
+            delete se; se = nullptr;
+            delete fzs; fzs = nullptr;
+            // delete executor; executor = nullptr;
+        };
 
         void setupAsset() override;
         void run() override {Gecode::Support::Thread::run(executor);};
 
         FlatZincSpace* getFZS() override { return fzs; }
-        FlatZincSpace* getCurrentBestSol() override { return current_best; }
         BaseEngine* getSE() override { return se; }
-        Support::Timer* getTSolve() override { return &t_solve; }
         StatusStatistics getSStat() override { return sstat; }
         int getNP() const override { return n_p; }
         long unsigned int getShavingStart() const override { return shaving_start; }
-
-        std::atomic<bool>& getopt() const override { return optimum_found; }
-
+        double getSolveTime() const override { return solve_time; }
+        FlatZinc::FlatZincSpace::LNSType getLNSType() const { return FlatZinc::FlatZincSpace::LNSType::NONE; }
+        string getAssetTypeStr() const override { return assetstr; }
+        
         void setNP(int n_p) override { this->n_p = n_p; }
         void setSStat(StatusStatistics sstat) override { this->sstat = sstat; }
         void setShavingStart(long unsigned int start) override { shaving_start = start; }
+        void setAssetTypeStr(string type) override { assetstr = type; }
+
+        void increaseSolveTime(double time) override {solve_time += time;};
+        
+        PBSController& control;
 
     private:
         FlatZincSpace* fzs;
-        FlatZincSpace* current_best;
         BABEngine* se;
-        Support::Timer t_solve;
         StatusStatistics sstat;
         int n_p;
-        // Flag indicating that the final best solution has been found.
-        std::atomic<bool>& optimum_found;
-        // The best solution found given objective value.
-        std::atomic<FlatZincSpace*>& best_sol;
         FlatZincSpace* fg;
         FlatZincOptions& fopt;
         FlatZinc::Printer& p;
@@ -308,43 +315,49 @@ class DFSAsset : public BaseAsset {
         BranchModifier bm;
         AssetExecutor* executor;
         long unsigned int shaving_start;
+        double solve_time;
+        string assetstr;
 };
 
 class LNSAsset : public BaseAsset {
     public:
-        LNSAsset(PBSController& control, FlatZincSpace* fg, FlatZincOptions& fopt, FlatZinc::Printer& p, std::ostream &out, unsigned int asset_id, std::atomic<FlatZincSpace*>& best_sol, std::atomic<bool>& optimum_found, bool branchmod, FlatZinc::FlatZincSpace::LNSType lns_type, unsigned int c_d, unsigned int a_d,
+        LNSAsset(PBSController& control, FlatZincSpace* fg, FlatZincOptions& fopt, FlatZinc::Printer& p, std::ostream &out, unsigned int asset_id, bool opposite_branching, bool initial_branch_by_afc, FlatZinc::FlatZincSpace::LNSType lns_type, unsigned int c_d, unsigned int a_d,
                      double threads, RestartMode mode, double restart_base, unsigned int restart_scale) 
-                    : optimum_found(optimum_found), best_sol(best_sol), fg(fg), fopt(fopt), p(p), c_d(c_d), a_d(a_d), threads(threads), bm(branchmod), mode(mode), restart_base(restart_base), 
-                      restart_scale(restart_scale), lns_type(lns_type), executor(new AssetExecutor(control, this, out, fopt, p, asset_id, true)), shaving_start(0) {setupAsset();};
-        
+                    : control(control), fg(fg), fopt(fopt), p(p), c_d(c_d), a_d(a_d), threads(threads), bm(opposite_branching, initial_branch_by_afc), mode(mode), restart_base(restart_base), 
+                      restart_scale(restart_scale), lns_type(lns_type), executor(new AssetExecutor(control, this, out, fopt, p, asset_id, true)), shaving_start(0), solve_time(0) {setupAsset();};
+        ~LNSAsset() override {
+            delete se; se = nullptr;
+            delete fzs; fzs = nullptr;
+            // delete executor; executor = nullptr;
+        };
+
         void setupAsset() override;
         void run() override {Gecode::Support::Thread::run(executor);};
 
         FlatZincSpace* getFZS() override { return fzs; }
-        FlatZincSpace* getCurrentBestSol() override { return current_best; }
         BaseEngine* getSE() override { return se; }
-        Support::Timer* getTSolve() override { return &t_solve; }
         StatusStatistics getSStat() override { return sstat; }
         int getNP() const override { return n_p; }
         long unsigned int getShavingStart() const override { return shaving_start; }
-
-        std::atomic<bool>& getopt() const override { return optimum_found; }
+        double getSolveTime() const override { return solve_time; }
+        FlatZinc::FlatZincSpace::LNSType getLNSType() const { return lns_type; }
+        string getAssetTypeStr() const override { return assetstr; }
 
         void setNP(int n_p) override { n_p = n_p; }
         void setSStat(StatusStatistics sstat) override { sstat = sstat; }
         void setShavingStart(long unsigned int start) override { shaving_start = start; }
+        void setAssetTypeStr(string type) override { assetstr = type; }
+
+        void increaseSolveTime(double time) override {solve_time += time;};
+        
+
+        PBSController& control;
 
     private:
         FlatZincSpace* fzs;
-        FlatZincSpace* current_best;
         RBSEngine* se;
-        Support::Timer t_solve;
         StatusStatistics sstat;
         int n_p;
-        // Flag indicating that the final best solution has been found.
-        std::atomic<bool>& optimum_found;
-        // The best solution found given objective value.
-        std::atomic<FlatZincSpace*>& best_sol;
         FlatZincSpace* fg;
         FlatZincOptions& fopt;
         FlatZinc::Printer& p;
@@ -358,36 +371,40 @@ class LNSAsset : public BaseAsset {
         FlatZinc::FlatZincSpace::LNSType lns_type;
         AssetExecutor* executor;
         long unsigned int shaving_start;
+        double solve_time;
+        string assetstr;
 };
 
 class RRLNSAsset : public BaseAsset {
     public:
-        RRLNSAsset(PBSController& control, FlatZincSpace* fg, FlatZincOptions& fopt, FlatZinc::Printer& p, std::ostream &out, unsigned int asset_id, std::atomic<FlatZincSpace*>& best_sol, std::atomic<bool>& optimum_found, unsigned int c_d, unsigned int a_d, double threads)
-        : control(control), optimum_found(optimum_found), best_sol(best_sol), fg(fg), fopt(fopt), p(p), out(out), c_d(c_d), a_d(a_d), threads(threads), asset_id(asset_id)  {setupAsset();};
-
+        RRLNSAsset(PBSController& control, FlatZincSpace* fg, FlatZincOptions& fopt, FlatZinc::Printer& p, std::ostream &out, unsigned int asset_id, unsigned int c_d, unsigned int a_d, double threads)
+        : best_asset(nullptr), control(control), fg(fg), fopt(fopt), p(p), out(out), c_d(c_d), a_d(a_d), threads(threads), asset_id(asset_id)  {setupAsset();};
+        ~RRLNSAsset() override {};
         void setupAsset() override;
         void run() override;
 
-        FlatZincSpace* getCurrentBestSol() override { return current_best; }
-        Support::Timer* getTSolve() override { return &t_solve; }
-        StatusStatistics getSStat() override { return sstat; }
-        int getNP() const override { return n_p; }
+        FlatZincSpace* getFZS() override { return best_asset->getFZS(); }
+        BaseEngine* getSE() override { return best_asset->getSE(); }
+        StatusStatistics getSStat() override { return best_asset->getSStat(); }
+        int getNP() const override { return best_asset->getNP(); }
+        double getSolveTime() const override { return best_asset->getSolveTime(); }
+        long unsigned int getShavingStart() const override { return -1; }
+        FlatZinc::FlatZincSpace::LNSType getLNSType() const { return best_asset->getLNSType(); }
+        string getAssetTypeStr() const override { return best_asset->getAssetTypeStr(); }
 
-        std::atomic<bool>& getopt() const override { return optimum_found; }
+        void setNP(int n_p) override { best_asset->setNP(n_p); }
+        void setSStat(StatusStatistics sstat) override { best_asset->setSStat(sstat); }
+        void setShavingStart(long unsigned int /*start*/) override {}
+        void setAssetTypeStr(string type) override { if (best_asset != nullptr) best_asset->setAssetTypeStr(type); }
 
-        void setNP(int n_p) override { this->n_p = n_p; }
-        void setSStat(StatusStatistics sstat) override { this->sstat = sstat; }
+        void increaseSolveTime(double /*time*/) override {};
+
+        std::unique_ptr<BaseAsset> best_asset;
 
     private:
         PBSController& control;
-        FlatZincSpace* current_best;
-        Support::Timer t_solve;
         StatusStatistics sstat;
         int n_p;
-        // Flag indicating that the final best solution has been found.
-        std::atomic<bool>& optimum_found;
-        // The best solution found given objective value.
-        std::atomic<FlatZincSpace*>& best_sol;
         FlatZincSpace* fg;
         FlatZincOptions& fopt;
         FlatZinc::Printer& p;
@@ -397,48 +414,46 @@ class RRLNSAsset : public BaseAsset {
         double threads;
         unsigned int asset_id;
         std::vector<std::unique_ptr<BaseAsset>> round_robin_assets;
+        string assetstr;
 };
 
 class ShavingAsset : public BaseAsset {
     public:
-        ShavingAsset(PBSController& control, FlatZincSpace* fg, Gecode::FlatZinc::Printer &p, FlatZincOptions& fopt, std::ostream &out, unsigned int asset_id, 
-        std::atomic<FlatZincSpace*>& best_sol, std::atomic<bool>& optimum_found, int max_dom_shaving_size, bool do_bounds_shaving, VariableSorter* sorter) 
-        : root(fg), optimum_found(optimum_found), best_sol(best_sol), fopt(fopt), executor(new AssetExecutor(control, this, out, fopt, p, asset_id, false)), 
-          max_dom_shaving_size(max_dom_shaving_size), do_bounds_shaving(do_bounds_shaving), sorter(sorter)
+        ShavingAsset(PBSController& control, FlatZincSpace* fg, Gecode::FlatZinc::Printer &p, FlatZincOptions& fopt, std::ostream &out, unsigned int asset_id, int max_dom_shaving_size, bool do_bounds_shaving, VariableSorter* sorter) 
+        : control(control), root(fg), fopt(fopt), executor(new AssetExecutor(control, this, out, fopt, p, asset_id, false)), max_dom_shaving_size(max_dom_shaving_size), do_bounds_shaving(do_bounds_shaving), sorter(sorter)
         {
             std::reverse(variables.begin(), variables.end()); setupAsset();
         };
+        ~ShavingAsset() override {delete sorter; sorter = nullptr; /*delete executor; executor = nullptr;*/};
 
         void setupAsset() override;
         void run() override {Gecode::Support::Thread::run(executor);};
         void run_shaving_pass(PBSController& control, StatusStatistics status_stat, CloneStatistics clone_stat, bool& has_reported_literal, const std::function<std::vector<Literal> (VarDescription&, FlatZincSpace*)> literal_extractor);
         
         FlatZincSpace* getFZS() override { return root; }
-        FlatZincSpace* getCurrentBestSol() override { return nullptr; }
         BaseEngine* getSE() override { return nullptr; }
-        Support::Timer* getTSolve() override { return nullptr; }
         StatusStatistics getSStat() override { return sstat; }
         int getNP() const override { return n_p; }
         bool doBoundsShaving() const { return do_bounds_shaving; }
         int getMaxDomShavingSize() const { return max_dom_shaving_size; }
         long unsigned int getShavingStart() const override { return 0; }
-
-        std::atomic<bool>& getopt() const override { return optimum_found; }
+        double getSolveTime() const override { return 0; }
+        FlatZinc::FlatZincSpace::LNSType getLNSType() const { return FlatZinc::FlatZincSpace::LNSType::NONE; }
+        string getAssetTypeStr() const override { return assetstr; }
 
         void setNP(int n_p) override { n_p = n_p; }
         void setSStat(StatusStatistics sstat) override { sstat = sstat; }
         void setShavingStart(long unsigned int /*start*/) override {}
-    
+        void setAssetTypeStr(string type) override { assetstr = type; }
+
+        void increaseSolveTime(double /*time*/) override {};
+
+        PBSController& control;
+
     private:
         FlatZincSpace* root;
-        FlatZincSpace* current_best;
-        Support::Timer t_solve;
         StatusStatistics sstat;
         int n_p;
-        // Flag indicating that the final best solution has been found.
-        std::atomic<bool>& optimum_found;
-        // The best solution found given objective value.
-        std::atomic<FlatZincSpace*>& best_sol;
         FlatZincOptions& fopt;
         AssetExecutor* executor;
 
@@ -446,6 +461,7 @@ class ShavingAsset : public BaseAsset {
         int max_dom_shaving_size;
         bool do_bounds_shaving;
         VariableSorter* sorter;
+        string assetstr;
 };
 
 class PBSController {
@@ -460,7 +476,7 @@ public:
         REVPGLNS, //< Reverse propagation guided LNS.
         AFCLNS, //< AFC guided LNS.
         
-        USER_OPPOSITE  //< Third asset is the user asset with opposite branching.
+        USER_OPPOSITE  //< The user asset with opposite branching.
     };
     // Methods
     PBSController(FlatZinc::FlatZincSpace* fg, const int num_assets, Printer& p); // constructor

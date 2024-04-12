@@ -82,7 +82,7 @@ private:
 class RBSEngine : public BaseEngine {
 public:
     RBSEngine(FlatZincSpace* space, const Search::Options& options, std::atomic<bool>* optimum_found)
-        : engine(space, options) {}
+        : engine(space, options, optimum_found) {}
 
     FlatZincSpace* next() override {
         return engine.next();

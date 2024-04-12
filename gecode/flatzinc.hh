@@ -440,8 +440,8 @@ namespace Gecode { namespace FlatZinc {
       RANDOM, //< Standard LNS
       PG, //< Propagation Guided LNS
       rPG, //< Reversed Propagation Guided LNS
-      AFCLNS, //< AFC guided LNS
-      OBJREL //< Objective relax LNS
+      OBJREL, //< Objective relax LNS
+      NONE //< No LNS used by asset in FlatZincSpace.
     };
 
     int getintVarCount() const { return intVarCount; }
@@ -512,6 +512,9 @@ namespace Gecode { namespace FlatZinc {
     Gecode::IntVarArray iv;
     /// The introduced integer variables
     Gecode::IntVarArray iv_aux;
+
+    // Integer variables used for inital branching if asset in PBS is to do so:
+    std::vector<int> iv_initial_branching;
 
     /// The integer variables used in LNS
     Gecode::IntVarArray iv_lns;

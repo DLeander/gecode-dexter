@@ -20,7 +20,7 @@ using namespace Gecode;
 using namespace Gecode::FlatZinc;
 
 // Constructor
-BranchModifier::BranchModifier(bool do_opposite_branching) 
+BranchModifier::BranchModifier(bool do_opposite_branching, bool initial_branch_by_afc) 
     : do_opposite_branching(do_opposite_branching),
       def_int_varsel(do_opposite_branching ? INT_VAR_AFC_SIZE_MIN(0.99) : INT_VAR_AFC_SIZE_MAX(0.99)),
       def_int_valsel(do_opposite_branching ? INT_VAL_MAX() : INT_VAL_MIN()),
@@ -33,12 +33,42 @@ BranchModifier::BranchModifier(bool do_opposite_branching)
 #endif
 #ifdef GECODE_HAS_FLOAT_VARS
       ,def_float_varsel(do_opposite_branching ? FLOAT_VAR_SIZE_MAX() : FLOAT_VAR_SIZE_MIN()),
-      def_float_valsel(do_opposite_branching ? FLOAT_VAL_SPLIT_MAX() : FLOAT_VAL_SPLIT_MIN())
+      def_float_valsel(do_opposite_branching ? FLOAT_VAL_SPLIT_MAX() : FLOAT_VAL_SPLIT_MIN()),
 #endif
+      initial_branch_by_afc(initial_branch_by_afc)
 {}
 
 // Destructor
 BranchModifier::~BranchModifier() {}
+
+AST::Node* BranchModifier::createBranchingAnnotation(std::vector<int> vars) {
+    AST::Array* args = new AST::Array(4);
+    // variables
+
+    args->a[0] = new AST::Array(vars.size());
+    for (long unsigned int i = 0; i < vars.size(); i++) {
+        args->a[0]->getArray()->a[i] = new AST::IntVar(vars[i]);
+    }
+    // If branchers are specified for the variables, then those will be branched on first. Therefore
+    // using default branching makes sense, since if anything else is defined in the model, the variables won't be using the
+    // default branching, but instead the defined ones.
+    if (do_opposite_branching){
+        // Variable selection
+        args->a[1] = new AST::Atom("afc_size_min");
+        // Value selection
+        args->a[2] = new AST::Atom("indomain_min");
+    } else {
+        // Variable selection
+        args->a[1] = new AST::Atom("afc_size_max");
+        // Value selection
+        args->a[2] = new AST::Atom("indomain_max");
+    }
+    // Create annotation.
+    AST::Node* ann = new AST::Call("int_search", args);
+    
+    // Return the crafted annotation.
+    return ann;
+}
 
 TieBreak<IntVarBranch> BranchModifier::doOppositeBranchingIntVar(string id, Rnd rnd, double decay) {
     if (id == "input_order")
