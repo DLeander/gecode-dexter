@@ -821,6 +821,7 @@ namespace Gecode { namespace FlatZinc {
       iv_lns.update(*this, f.iv_lns);
       iv_lns_default.update(*this, f.iv_lns_default);
       iv_lns_obj_relax.update(*this, f.iv_lns_obj_relax);
+      ciglns_info = f.ciglns_info;
       num_non_introduced_vars = f.num_non_introduced_vars;
       intVarCount = f.intVarCount;
 
@@ -890,7 +891,7 @@ namespace Gecode { namespace FlatZinc {
   :  _initData(new FlatZincSpaceInitData),
     intVarCount(-1), boolVarCount(-1), floatVarCount(-1), setVarCount(-1),
     _optVar(-1), _optVarIsInt(true), _lns(0), _lnsInitialSolution(0),
-    _random(random), _solveAnnotations(nullptr), 
+    _random(random), _solveAnnotations(nullptr), ciglns_info(nullptr),
     pbs_current_best_sol(nullptr), optimum_found(nullptr), needAuxVars(true) {
     branchInfo.init();
   }
@@ -2616,23 +2617,27 @@ namespace Gecode { namespace FlatZinc {
     }
 
     // Depending on the type of LNS, apply it and return false.
+    bool maximize = _method == MAX;
     switch (_lnsType) {
       case RANDOM:
       {
-        // cerr << "Random LNS" << endl;
-        return _lnsStrategy.randomLNS(*this, mi, _lnsInitialSolution, _lns, iv_lns, _random);
+        return _lnsStrategy.random(*this, mi, _lnsInitialSolution, _lns, iv_lns, _random);
       }
       case PG:
       {
-        return _lnsStrategy.pgLNS(*this, mi, iv, num_non_introduced_vars, _random);
+        return _lnsStrategy.propagationGuided(*this, mi, iv, num_non_introduced_vars, _random);
       }
       case rPG:
       {
-        return _lnsStrategy.revpgLNS(*this, mi, iv, num_non_introduced_vars, _random);
+        return _lnsStrategy.reversedPropagationGuided(*this, mi, iv, num_non_introduced_vars, _random);
       }
       case OBJREL:
       {
-        return _lnsStrategy.objrelaxLNS(*this, mi, _lns, iv_lns_obj_relax, _random);
+        return _lnsStrategy.objectiveRelaxation(*this, mi, _lns, iv_lns_obj_relax, _random);
+      }
+      case CIG:
+      {
+        return _lnsStrategy.costImpactGuided(*this, mi, ciglns_info, maximize, 2, 0.5, ceil((_lns/100.0) * iv_lns_default.size()), _random);
       }
       default:
       {

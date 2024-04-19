@@ -327,6 +327,7 @@ class LNSAsset : public BaseAsset {
                       restart_scale(restart_scale), lns_type(lns_type), executor(new AssetExecutor(control, this, out, fopt, p, asset_id, true)), shaving_start(0), solve_time(0) {setupAsset();};
         ~LNSAsset() override {
             delete se; se = nullptr;
+            delete fzs->ciglns_info; fzs->ciglns_info = nullptr;
             delete fzs; fzs = nullptr;
             // delete executor; executor = nullptr;
         };

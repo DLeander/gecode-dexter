@@ -25,17 +25,42 @@ struct PGLNSInfo {
     int domainDiff;
 };
 
-class LNStrategies {
+// Structs mainly used for CIG LNS.
+struct VariableShuffleInfo {
+    IntVar intVar;
+    unsigned int ivIndex;
+
+    VariableShuffleInfo(IntVar var, unsigned int index) : intVar(var), ivIndex(index) {}
+};
+struct CIGInfo {
+    std::vector<VariableShuffleInfo> vars;
+    std::vector<double> bound_differences;
+    std::vector<double> scores;
+    double bound_diff_sum;
+    double r;
+
+    CIGInfo(IntVarArray lns_vars) : bound_differences(lns_vars.size()), scores(lns_vars.size()), bound_diff_sum(0), r(0) {
+        for (int i = 0; i < lns_vars.size(); i++){
+            vars.push_back(VariableShuffleInfo(lns_vars[i], i));
+        }
+    }
+};
+
+class LNSstrategies {
 public:
-    LNStrategies(); // constructor
-    ~LNStrategies(); // destructor
+    LNSstrategies(); // constructor
+    ~LNSstrategies(); // destructor
 
     // Standard LNS
-    bool randomLNS(FlatZincSpace& fzs, MetaInfo mi, IntSharedArray& initialSolution, unsigned int lns, IntVarArgs iv_lns, Rnd random);
-    bool pgLNS(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int num_non_introduced_vars, Rnd random);
-    bool revpgLNS(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int num_non_introduced_vars, Rnd random);
-    bool afcLNS(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv);
-    bool objrelaxLNS(FlatZincSpace& fzs, MetaInfo mi, unsigned int lns, IntVarArgs iv_lns_obj_relax, Rnd random);
+    bool random(FlatZincSpace& fzs, MetaInfo mi, IntSharedArray& initialSolution, unsigned int lns, IntVarArgs iv_lns, Rnd random);
+    // Propagation guided LNS
+    bool propagationGuided(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int num_non_introduced_vars, Rnd random);
+    // Reversed propagation guided LNS
+    bool reversedPropagationGuided(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int num_non_introduced_vars, Rnd random);
+    // Objective relaxation LNS
+    bool objectiveRelaxation(FlatZincSpace& fzs, MetaInfo mi, unsigned int lns, IntVarArgs iv_lns_obj_relax, Rnd random);
+    // Cost impact guided LNS
+    bool costImpactGuided(FlatZincSpace& fzs, MetaInfo mi, CIGInfo* data, bool maximize, unsigned int dives, double alpha, long unsigned int numfixedvars, Rnd random);
 
 };
 

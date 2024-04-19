@@ -1,2 +1,2 @@
-1. While inside step(), there is no way for an engine to know if another engine has finished, so it might get stuck.
-2. Memory leaks.
+1. Cost Impact Guided Search does not work as intended.
+2. When running search with more than 1 asset, the solve time is slower for unknown reasons.

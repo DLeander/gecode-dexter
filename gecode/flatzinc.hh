@@ -441,6 +441,7 @@ namespace Gecode { namespace FlatZinc {
       PG, //< Propagation Guided LNS
       rPG, //< Reversed Propagation Guided LNS
       OBJREL, //< Objective relax LNS
+      CIG, // < Cost Impact Guided LNS
       NONE //< No LNS used by asset in FlatZincSpace.
     };
 
@@ -483,7 +484,7 @@ namespace Gecode { namespace FlatZinc {
 
     LNSType _lnsType;
 
-    LNStrategies _lnsStrategy;
+    LNSstrategies _lnsStrategy;
 
     std::vector<ConExpr*> constraints;
 
@@ -505,9 +506,6 @@ namespace Gecode { namespace FlatZinc {
     void
     branchWithPlugin(AST::Node* ann);
   public:
-
-    // std::vector<IntVar> 
-
     /// The integer variables
     Gecode::IntVarArray iv;
     /// The introduced integer variables
@@ -520,6 +518,7 @@ namespace Gecode { namespace FlatZinc {
     Gecode::IntVarArray iv_lns;
     Gecode::IntVarArray iv_lns_default;
     Gecode::IntVarArray iv_lns_obj_relax;
+    CIGInfo* ciglns_info;
 
     int num_non_introduced_vars;
 

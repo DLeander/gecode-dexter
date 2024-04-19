@@ -11,6 +11,7 @@
 #include <gecode/flatzinc/fzn-pbs.hh>
 #include <gecode/flatzinc/searchenginebase.hh>
 #include <gecode/flatzinc/branchmodifier.hh>
+#include <gecode/flatzinc/lnsstrategies.hh>
 
 #include <array>
 #include <vector>
@@ -132,8 +133,8 @@ void PBSController::setupPortfolioAssets(int asset, FlatZinc::Printer& p, FlatZi
     switch (AssetType(asset))
     {
     case USER:
-        // assets[asset] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset, false, false, FlatZinc::FlatZincSpace::LNSType::PG, fopt.c_d(), fopt.a_d(), fopt.threads(), RM_LUBY, 1.5, 250));
-        assets[asset] = (std::make_unique<DFSAsset>(*this, fg, fopt, p, out, asset, false, false, fopt.c_d(), fopt.a_d(), fopt.threads()));
+        assets[asset] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset, false, false, FlatZinc::FlatZincSpace::LNSType::CIG, fopt.c_d(), fopt.a_d(), fopt.threads(), RM_LUBY, 1.5, 250));
+        // assets[asset] = (std::make_unique<DFSAsset>(*this, fg, fopt, p, out, asset, false, false, fopt.c_d(), fopt.a_d(), fopt.threads()));
         if (fopt.mode() == SM_STAT) {
             assets[asset]->setAssetTypeStr("bab asset");
         }
@@ -405,6 +406,9 @@ void RRLNSAsset::run(){
                 case FlatZinc::FlatZincSpace::LNSType::OBJREL:
                     best_asset->setAssetTypeStr("round robin asset objective relaxation lns");
                     break;
+                case FlatZinc::FlatZincSpace::LNSType::CIG:
+                    best_asset->setAssetTypeStr("rounds robin asset cost impact guided lns");
+                    break;
                 case FlatZinc::FlatZincSpace::LNSType::NONE:
                     best_asset->setAssetTypeStr("round robin asset");
                     break;
@@ -544,6 +548,9 @@ void LNSAsset::setupAsset(){
     search_options.nogoods_limit = fopt.nogoods() ? fopt.nogoods_limit() : 0;
 
     fzs->setLNSType(lns_type);
+    if (lns_type == FlatZinc::FlatZincSpace::LNSType::CIG){
+        fzs->ciglns_info = new CIGInfo(fzs->iv_lns_default);
+    }
 
     if (fopt.interrupt()) Driver::PBSCombinedStop::installCtrlHandler(true);
 
