@@ -74,56 +74,56 @@ TieBreak<IntVarBranch> BranchModifier::doOppositeBranchingIntVar(string id, Rnd 
     if (id == "input_order")
         return TieBreak<IntVarBranch>(INT_VAR_NONE());
 
-      if (id == "first_fail")
-        return TieBreak<IntVarBranch>(INT_VAR_SIZE_MAX());
+    if (id == "first_fail")
+    return TieBreak<IntVarBranch>(INT_VAR_SIZE_MAX());
 
-      if (id == "anti_first_fail")
-        return TieBreak<IntVarBranch>(INT_VAR_SIZE_MIN());
+    if (id == "anti_first_fail")
+    return TieBreak<IntVarBranch>(INT_VAR_SIZE_MIN());
 
-      if (id == "smallest")
-        return TieBreak<IntVarBranch>(INT_VAR_MAX_MAX());
+    if (id == "smallest")
+    return TieBreak<IntVarBranch>(INT_VAR_MAX_MAX());
 
-      if (id == "largest")
-        return TieBreak<IntVarBranch>(INT_VAR_MIN_MIN());
+    if (id == "largest")
+    return TieBreak<IntVarBranch>(INT_VAR_MIN_MIN());
 
-      if (id == "occurrence")
-        return TieBreak<IntVarBranch>(INT_VAR_DEGREE_MAX());
+    if (id == "occurrence")
+    return TieBreak<IntVarBranch>(INT_VAR_DEGREE_MAX());
 
-      if (id == "max_regret")
-        return TieBreak<IntVarBranch>(INT_VAR_REGRET_MIN_MAX());
+    if (id == "max_regret")
+    return TieBreak<IntVarBranch>(INT_VAR_REGRET_MIN_MAX());
 
-      if (id == "most_constrained")
-        return TieBreak<IntVarBranch>(INT_VAR_SIZE_MAX(), INT_VAR_DEGREE_MAX());
+    if (id == "most_constrained")
+    return TieBreak<IntVarBranch>(INT_VAR_SIZE_MAX(), INT_VAR_DEGREE_MAX());
 
-      if (id == "random")
-        return TieBreak<IntVarBranch>(INT_VAR_RND(rnd));
+    if (id == "random")
+    return TieBreak<IntVarBranch>(INT_VAR_RND(rnd));
 
-      if (id == "dom_w_deg")
-        return TieBreak<IntVarBranch>(INT_VAR_AFC_SIZE_MAX(decay));
+    if (id == "dom_w_deg")
+    return TieBreak<IntVarBranch>(INT_VAR_AFC_SIZE_MAX(decay));
 
-      if (id == "afc_min")
-        return TieBreak<IntVarBranch>(INT_VAR_AFC_MAX(decay));
+    if (id == "afc_min")
+    return TieBreak<IntVarBranch>(INT_VAR_AFC_MAX(decay));
 
-      if (id == "afc_max")
-        return TieBreak<IntVarBranch>(INT_VAR_AFC_MIN(decay));
-        
-      if (id == "afc_size_min")
-        return TieBreak<IntVarBranch>(INT_VAR_AFC_SIZE_MAX(decay));
-        
-      if (id == "afc_size_max")
-        return TieBreak<IntVarBranch>(INT_VAR_AFC_SIZE_MIN(decay));
+    if (id == "afc_max")
+    return TieBreak<IntVarBranch>(INT_VAR_AFC_MIN(decay));
+    
+    if (id == "afc_size_min")
+    return TieBreak<IntVarBranch>(INT_VAR_AFC_SIZE_MAX(decay));
+    
+    if (id == "afc_size_max")
+    return TieBreak<IntVarBranch>(INT_VAR_AFC_SIZE_MIN(decay));
 
-      if (id == "action_min")
-        return TieBreak<IntVarBranch>(INT_VAR_ACTION_MAX(decay));
+    if (id == "action_min")
+    return TieBreak<IntVarBranch>(INT_VAR_ACTION_MAX(decay));
 
-      if (id == "action_max")
-        return TieBreak<IntVarBranch>(INT_VAR_ACTION_MIN(decay));
+    if (id == "action_max")
+    return TieBreak<IntVarBranch>(INT_VAR_ACTION_MIN(decay));
 
-      if (id == "action_size_min")
-        return TieBreak<IntVarBranch>(INT_VAR_ACTION_SIZE_MAX(decay));
-        
-      if (id == "action_size_max")
-        return TieBreak<IntVarBranch>(INT_VAR_ACTION_SIZE_MIN(decay));
+    if (id == "action_size_min")
+    return TieBreak<IntVarBranch>(INT_VAR_ACTION_SIZE_MAX(decay));
+    
+    if (id == "action_size_max")
+    return TieBreak<IntVarBranch>(INT_VAR_ACTION_SIZE_MIN(decay));
 
     return TieBreak<IntVarBranch>(INT_VAR_NONE()); 
 }
@@ -132,7 +132,7 @@ IntValBranch BranchModifier::doOppositeBranchingIntVal(string id, std::string& r
     if (id == "indomain_min") {
         r0 = "="; r1 = "!=";
         return INT_VAL_MAX();
-      }
+    }
     if (id == "indomain_max") {
         r0 = "="; r1 = "!=";
         return INT_VAL_MIN();

@@ -54,9 +54,9 @@ public:
     // Standard LNS
     bool random(FlatZincSpace& fzs, MetaInfo mi, IntSharedArray& initialSolution, unsigned int lns, IntVarArgs iv_lns, Rnd random);
     // Propagation guided LNS
-    bool propagationGuided(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int num_non_introduced_vars, Rnd random);
+    bool propagationGuided(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int num_non_introduced_vars, unsigned int queue_size, Rnd random);
     // Reversed propagation guided LNS
-    bool reversedPropagationGuided(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int num_non_introduced_vars, Rnd random);
+    bool reversedPropagationGuided(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int num_non_introduced_vars, unsigned int queue_size, Rnd random);
     // Objective relaxation LNS
     bool objectiveRelaxation(FlatZincSpace& fzs, MetaInfo mi, unsigned int lns, IntVarArgs iv_lns_obj_relax, Rnd random);
     // Cost impact guided LNS

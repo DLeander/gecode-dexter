@@ -1173,7 +1173,6 @@ namespace Gecode { namespace FlatZinc {
               iv_lns_obj_relax = IntVarArray(*this, num_relevant_vars);
               for (unsigned long int i = 1; i < vars->a.size(); i++){
                 if (vars->a[i]->isIntVar()){
-                  // cerr << iv.size() << " " << vars->a[i]->getIntVar() << " " << num_relevant_vars << endl;
                   iv_lns_obj_relax[i-1] = iv[vars->a[i]->getIntVar()];
                 }
               }
@@ -2372,39 +2371,46 @@ namespace Gecode { namespace FlatZinc {
   void
   FlatZincSpace::constrain(const Space& s) {
     // If PBS, update global bounds.
-    FlatZincSpace* best_sol = nullptr;
+    FlatZincSpace* global_sol = nullptr;
     if (pbs_current_best_sol != nullptr){
-        best_sol = pbs_current_best_sol->load();
+        global_sol = pbs_current_best_sol->load();
     }
-
+    
     if (_optVarIsInt) {
-      if (best_sol != nullptr){
+      int local_sol = static_cast<const FlatZincSpace*>(&s)->iv[_optVar].val();
+      if (global_sol != nullptr){
+        int best_sol;
         if (_method == MIN){
-          rel(*this, iv[_optVar], IRT_LE, best_sol->iv[best_sol->optVar()].val());
+          best_sol = local_sol < global_sol->iv[global_sol->optVar()].val() ? local_sol : global_sol->iv[global_sol->optVar()].val();
+          rel(*this, iv[_optVar], IRT_LE, best_sol);
         }
         else if (_method == MAX){
-          rel(*this, iv[_optVar], IRT_GR, best_sol->iv[best_sol->optVar()].val());
+          best_sol = local_sol > global_sol->iv[global_sol->optVar()].val() ? local_sol : global_sol->iv[global_sol->optVar()].val();
+          rel(*this, iv[_optVar], IRT_GR, best_sol);
         } 
       }
       // If not PBS or no solution has been found, update local bounds.
       else{
         if (_method == MIN){
-          rel(*this, iv[_optVar], IRT_LE, static_cast<const FlatZincSpace*>(&s)->iv[_optVar].val());
+          rel(*this, iv[_optVar], IRT_LE, local_sol);
         }
         else if (_method == MAX){
-          rel(*this, iv[_optVar], IRT_GR, static_cast<const FlatZincSpace*>(&s)->iv[_optVar].val());
+          rel(*this, iv[_optVar], IRT_GR, local_sol);
         } 
       }
     }
     else {
 #ifdef GECODE_HAS_FLOAT_VARS
-      if (best_sol != nullptr && false){
-        Gecode::FloatVal val = best_sol->fv[best_sol->optVar()].val();
+      if (global_sol != nullptr){
+        Gecode::FloatVal val = global_sol->fv[global_sol->optVar()].val();
+        Gecode::FloatVal best_sol;
         if (_method == MIN){
-          rel(*this, fv[_optVar], FRT_LE, val-step);
+          best_sol = val < fv[_optVar].val() ? val : fv[_optVar].val();
+          rel(*this, fv[_optVar], FRT_LE, best_sol-step);
         }
         else if (_method == MAX){
-          rel(*this, fv[_optVar], FRT_GR, val+step);
+          best_sol = val > fv[_optVar].val() ? val : fv[_optVar].val();
+          rel(*this, fv[_optVar], FRT_GR, best_sol+step);
         } 
       }
       else{
@@ -2625,11 +2631,11 @@ namespace Gecode { namespace FlatZinc {
       }
       case PG:
       {
-        return _lnsStrategy.propagationGuided(*this, mi, iv, num_non_introduced_vars, _random);
+        return _lnsStrategy.propagationGuided(*this, mi, iv, num_non_introduced_vars, 10, _random);
       }
       case rPG:
       {
-        return _lnsStrategy.reversedPropagationGuided(*this, mi, iv, num_non_introduced_vars, _random);
+        return _lnsStrategy.reversedPropagationGuided(*this, mi, iv, num_non_introduced_vars, 10, _random);
       }
       case OBJREL:
       {

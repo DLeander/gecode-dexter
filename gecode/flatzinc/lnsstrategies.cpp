@@ -52,7 +52,7 @@ bool LNSstrategies::random(FlatZincSpace& fzs, MetaInfo mi, IntSharedArray& init
     return true;
 }
 
-bool LNSstrategies::propagationGuided(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int num_non_introduced_vars, Rnd random) {
+bool LNSstrategies::propagationGuided(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int num_non_introduced_vars, unsigned int queue_size, Rnd random) {
     if ((mi.type() == MetaInfo::RESTART) && (mi.restart() != 0) && (mi.last())){
       // Set up the variables to make sure that pglns stops.
       double test = 0;
@@ -88,8 +88,6 @@ bool LNSstrategies::propagationGuided(FlatZincSpace& fzs, MetaInfo mi, IntVarArr
 
           pglns_info.pop_front();
         }
-        // Clear the deque from last iteration (as their diffs might not be valid anymore).
-        pglns_info.clear();
 
         // Get the domain size before the propagation
         for (int i = 0; i < num_non_introduced_vars; ++i) {
@@ -102,7 +100,7 @@ bool LNSstrategies::propagationGuided(FlatZincSpace& fzs, MetaInfo mi, IntVarArr
         // Add the variables that were propagated to pglns_info.
         for (int i = 0; i < num_non_introduced_vars; ++i) {
           int diff = domainSizes[i] - iv[i].size();
-          if (diff > 0){
+          if (diff > 0 && pglns_info.size() < queue_size && index != i){
             pglns_info.push_back({iv[i], i, diff});
           }
         }
@@ -122,7 +120,7 @@ bool LNSstrategies::propagationGuided(FlatZincSpace& fzs, MetaInfo mi, IntVarArr
     return true;
 }
 
-bool LNSstrategies::reversedPropagationGuided(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int num_non_introduced_vars, Rnd random) {
+bool LNSstrategies::reversedPropagationGuided(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int num_non_introduced_vars, unsigned int queue_size, Rnd random) {
     if ((mi.type() == MetaInfo::RESTART) && (mi.restart() != 0) && (mi.last())){
       // Set up the variables to make sure that pglns stops.
       double test = 0;
@@ -158,8 +156,6 @@ bool LNSstrategies::reversedPropagationGuided(FlatZincSpace& fzs, MetaInfo mi, I
 
           pglns_info.pop_front();
         }
-        // Clear the deque from last iteration (as their diffs might not be valid anymore).
-        pglns_info.clear();
 
         // Get the domain size before the propagation
         for (int i = 0; i < num_non_introduced_vars; ++i) {
@@ -172,7 +168,7 @@ bool LNSstrategies::reversedPropagationGuided(FlatZincSpace& fzs, MetaInfo mi, I
         // Add the variables that were propagated to pglns_info.
         for (int i = 0; i < num_non_introduced_vars; ++i) {
           int diff = domainSizes[i] - iv[i].size();
-          if (diff > 0){
+          if (diff > 0 && pglns_info.size() < queue_size && index != i){
             pglns_info.push_back({iv[i], i, diff});
           }
         }
@@ -231,16 +227,17 @@ bool LNSstrategies::costImpactGuided(FlatZincSpace& fzs, MetaInfo mi, CIGInfo* d
     // Update scores and r every 10th restart or every time a better solution is found.
     if (mi.restart() == 1 || mi.restart() % 10 == 0 || foundBetterSolution(last, fzs, maximize)){
       data->bound_differences.clear();
-      data->bound_differences.reserve(data->vars.size());
+      data->bound_differences.resize(data->vars.size(), 0);
       data->scores.clear();
       data->scores.reserve(data->vars.size());
       data->bound_diff_sum = 0;
       data->r = 0;
 
+      FlatZincSpace* fzs_clone;
       int oldVal;
       for (unsigned int dive = 0; dive < dives; dive++){
         // Clone the space to make a dive possible.
-        FlatZincSpace* fzs_clone = static_cast<FlatZinc::FlatZincSpace*>(fzs.clone());
+        fzs_clone = static_cast<FlatZinc::FlatZincSpace*>(fzs.clone());
         // Create uniformly randomized permutations of the variables.
         
         std::shuffle(fzs_clone->ciglns_info->vars.begin(), fzs_clone->ciglns_info->vars.end(), engine);
@@ -248,10 +245,11 @@ bool LNSstrategies::costImpactGuided(FlatZincSpace& fzs, MetaInfo mi, CIGInfo* d
         for (long unsigned int i = 0; i < data->vars.size(); ++i){
           oldVal = getBound(fzs_clone->iv[fzs_clone->optVar()], maximize);
           // The variables stored in vars.intVar are those variables found in iv_lns_default.
-          rel(*fzs_clone, fzs_clone->ciglns_info->vars[i].intVar, IRT_EQ, last.iv_lns_default[i].val());
+          rel(*fzs_clone, fzs_clone->iv_lns_default[fzs_clone->ciglns_info->vars[i].ivIndex], IRT_EQ, last.iv_lns_default[fzs_clone->ciglns_info->vars[i].ivIndex].val());
           fzs_clone->status();
-          data->bound_differences[fzs_clone->ciglns_info->vars[i].ivIndex] += (abs(getBound(fzs_clone->iv[fzs_clone->optVar()], maximize) - oldVal));
-          data->bound_diff_sum += data->bound_differences[fzs_clone->ciglns_info->vars[i].ivIndex];
+          double bound_diff = (abs(getBound(fzs_clone->iv[fzs_clone->optVar()], maximize) - oldVal));
+          data->bound_differences[fzs_clone->ciglns_info->vars[i].ivIndex] += bound_diff;
+          data->bound_diff_sum += bound_diff;
         }
         delete fzs_clone;
       }
@@ -272,7 +270,7 @@ bool LNSstrategies::costImpactGuided(FlatZincSpace& fzs, MetaInfo mi, CIGInfo* d
 
     // Select which variables to relax.
     double r_local = data->r;
-    std::vector<IntVar> varsToRelax;
+    std::vector<VariableShuffleInfo> varsToRelax;
     // Use a vector of indices and shuffle it, select variables from it.
     std::vector<int> indices(data->vars.size());
     std::iota(indices.begin(), indices.end(), 0);
@@ -292,7 +290,7 @@ bool LNSstrategies::costImpactGuided(FlatZincSpace& fzs, MetaInfo mi, CIGInfo* d
         v = v - data->scores[indices[i]];
         if (v <= 0){
           r_local = r_local - data->scores[indices[i]];
-          varsToRelax.push_back(data->vars[indices[i]].intVar);
+          varsToRelax.push_back(data->vars[indices[i]]);
           start++;
           break;
         }
@@ -301,8 +299,8 @@ bool LNSstrategies::costImpactGuided(FlatZincSpace& fzs, MetaInfo mi, CIGInfo* d
 
     // Relax the chosen variables.
     for (long unsigned int i = 0; i < varsToRelax.size(); ++i){
-      // cerr << "Relaxing variable " << i << endl;
-      rel(fzs, varsToRelax[i], IRT_EQ, last.iv_lns_default[data->vars[indices[i]].ivIndex].val());
+      unsigned int ivIndex = varsToRelax[i].ivIndex;
+      rel(fzs, fzs.iv_lns_default[ivIndex], IRT_EQ, last.iv_lns_default[ivIndex].val());
     }
     // Only return false if variables were relaxed.
     return !(varsToRelax.size() > 0);

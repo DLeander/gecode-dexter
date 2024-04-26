@@ -425,7 +425,7 @@ class ShavingAsset : public BaseAsset {
         {
             std::reverse(variables.begin(), variables.end()); setupAsset();
         };
-        ~ShavingAsset() override {delete sorter; sorter = nullptr; /*delete executor; executor = nullptr;*/};
+        ~ShavingAsset() override {delete sorter; sorter = nullptr; delete executor; executor = nullptr;};
 
         void setupAsset() override;
         void run() override {Gecode::Support::Thread::run(executor);};

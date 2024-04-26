@@ -1,2 +1,1 @@
-1. Cost Impact Guided Search does not work as intended.
-2. When running search with more than 1 asset, the solve time is slower for unknown reasons.
+1. When running search with more than 1 asset, the solve time is slower for unknown reasons.
