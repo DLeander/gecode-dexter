@@ -277,21 +277,23 @@ bool LNSstrategies::costImpactGuided(FlatZincSpace& fzs, MetaInfo mi, CIGInfo* d
     std::shuffle(indices.begin(), indices.end(), engine);
 
     double v;
-    long unsigned int start = 0;
-    while (varsToRelax.size() < numfixedvars || start == data->vars.size()-1){
+    while (varsToRelax.size() < numfixedvars){
       if (r_local != 0){
-        v = random((int)ceil(r_local));
+        v = random((int)floor(r_local));
       }
       else{
         v = 0;
       }
       
-      for (long unsigned int i = start; i < indices.size(); ++i){
+      for (long unsigned int i = 0; i < indices.size(); ++i){
         v = v - data->scores[indices[i]];
         if (v <= 0){
           r_local = r_local - data->scores[indices[i]];
           varsToRelax.push_back(data->vars[indices[i]]);
-          start++;
+          // More efficient than erasing the element, because vectors.
+          std::swap(indices[i], indices.back());
+          indices.pop_back();
+          
           break;
         }
       }
