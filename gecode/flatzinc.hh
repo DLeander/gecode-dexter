@@ -91,6 +91,13 @@
 #include <gecode/flatzinc/branchmodifier.hh>
 #include <gecode/flatzinc/lnsstrategies.hh>
 
+struct ConsVarInfo {
+    std::vector<AST::Array*> vars;
+    double weight;
+
+    ConsVarInfo(std::vector<AST::Array*> vars, double weight) : vars(vars), weight(weight) {}
+};
+
 /**
  * \namespace Gecode::FlatZinc
  * \brief Interpreter for the %FlatZinc language
@@ -442,6 +449,7 @@ namespace Gecode { namespace FlatZinc {
       rPG, //< Reversed Propagation Guided LNS
       OBJREL, //< Objective relax LNS
       CIG, // < Cost Impact Guided LNS
+      SVD, // < Static Variable Dependency LNS
       NONE //< No LNS used by asset in FlatZincSpace.
     };
 
@@ -518,9 +526,9 @@ namespace Gecode { namespace FlatZinc {
     Gecode::IntVarArray iv_lns;
     Gecode::IntVarArray iv_lns_default;
     Gecode::IntVarArray iv_lns_obj_relax;
+    Gecode::IntVarArray non_fzn_introduced_vars;
+    double** variable_relations;
     CIGInfo* ciglns_info;
-
-    int num_non_introduced_vars;
 
     /* === Experimental `on_restart` support === */
     class OnRestartHandle : public SharedHandle {

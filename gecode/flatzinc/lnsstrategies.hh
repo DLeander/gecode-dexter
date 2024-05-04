@@ -54,13 +54,15 @@ public:
     // Standard LNS
     bool random(FlatZincSpace& fzs, MetaInfo mi, IntSharedArray& initialSolution, unsigned int lns, IntVarArgs iv_lns, Rnd random);
     // Propagation guided LNS
-    bool propagationGuided(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int num_non_introduced_vars, unsigned int queue_size, Rnd random);
+    bool propagationGuided(FlatZincSpace& fzs, MetaInfo mi, IntVarArray non_fzn_introduced_vars, unsigned int queue_size, Rnd random);
     // Reversed propagation guided LNS
-    bool reversedPropagationGuided(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int num_non_introduced_vars, unsigned int queue_size, Rnd random);
+    bool reversedPropagationGuided(FlatZincSpace& fzs, MetaInfo mi, IntVarArray non_fzn_introduced_vars, unsigned int queue_size, Rnd random);
     // Objective relaxation LNS
     bool objectiveRelaxation(FlatZincSpace& fzs, MetaInfo mi, unsigned int lns, IntVarArgs iv_lns_obj_relax, Rnd random);
     // Cost impact guided LNS
     bool costImpactGuided(FlatZincSpace& fzs, MetaInfo mi, CIGInfo* data, bool maximize, unsigned int dives, double alpha, long unsigned int numfixedvars, Rnd random);
+    // Static Variable Dependency LNS
+    bool staticVariableDependency(FlatZincSpace& fzs, MetaInfo mi, IntVarArray non_fzn_introduced_vars, unsigned int vars_to_fix);
 
 };
 

@@ -133,9 +133,9 @@ void PBSController::setupPortfolioAssets(int asset, FlatZinc::Printer& p, FlatZi
     switch (AssetType(asset))
     {
     case USER:
-        // assets[asset] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset, false, false, FlatZinc::FlatZincSpace::LNSType::CIG, fopt.c_d(), fopt.a_d(), fopt.threads(), RM_LUBY, 1.5, 250));
-        // assets[asset] = (std::make_unique<DFSAsset>(*this, fg, fopt, p, out, asset, false, false, fopt.c_d(), fopt.a_d(), fopt.threads()));
-        assets[asset] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset, false, false, FlatZinc::FlatZincSpace::LNSType::CIG, fopt.c_d(), fopt.a_d(), fopt.threads(), RM_LUBY, 1.5, 250));
+        // assets[asset] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset, false, false, FlatZinc::FlatZincSpace::LNSType::SVD, fopt.c_d(), fopt.a_d(), fopt.threads(), RM_LUBY, 1.5, 250));
+        assets[asset] = (std::make_unique<DFSAsset>(*this, fg, fopt, p, out, asset, false, false, fopt.c_d(), fopt.a_d(), fopt.threads()));
+        // assets[asset] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset, false, false, FlatZinc::FlatZincSpace::LNSType::SVD, fopt.c_d(), fopt.a_d(), fopt.threads(), RM_LUBY, 1.5, 250));
         if (fopt.mode() == SM_STAT) {
             assets[asset]->setAssetTypeStr("bab asset");
         }
@@ -375,7 +375,7 @@ void RRLNSAsset::run(){
         t_solve.start();
         sol = se->next();
         round_robin_assets[i]->increaseSolveTime(t_solve.stop());
-
+        
         solWasBestSol = updateBestSol(control, sol, out, p, printAll);
 
         curr = sol->iv[optVar].val();
@@ -409,6 +409,9 @@ void RRLNSAsset::run(){
                     break;
                 case FlatZinc::FlatZincSpace::LNSType::CIG:
                     best_asset->setAssetTypeStr("rounds robin asset cost impact guided lns");
+                    break;
+                case FlatZinc::FlatZincSpace::LNSType::SVD:
+                    best_asset->setAssetTypeStr("round robin asset static variable dependency lns");
                     break;
                 case FlatZinc::FlatZincSpace::LNSType::NONE:
                     best_asset->setAssetTypeStr("round robin asset");
@@ -621,6 +624,7 @@ void ShavingAsset::run_shaving_pass(PBSController& control, StatusStatistics sta
                 has_reported_literal = true;
                 literal.var.nq(root, literal.value);
                 auto root_status = root->status(status_stat);
+                // If variable can neither be equal or not equal, then the problem is unsatisfiable and we are done.
                 if (root_status == SS_FAILED) {
                     control.thread_done();
                     return;

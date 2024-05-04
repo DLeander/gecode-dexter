@@ -17,6 +17,7 @@
 #include <unordered_set>
 #include <cstdlib> // for rand() and srand()
 #include <ctime> // for time()
+#include <random>
 
 using namespace std;
 using namespace Gecode;
@@ -52,18 +53,18 @@ bool LNSstrategies::random(FlatZincSpace& fzs, MetaInfo mi, IntSharedArray& init
     return true;
 }
 
-bool LNSstrategies::propagationGuided(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int num_non_introduced_vars, unsigned int queue_size, Rnd random) {
+bool LNSstrategies::propagationGuided(FlatZincSpace& fzs, MetaInfo mi, IntVarArray non_fzn_introduced_vars, unsigned int queue_size, Rnd random) {
     if ((mi.type() == MetaInfo::RESTART) && (mi.restart() != 0) && (mi.last())){
       // Set up the variables to make sure that pglns stops.
       double test = 0;
-      for (int i = 0; i < num_non_introduced_vars; ++i) {
-        test += std::log(iv[i].size());
+      for (int i = 0; i < non_fzn_introduced_vars.size(); ++i) {
+        test += std::log(non_fzn_introduced_vars[i].size());
       }
       double stop = test * 0.90;
 
       // Set up the variables for the propagation guided LNS.
       std::deque<PGLNSInfo> pglns_info;
-      vector<int> domainSizes(num_non_introduced_vars);
+      vector<int> domainSizes(non_fzn_introduced_vars.size());
       // bool guided = false;
       int index;
       PGLNSInfo pglns_info_elem;
@@ -74,8 +75,8 @@ bool LNSstrategies::propagationGuided(FlatZincSpace& fzs, MetaInfo mi, IntVarArr
         test = 0;
 
         if (pglns_info.size() == 0){
-          index = random(num_non_introduced_vars);
-          curr_var = iv[index];
+          index = random(non_fzn_introduced_vars.size()-1);
+          curr_var = non_fzn_introduced_vars[index];
           if (curr_var.assigned()){
             continue;
           }
@@ -90,28 +91,28 @@ bool LNSstrategies::propagationGuided(FlatZincSpace& fzs, MetaInfo mi, IntVarArr
         }
 
         // Get the domain size before the propagation
-        for (int i = 0; i < num_non_introduced_vars; ++i) {
-          domainSizes[i] = iv[i].size();
+        for (int i = 0; i < non_fzn_introduced_vars.size(); ++i) {
+          domainSizes[i] = non_fzn_introduced_vars[i].size();
         }
         // Force value accordinly, and propagate.
-        rel(fzs, curr_var, IRT_EQ, last.iv[index].val());
+        rel(fzs, curr_var, IRT_EQ, last.non_fzn_introduced_vars[index].val());
         fzs.status();
         
         // Add the variables that were propagated to pglns_info.
-        for (int i = 0; i < num_non_introduced_vars; ++i) {
-          int diff = domainSizes[i] - iv[i].size();
+        for (int i = 0; i < non_fzn_introduced_vars.size(); ++i) {
+          int diff = domainSizes[i] - non_fzn_introduced_vars[i].size();
           if (diff > 0 && pglns_info.size() < queue_size && index != i){
-            pglns_info.push_back({iv[i], i, diff});
+            pglns_info.push_back({non_fzn_introduced_vars[i], i, diff});
           }
         }
         
-        // Sort the variables and indexes in iv according to the difference in domain size in pglns_info.
+        // Sort the variables and indexes in non_fzn_introduced_vars according to the difference in domain size in pglns_info.
         std::sort(pglns_info.begin(), pglns_info.end(), [](const PGLNSInfo& a, const PGLNSInfo& b) {
           return a.domainDiff > b.domainDiff;
         });
         // Recompute new size of the domains.
-        for (int i = 0; i < num_non_introduced_vars; ++i) {
-            test += std::log(iv[i].size());
+        for (int i = 0; i < non_fzn_introduced_vars.size(); ++i) {
+            test += std::log(non_fzn_introduced_vars[i].size());
         }
       }
 
@@ -120,18 +121,18 @@ bool LNSstrategies::propagationGuided(FlatZincSpace& fzs, MetaInfo mi, IntVarArr
     return true;
 }
 
-bool LNSstrategies::reversedPropagationGuided(FlatZincSpace& fzs, MetaInfo mi, IntVarArray iv, int num_non_introduced_vars, unsigned int queue_size, Rnd random) {
+bool LNSstrategies::reversedPropagationGuided(FlatZincSpace& fzs, MetaInfo mi, IntVarArray non_fzn_introduced_vars, unsigned int queue_size, Rnd random) {
     if ((mi.type() == MetaInfo::RESTART) && (mi.restart() != 0) && (mi.last())){
       // Set up the variables to make sure that pglns stops.
       double test = 0;
-      for (int i = 0; i < num_non_introduced_vars; ++i) {
-        test += std::log(iv[i].size());
+      for (int i = 0; i < non_fzn_introduced_vars.size(); ++i) {
+        test += std::log(non_fzn_introduced_vars[i].size());
       }
       double stop = test * 0.90;
 
       // Set up the variables for the propagation guided LNS.
       std::deque<PGLNSInfo> pglns_info;
-      vector<int> domainSizes(num_non_introduced_vars);
+      vector<int> domainSizes(non_fzn_introduced_vars.size());
       // bool guided = false;
       int index;
       PGLNSInfo pglns_info_elem;
@@ -142,8 +143,8 @@ bool LNSstrategies::reversedPropagationGuided(FlatZincSpace& fzs, MetaInfo mi, I
         test = 0;
 
         if (pglns_info.size() == 0){
-          index = random(num_non_introduced_vars);
-          curr_var = iv[index];
+          index = random(non_fzn_introduced_vars.size()-1);
+          curr_var = non_fzn_introduced_vars[index];
           if (curr_var.assigned()){
             continue;
           }
@@ -158,27 +159,28 @@ bool LNSstrategies::reversedPropagationGuided(FlatZincSpace& fzs, MetaInfo mi, I
         }
 
         // Get the domain size before the propagation
-        for (int i = 0; i < num_non_introduced_vars; ++i) {
-          domainSizes[i] = iv[i].size();
+        for (int i = 0; i < non_fzn_introduced_vars.size(); ++i) {
+          domainSizes[i] = non_fzn_introduced_vars[i].size();
         }
         // Force value accordinly, and propagate.
-        rel(fzs, curr_var, IRT_EQ, last.iv[index].val());
+        rel(fzs, curr_var, IRT_EQ, last.non_fzn_introduced_vars[index].val());
         fzs.status();
         
         // Add the variables that were propagated to pglns_info.
-        for (int i = 0; i < num_non_introduced_vars; ++i) {
-          int diff = domainSizes[i] - iv[i].size();
+        for (int i = 0; i < non_fzn_introduced_vars.size(); ++i) {
+          int diff = domainSizes[i] - non_fzn_introduced_vars[i].size();
           if (diff > 0 && pglns_info.size() < queue_size && index != i){
-            pglns_info.push_back({iv[i], i, diff});
+            pglns_info.push_back({non_fzn_introduced_vars[i], i, diff});
           }
         }
-        // Sort the variables and indexes in iv according to the difference in domain size in pglns_info.
+        
+        // Sort the variables and indexes in non_fzn_introduced_vars according to the difference in domain size in pglns_info.
         std::sort(pglns_info.begin(), pglns_info.end(), [](const PGLNSInfo& a, const PGLNSInfo& b) {
           return a.domainDiff < b.domainDiff;
         });
         // Recompute new size of the domains.
-        for (int i = 0; i < num_non_introduced_vars; ++i) {
-            test += std::log(iv[i].size());
+        for (int i = 0; i < non_fzn_introduced_vars.size(); ++i) {
+            test += std::log(non_fzn_introduced_vars[i].size());
         }
       }
 
@@ -307,6 +309,47 @@ bool LNSstrategies::costImpactGuided(FlatZincSpace& fzs, MetaInfo mi, CIGInfo* d
     // Only return false if variables were relaxed.
     return !(varsToRelax.size() > 0);
 
+  }
+  return true;
+}
+
+bool LNSstrategies::staticVariableDependency(FlatZincSpace& fzs, MetaInfo mi, IntVarArray non_fzn_introduced_vars, unsigned int vars_to_fix){
+  if ((mi.type() == MetaInfo::RESTART) && (mi.restart() != 0) && mi.last()){
+    const FlatZincSpace& last = static_cast<const FlatZincSpace&>(*mi.last());
+    std::vector<int> indices(non_fzn_introduced_vars.size());
+    std::iota(indices.begin(), indices.end(), 0);
+    int indice_index = 0;
+
+    // Select variable with highest afc instead.
+    int var_index = 0;
+    int current = -1;
+    for (int i = 0; i < non_fzn_introduced_vars.size(); i++){
+      if (non_fzn_introduced_vars[i].afc() > current){
+        var_index = i;
+        current = non_fzn_introduced_vars[i].afc();
+      }
+    }
+    std::swap(indices[var_index], indices.back());
+    indices.pop_back();
+
+    unsigned int fixed_vars = 0;
+    while(fixed_vars < vars_to_fix){
+      current = -1;
+      rel(fzs, non_fzn_introduced_vars[var_index], IRT_EQ, last.non_fzn_introduced_vars[var_index].val());
+
+      for (long unsigned int i = 0; i < indices.size(); i++) {
+        if (fzs.variable_relations[var_index][indices[i]] > current){
+          current = fzs.variable_relations[var_index][indices[i]];
+          var_index = indices[i];
+          indice_index = i;
+        }
+      }
+      std::swap(indices[indice_index], indices.back());
+      indices.pop_back();
+      fixed_vars++;
+
+    }
+    return false;
   }
   return true;
 }
