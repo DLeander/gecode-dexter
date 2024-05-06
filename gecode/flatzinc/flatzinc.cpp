@@ -1371,7 +1371,7 @@ namespace Gecode { namespace FlatZinc {
       }
 
       variable_relations = new double*[var_mapper.size()];
-      for (int i = 0; i < var_mapper.size(); i++){
+      for (long unsigned int i = 0; i < var_mapper.size(); i++){
         variable_relations[i] = new double[var_mapper.size()];
         std::fill_n(variable_relations[i], var_mapper.size(), 0);
       }
@@ -2672,7 +2672,7 @@ namespace Gecode { namespace FlatZinc {
       }
       case SVD:
       {
-        return _lnsStrategy.staticVariableRelation(*this, mi, non_fzn_introduced_vars, floor(0.6*non_fzn_introduced_vars.size()));
+        return _lnsStrategy.staticVariableRelation(*this, mi, non_fzn_introduced_vars, floor(0.6*non_fzn_introduced_vars.size()), _random);
       }
       default:
       {

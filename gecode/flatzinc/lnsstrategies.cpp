@@ -313,41 +313,67 @@ bool LNSstrategies::costImpactGuided(FlatZincSpace& fzs, MetaInfo mi, CIGInfo* d
   return true;
 }
 
-bool LNSstrategies::staticVariableRelation(FlatZincSpace& fzs, MetaInfo mi, IntVarArray non_fzn_introduced_vars, unsigned int vars_to_fix){
-  if ((mi.type() == MetaInfo::RESTART) && (mi.restart() != 0) && mi.last()){
-    const FlatZincSpace& last = static_cast<const FlatZincSpace&>(*mi.last());
-    std::vector<int> indices(non_fzn_introduced_vars.size());
-    std::iota(indices.begin(), indices.end(), 0);
-    int indice_index = 0;
-
-    // Select variable with highest afc instead.
-    int var_index = 0;
-    int current = -1;
-    for (int i = 0; i < non_fzn_introduced_vars.size(); i++){
-      if (non_fzn_introduced_vars[i].afc() > current){
-        var_index = i;
-        current = non_fzn_introduced_vars[i].afc();
+int selectRandomBestVar(std::vector<int> indices, int n, double** var_rels, int var_rels_size, Rnd random){
+  std::vector<int> random_indices(n);
+  for (int i = 0; i < n; i++){
+    random_indices[i] = random(var_rels_size);
+  }
+  
+  int current = -1;
+  int best_var_index = 0;
+  for (int index : random_indices){
+    for (int i = 0; i < var_rels_size; i++){
+      if (var_rels[index][indices[i]] > current){
+        current = var_rels[index][indices[i]];
+        best_var_index = index;
       }
     }
-    std::swap(indices[var_index], indices.back());
-    indices.pop_back();
+  }
 
+  return best_var_index;
+}
+
+int selectRandomRelatedVar(std::vector<int> indices, int n, double** var_rels, int var_index, Rnd random){
+  std::vector<int> random_indices(n);
+  for (int i = 0; i < n; i++){
+    random_indices[i] = random((int) indices.size());
+  }
+
+  // Given indices to relations, select variable with best relations.
+  int best_var_index = 0;
+  int current = -1;
+  for (long unsigned int i = 0; i < random_indices.size(); i++){
+    if (var_rels[var_index][indices[random_indices[i]]] > current){
+      current = var_rels[var_index][indices[random_indices[i]]];
+      best_var_index = random_indices[i];
+    }
+  }
+
+  return best_var_index;
+}
+
+bool LNSstrategies::staticVariableRelation(FlatZincSpace& fzs, MetaInfo mi, IntVarArray non_fzn_introduced_vars, unsigned int vars_to_fix, Rnd random){
+  if ((mi.type() == MetaInfo::RESTART) && (mi.restart() != 0) && mi.last()){
+    const FlatZincSpace& last = static_cast<const FlatZincSpace&>(*mi.last());
+    std::default_random_engine engine(random(999U));
+
+    std::vector<int> indices(non_fzn_introduced_vars.size());
+    std::iota(indices.begin(), indices.end(), 0);
+
+    // Select random initial variable to fix given random variables and their relations.
+    int var_index = selectRandomBestVar(indices, ((int)ceil(non_fzn_introduced_vars.size()*0.3)), fzs.variable_relations, non_fzn_introduced_vars.size(), random);
     unsigned int fixed_vars = 0;
-    while(fixed_vars < vars_to_fix){
-      current = -1;
-      rel(fzs, non_fzn_introduced_vars[var_index], IRT_EQ, last.non_fzn_introduced_vars[var_index].val());
+    while(fixed_vars < vars_to_fix && indices.size() > 0){
+      rel(fzs, non_fzn_introduced_vars[indices[var_index]], IRT_EQ, last.non_fzn_introduced_vars[indices[var_index]].val());
 
-      for (long unsigned int i = 0; i < indices.size(); i++) {
-        if (fzs.variable_relations[var_index][indices[i]] > current){
-          current = fzs.variable_relations[var_index][indices[i]];
-          var_index = indices[i];
-          indice_index = i;
-        }
-      }
-      std::swap(indices[indice_index], indices.back());
+      // Remove frozen variable so it is not picked again.
+      std::swap(indices[var_index], indices.back());
       indices.pop_back();
-      fixed_vars++;
 
+      // Select a new variable to freeze.
+      var_index = selectRandomRelatedVar(indices, ((int)ceil(non_fzn_introduced_vars.size()*0.5)), fzs.variable_relations, var_index, random);
+
+      fixed_vars++;
     }
     return false;
   }
