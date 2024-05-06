@@ -133,8 +133,8 @@ void PBSController::setupPortfolioAssets(int asset, FlatZinc::Printer& p, FlatZi
     switch (AssetType(asset))
     {
     case USER:
-        // assets[asset] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset, false, false, FlatZinc::FlatZincSpace::LNSType::SVD, fopt.c_d(), fopt.a_d(), fopt.threads(), RM_LUBY, 1.5, 250));
-        assets[asset] = (std::make_unique<DFSAsset>(*this, fg, fopt, p, out, asset, false, false, fopt.c_d(), fopt.a_d(), fopt.threads()));
+        assets[asset] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset, false, false, FlatZinc::FlatZincSpace::LNSType::SVD, fopt.c_d(), fopt.a_d(), fopt.threads(), RM_LUBY, 1.5, 250));
+        // assets[asset] = (std::make_unique<DFSAsset>(*this, fg, fopt, p, out, asset, false, false, fopt.c_d(), fopt.a_d(), fopt.threads()));
         // assets[asset] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset, false, false, FlatZinc::FlatZincSpace::LNSType::SVD, fopt.c_d(), fopt.a_d(), fopt.threads(), RM_LUBY, 1.5, 250));
         if (fopt.mode() == SM_STAT) {
             assets[asset]->setAssetTypeStr("bab asset");

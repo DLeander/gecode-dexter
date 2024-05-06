@@ -62,19 +62,19 @@ export VERSION	= 6.3.0
 
 export CXX = g++
 export CC = gcc
-export MOC = moc
+export MOC = 
 ifeq "$(top_srcdir)" "$(top_builddir)"
 CPPFLAGS=-I$(top_srcdir)
 else
 CPPFLAGS=-I$(top_builddir) -I$(top_srcdir)
 endif
 export CPPFLAGS
-export CXXFLAGS = $(CPPFLAGS) -fcx-limited-range -fno-signaling-nans -fno-rounding-math -ffinite-math-only -fno-math-errno -fno-strict-aliasing -O3 -fvisibility=hidden -ggdb -std=c++17 -pipe -Wno-unknown-pragmas -Wall -Wextra -fPIC -DNDEBUG $(CXXUSR)
-export CFLAGS = $(CPPFLAGS) -fcx-limited-range -fno-signaling-nans -fno-rounding-math -ffinite-math-only -fno-math-errno -fno-strict-aliasing -O3 -fvisibility=hidden -ggdb -pipe -Wno-unknown-pragmas -Wall -Wextra -fPIC -DNDEBUG $(CUSR)
+export CXXFLAGS = $(CPPFLAGS) -Qunused-arguments -fno-rounding-math -ffinite-math-only -fno-math-errno -fno-strict-aliasing -O3 -fvisibility=hidden -ggdb -std=c++17 -pipe -Wno-unknown-pragmas -Wall -Wextra -fPIC -DNDEBUG $(CXXUSR)
+export CFLAGS = $(CPPFLAGS) -Qunused-arguments -fno-rounding-math -ffinite-math-only -fno-math-errno -fno-strict-aliasing -O3 -fvisibility=hidden -ggdb -pipe -Wno-unknown-pragmas -Wall -Wextra -fPIC -DNDEBUG $(CUSR)
 export EXAMPLES_EXTRA_CXXFLAGS = 
 
-export QT_CPPFLAGS =  -DQT_NO_DEBUG -DQT_PRINTSUPPORT_LIB -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB  -I. -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtPrintSupport -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I. -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++
-export LINKQT =  $(SUBLIBS) /usr/lib/x86_64-linux-gnu/libQt5PrintSupport.so /usr/lib/x86_64-linux-gnu/libQt5Widgets.so /usr/lib/x86_64-linux-gnu/libQt5Gui.so /usr/lib/x86_64-linux-gnu/libQt5Core.so -lGL -lpthread   
+export QT_CPPFLAGS =  
+export LINKQT = 
 export MPFR_CPPFLAGS =  
 ifeq "yes" "yes"
 export LINKMPFR =   -lmpfr  -lgmp
@@ -89,24 +89,24 @@ export LINKSTATICQT = $(LINKQT)
 endif
 
 export GLDFLAGS = 
-export DLLFLAGS = -shared
+export DLLFLAGS = -dynamiclib -Wl,-single_module
 export DLLPATH = -L.
 
 export RANLIB = ranlib
 export TAR = tar
 
-export RUNENVIRONMENT = LD_LIBRARY_PATH=.
+export RUNENVIRONMENT = DYLD_LIBRARY_PATH=.
 
 #
 # Use suffixes to get consistent treatment of dots
 #
 export OBJSUFFIX	= .o
 export SBJSUFFIX	= .s
-export DLLSUFFIX	= .so.51.0
-export MANIFESTSUFFIX	= .so.51.0.manifest
-export RCSUFFIX		= .so.51.0.rc
-export RESSUFFIX	= .so.51.0.res
-export LIBSUFFIX	= .so.51.0
+export DLLSUFFIX	= .51.0.dylib
+export MANIFESTSUFFIX	= .51.0.dylib.manifest
+export RCSUFFIX		= .51.0.dylib.rc
+export RESSUFFIX	= .51.0.dylib.res
+export LIBSUFFIX	= .51.0.dylib
 export PDBSUFFIX	= .pdb
 export EXPSUFFIX	= .exp
 export STATICLIBSUFFIX	= .a
@@ -116,8 +116,8 @@ export LIBPREFIX 	= libgecode
 export LINKPREFIX	= -lgecode
 export LINKSUFFIX	= 
 
-export SOLINKSUFFIX     = .so
-export SOSUFFIX         = .so.51
+export SOLINKSUFFIX     = .dylib
+export SOSUFFIX         = .51.dylib
 
 #
 # Programs
@@ -167,7 +167,7 @@ export SUPPORTDLL	= $(LIBPREFIX)support$(DLLSUFFIX)
 export SUPPORTLIB	= $(LIBPREFIX)support$(LIBSUFFIX)
 ifeq "yes" "yes"
 export SUPPORTSONAME     = \
-	-Wl,-soname=$(LIBPREFIX)support$(SOSUFFIX)
+	-compatibility_version 51.0 -current_version 51.0 -install_name ${exec_prefix}/lib/$(LIBPREFIX)support$(SOSUFFIX)
 else
 export SUPPORTSONAME     =
 endif
@@ -230,7 +230,7 @@ export KERNELDLL	= $(LIBPREFIX)kernel$(DLLSUFFIX)
 export KERNELLIB	= $(LIBPREFIX)kernel$(LIBSUFFIX)
 ifeq "yes" "yes"
 export KERNELSONAME     = \
-	-Wl,-soname=$(LIBPREFIX)kernel$(SOSUFFIX)
+	-compatibility_version 51.0 -current_version 51.0 -install_name ${exec_prefix}/lib/$(LIBPREFIX)kernel$(SOSUFFIX)
 else
 export KERNELSONAME     =
 endif
@@ -289,7 +289,7 @@ export SEARCHLIB	= $(LIBPREFIX)search$(LIBSUFFIX)
 export LINKSEARCH       = $(LINKPREFIX)search$(LINKSUFFIX)
 ifeq "yes" "yes"
 export SEARCHSONAME     = \
-	-Wl,-soname=$(LIBPREFIX)search$(SOSUFFIX)
+	-compatibility_version 51.0 -current_version 51.0 -install_name ${exec_prefix}/lib/$(LIBPREFIX)search$(SOSUFFIX)
 else
 export SEARCHSONAME     =
 ifeq "no" "yes"
@@ -446,7 +446,7 @@ export INTLIB		= $(LIBPREFIX)int$(LIBSUFFIX)
 export LINKINT      	= $(LINKPREFIX)int$(LINKSUFFIX)
 ifeq "yes" "yes"
 export INTSONAME     = \
-	-Wl,-soname=$(LIBPREFIX)int$(SOSUFFIX)
+	-compatibility_version 51.0 -current_version 51.0 -install_name ${exec_prefix}/lib/$(LIBPREFIX)int$(SOSUFFIX)
 else
 export INTSONAME     =
 endif
@@ -520,7 +520,7 @@ export FLOATLIB		= $(LIBPREFIX)float$(LIBSUFFIX)
 export LINKFLOAT	= $(LINKPREFIX)float$(LINKSUFFIX)
 ifeq "yes" "yes"
 export FLOATSONAME     = \
-	-Wl,-soname=$(LIBPREFIX)float$(SOSUFFIX)
+	-compatibility_version 51.0 -current_version 51.0 -install_name ${exec_prefix}/lib/$(LIBPREFIX)float$(SOSUFFIX)
 else
 export FLOATSONAME     =
 endif
@@ -616,7 +616,7 @@ export SETLIB		= $(LIBPREFIX)set$(LIBSUFFIX)
 export LINKSET      	= $(LINKPREFIX)set$(LINKSUFFIX)
 ifeq "yes" "yes"
 export SETSONAME     = \
-	-Wl,-soname=$(LIBPREFIX)set$(SOSUFFIX)
+	-compatibility_version 51.0 -current_version 51.0 -install_name ${exec_prefix}/lib/$(LIBPREFIX)set$(SOSUFFIX)
 else
 export SETSONAME     =
 endif
@@ -669,7 +669,7 @@ export MMLIB		= $(LIBPREFIX)minimodel$(LIBSUFFIX)
 export LINKMM      	= $(LINKPREFIX)minimodel$(LINKSUFFIX)
 ifeq "yes" "yes"
 export MMSONAME     = \
-	-Wl,-soname=$(LIBPREFIX)minimodel$(SOSUFFIX)
+	-compatibility_version 51.0 -current_version 51.0 -install_name ${exec_prefix}/lib/$(LIBPREFIX)minimodel$(SOSUFFIX)
 else
 export MMSONAME     =
 endif
@@ -709,7 +709,7 @@ export DRIVERLIB	= $(LIBPREFIX)driver$(LIBSUFFIX)
 export LINKDRIVER      	= $(LINKPREFIX)driver$(LINKSUFFIX)
 ifeq "yes" "yes"
 export DRIVERSONAME     = \
-	-Wl,-soname=$(LIBPREFIX)driver$(SOSUFFIX)
+	-compatibility_version 51.0 -current_version 51.0 -install_name ${exec_prefix}/lib/$(LIBPREFIX)driver$(SOSUFFIX)
 else
 export DRIVERSONAME     =
 endif
@@ -785,14 +785,14 @@ GISTSBJ	= $(GISTSRC:%.cpp=%$(SBJSUFFIX)) $(GISTMOCSRC:%.cpp=%$(SBJSUFFIX))
 
 GISTBUILDDIRS = gist
 
-ifeq "yes" "yes"
+ifeq "" "yes"
 export GISTDLL		= $(LIBPREFIX)gist$(DLLSUFFIX)
 export GISTSTATICLIB	= $(LIBPREFIX)gist$(STATICLIBSUFFIX)
 export GISTLIB		= $(LIBPREFIX)gist$(LIBSUFFIX)
 export LINKGIST      	= $(LINKPREFIX)gist$(LINKSUFFIX)
 ifeq "yes" "yes"
 export GISTSONAME     = \
-	-Wl,-soname=$(LIBPREFIX)gist$(SOSUFFIX)
+	-compatibility_version 51.0 -current_version 51.0 -install_name ${exec_prefix}/lib/$(LIBPREFIX)gist$(SOSUFFIX)
 else
 export GISTSONAME     =
 endif
@@ -845,14 +845,14 @@ export FLATZINCSTATICLIB	= $(LIBPREFIX)flatzinc$(STATICLIBSUFFIX)
 export FLATZINCLIB		= $(LIBPREFIX)flatzinc$(LIBSUFFIX)
 export LINKFLATZINC		= $(LINKPREFIX)flatzinc$(LINKSUFFIX)
 export FLATZINCMZNLIB		= gecode/flatzinc/mznlib
-ifeq "yes" "yes"
+ifeq "" "yes"
 export FLATZINCCONFIG		= tools/flatzinc/gecode.msc tools/flatzinc/gecode-gist.msc
 else
 export FLATZINCCONFIG		= tools/flatzinc/gecode.msc
 endif
 FLATZINCEXE	= tools/flatzinc/fzn-gecode$(EXESUFFIX)
 ifeq "yes" "yes"
-export FLATZINCSONAME = -Wl,-soname=$(LIBPREFIX)flatzinc$(SOSUFFIX)
+export FLATZINCSONAME = -compatibility_version 51.0 -current_version 51.0 -install_name ${exec_prefix}/lib/$(LIBPREFIX)flatzinc$(SOSUFFIX)
 else
 export FLATZINCSONAME =
 endif
@@ -1045,7 +1045,7 @@ export ALLLIB = \
 	$(MMLIB) $(DRIVERLIB) $(GISTLIB) $(FLATZINCLIB)
 else
 DLLTARGETS=
-ifeq "" "yes"
+ifeq "no" "yes"
 export ALLLIB = gecode.framework/Versions/51/gecode
 else
 export ALLLIB = \
@@ -1533,7 +1533,7 @@ $(FLATZINC_GENSRC:%.cpp=%$(SBJSUFFIX)): gecode/flatzinc/%$(SBJSUFFIX): gecode/fl
 
 ifeq "$(DLLSUFFIX)" "$(LIBSUFFIX)"
 
-ifeq "" "yes"
+ifeq "no" "yes"
 export LINKALL = -F. -framework gecode
 else
 export LINKALL = \
@@ -1754,7 +1754,7 @@ $(FLATZINCSTATICLIB): $(FLATZINCOBJ)
 #
 
 .PHONY: framework
-ifeq "" "yes"
+ifeq "no" "yes"
 framework: gecode.framework/Versions/51/gecode
 
 gecode.framework/Versions/51/gecode: $(STATICTARGETS)
@@ -1982,7 +1982,7 @@ endif
 
 .PHONY: install
 
-ifeq "" "yes"
+ifeq "no" "yes"
 install: installframework
 else
 

@@ -313,7 +313,7 @@ bool LNSstrategies::costImpactGuided(FlatZincSpace& fzs, MetaInfo mi, CIGInfo* d
   return true;
 }
 
-bool LNSstrategies::staticVariableDependency(FlatZincSpace& fzs, MetaInfo mi, IntVarArray non_fzn_introduced_vars, unsigned int vars_to_fix){
+bool LNSstrategies::staticVariableRelation(FlatZincSpace& fzs, MetaInfo mi, IntVarArray non_fzn_introduced_vars, unsigned int vars_to_fix){
   if ((mi.type() == MetaInfo::RESTART) && (mi.restart() != 0) && mi.last()){
     const FlatZincSpace& last = static_cast<const FlatZincSpace&>(*mi.last());
     std::vector<int> indices(non_fzn_introduced_vars.size());

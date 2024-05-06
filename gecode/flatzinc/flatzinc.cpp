@@ -52,6 +52,7 @@
 #include <numeric>
 #include <cmath>
 #include <algorithm>
+#include <unordered_map>
 
 
 namespace std {
@@ -1354,34 +1355,44 @@ namespace Gecode { namespace FlatZinc {
     }
 
     if (cons_info_vec.size() > 0){
+      // For each variable present, map the iv index to the index that will be used in non_fzn_introduced_vars
       int var_index = 0;
-      non_fzn_introduced_vars = IntVarArray(*this, num_non_introduced_vars);
+      std::unordered_map<int, int> var_mapper;
       for (long unsigned int i = 0; i < cons_info_vec.size(); i++){
         for (long unsigned int j = 0; j < cons_info_vec[i].vars.size(); j++){
           for (long unsigned int k = 0; k < cons_info_vec[i].vars[j]->a.size(); k++){
-            non_fzn_introduced_vars[var_index] = iv[cons_info_vec[i].vars[j]->a[k]->getIntVar()];
-            var_index++;
+            int iv_index = cons_info_vec[i].vars[j]->a[k]->getIntVar();
+            if (var_mapper.find(iv_index) == var_mapper.end()) {
+              var_mapper[cons_info_vec[i].vars[j]->a[k]->getIntVar()] = var_index;
+              var_index++;
+            }
           }
         }
       }
 
-      // The variable_relations matrix is used for Static Variable Dependency LNS asset.
-      variable_relations = new double*[num_non_introduced_vars];
-      for (int i = 0; i < num_non_introduced_vars; i++){
-        variable_relations[i] = new double[num_non_introduced_vars];
-        std::fill_n(variable_relations[i], num_non_introduced_vars, 0);
+      variable_relations = new double*[var_mapper.size()];
+      for (int i = 0; i < var_mapper.size(); i++){
+        variable_relations[i] = new double[var_mapper.size()];
+        std::fill_n(variable_relations[i], var_mapper.size(), 0);
       }
-      cerr << num_non_introduced_vars << endl;
+      non_fzn_introduced_vars = IntVarArray(*this, var_mapper.size());
 
-      AST::Array* vars;
-      int var_index_y = 0;
-      int var_index_x = 0;
-      // For each pair of variables, add the weight to that index. The LNS will then select variables to freeze based on the weight.
-      for (int i = 0; i < num_non_introduced_vars; i++){
-        for(int j = 0; j < num_non_introduced_vars; j++){
-          // if (i != j){
-            variable_relations[i][j] = _random(10); // how to get correct weight here... random is a placeholder.
-          // }
+      // The variable_relations matrix is used for Static Variable Dependency LNS asset
+      // and contain the relations between the variables given the weights defined for each constraint.
+      for (long unsigned int i = 0; i < cons_info_vec.size(); i++){
+        for (long unsigned int j = 0; j < cons_info_vec[i].vars.size(); j++){
+          for (long unsigned int k = 0; k < cons_info_vec[i].vars[j]->a.size(); k++){
+            // For each pair of variables, add the weight to that index. The LNS will then select variables to freeze based on the weight.
+            non_fzn_introduced_vars[var_mapper[cons_info_vec[i].vars[j]->a[k]->getIntVar()]] = iv[cons_info_vec[i].vars[j]->a[k]->getIntVar()];
+            int iv_index = cons_info_vec[i].vars[j]->a[k]->getIntVar();
+            for (long unsigned int l = k; l < cons_info_vec[i].vars[j]->a.size(); l++){
+              if (l != k){
+                int iv_index2 = cons_info_vec[i].vars[j]->a[l]->getIntVar();
+                variable_relations[var_mapper[iv_index]][var_mapper[iv_index2]] += cons_info_vec[i].weight;
+                variable_relations[var_mapper[iv_index2]][var_mapper[iv_index]] += cons_info_vec[i].weight;
+              }
+            }
+          }
         }
       }
 
@@ -2661,7 +2672,7 @@ namespace Gecode { namespace FlatZinc {
       }
       case SVD:
       {
-        return _lnsStrategy.staticVariableDependency(*this, mi, non_fzn_introduced_vars, floor(0.6*non_fzn_introduced_vars.size()));
+        return _lnsStrategy.staticVariableRelation(*this, mi, non_fzn_introduced_vars, floor(0.6*non_fzn_introduced_vars.size()));
       }
       default:
       {

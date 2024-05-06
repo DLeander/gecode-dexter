@@ -289,7 +289,7 @@ class DFSAsset : public BaseAsset {
         int getNP() const override { return n_p; }
         long unsigned int getShavingStart() const override { return shaving_start; }
         double getSolveTime() const override { return solve_time; }
-        FlatZinc::FlatZincSpace::LNSType getLNSType() const { return FlatZinc::FlatZincSpace::LNSType::NONE; }
+        FlatZinc::FlatZincSpace::LNSType getLNSType() const override { return FlatZinc::FlatZincSpace::LNSType::NONE; }
         string getAssetTypeStr() const override { return assetstr; }
         
         void setNP(int n_p) override { this->n_p = n_p; }
@@ -341,7 +341,7 @@ class LNSAsset : public BaseAsset {
         int getNP() const override { return n_p; }
         long unsigned int getShavingStart() const override { return shaving_start; }
         double getSolveTime() const override { return solve_time; }
-        FlatZinc::FlatZincSpace::LNSType getLNSType() const { return lns_type; }
+        FlatZinc::FlatZincSpace::LNSType getLNSType() const override { return lns_type; }
         string getAssetTypeStr() const override { return assetstr; }
 
         void setNP(int n_p) override { n_p = n_p; }
@@ -390,7 +390,7 @@ class RRLNSAsset : public BaseAsset {
         int getNP() const override { return best_asset->getNP(); }
         double getSolveTime() const override { return best_asset->getSolveTime(); }
         long unsigned int getShavingStart() const override { return -1; }
-        FlatZinc::FlatZincSpace::LNSType getLNSType() const { return best_asset->getLNSType(); }
+        FlatZinc::FlatZincSpace::LNSType getLNSType() const override { return best_asset->getLNSType(); }
         string getAssetTypeStr() const override { return best_asset->getAssetTypeStr(); }
 
         void setNP(int n_p) override { best_asset->setNP(n_p); }
@@ -439,7 +439,7 @@ class ShavingAsset : public BaseAsset {
         int getMaxDomShavingSize() const { return max_dom_shaving_size; }
         long unsigned int getShavingStart() const override { return 0; }
         double getSolveTime() const override { return 0; }
-        FlatZinc::FlatZincSpace::LNSType getLNSType() const { return FlatZinc::FlatZincSpace::LNSType::NONE; }
+        FlatZinc::FlatZincSpace::LNSType getLNSType() const override { return FlatZinc::FlatZincSpace::LNSType::NONE; }
         string getAssetTypeStr() const override { return assetstr; }
 
         void setNP(int n_p) override { n_p = n_p; }
