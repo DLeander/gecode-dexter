@@ -1,0 +1,20 @@
+chosen = [Item(1): false, Item(2): false, Item(3): false, Item(4): false, Item(5): false, Item(6): true, Item(7): false, Item(8): false, Item(9): false, Item(10): false, Item(11): false, Item(12): false, Item(13): false, Item(14): true, Item(15): false, Item(16): false, Item(17): false, Item(18): false, Item(19): false, Item(20): false, Item(21): false, Item(22): false, Item(23): false, Item(24): false, Item(25): false, Item(26): false, Item(27): false];
+order = [Time(1): City(1), Time(2): City(2), Time(3): City(3), Time(4): City(4), Time(5): City(5), Time(6): City(6), Time(7): City(7), Time(8): City(8), Time(9): City(9), Time(10): City(10)];
+weight = [Time(1): 0, Time(2): 0, Time(3): 1925, Time(4): 1925, Time(5): 1925, Time(6): 2583, Time(7): 2583, Time(8): 2583, Time(9): 2583, Time(10): 2583];
+velocity = [Time(1): 10100, Time(2): 10100, Time(3): 10100, Time(4): 10100, Time(5): 10100, Time(6): 10100, Time(7): 10100, Time(8): 10100, Time(9): 10100, Time(10): 10100];
+profit = 14545;
+rental = 0;
+distAtTime = [Time(1): 4524, Time(2): 4474, Time(3): 3879, Time(4): 3327, Time(5): 2747, Time(6): 2572, Time(7): 2009, Time(8): 1139, Time(9): 777, Time(10): 361];
+----------
+==========
+%%%mzn-stat: initTime=0.00209351
+%%%mzn-stat: solveTime=25.205
+%%%mzn-stat: solutions=2
+%%%mzn-stat: variables=384
+%%%mzn-stat: propagators=383
+%%%mzn-stat: propagations=564339806
+%%%mzn-stat: nodes=4330371
+%%%mzn-stat: failures=2165184
+%%%mzn-stat: restarts=0
+%%%mzn-stat: peakDepth=25
+%%%mzn-stat-end

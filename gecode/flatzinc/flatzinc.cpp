@@ -1395,13 +1395,6 @@ namespace Gecode { namespace FlatZinc {
           }
         }
       }
-
-      for (int i = 0; i < num_non_introduced_vars; i++){
-        for (int j = 0; j < num_non_introduced_vars; j++){
-          std::cerr << variable_relations[i][j] << " ";
-        }
-        std::cerr << std::endl;
-      }
     }
 
     default_lns = 60;
@@ -2019,7 +2012,11 @@ namespace Gecode { namespace FlatZinc {
 
   FlatZincSpace::~FlatZincSpace(void) {
     delete _initData;
-    delete _solveAnnotations;
+    // The same _solveAnnotation may be used by other assets.
+    // if (_solveAnnotations != nullptr){
+    //   delete _solveAnnotations;
+    //   _solveAnnotations = nullptr;
+    // }
   }
 
 #ifdef GECODE_HAS_GIST
@@ -2385,6 +2382,8 @@ namespace Gecode { namespace FlatZinc {
     PBSController pbs(this, assets, p);
     switch (_method) {
     case MIN:
+      pbs.controller(out, opt, t_total);
+      break;
     case MAX:
       pbs.controller(out, opt, t_total);
       break;
@@ -2392,6 +2391,11 @@ namespace Gecode { namespace FlatZinc {
       // runEngine<DFS>(out,p,opt,t_total);
       break;
     }
+    // Delete variable_relations matrix
+    for (int i = 0; i < non_fzn_introduced_vars.size(); i++){
+      delete[] variable_relations[i];
+    }
+    delete[] variable_relations;
   }
 
   void
@@ -2670,7 +2674,7 @@ namespace Gecode { namespace FlatZinc {
       {
         return _lnsStrategy.costImpactGuided(*this, mi, ciglns_info, maximize, 2, 0.5, ceil((_lns/100.0) * iv_lns_default.size()), _random);
       }
-      case SVD:
+      case SVR:
       {
         return _lnsStrategy.staticVariableRelation(*this, mi, non_fzn_introduced_vars, floor(0.6*non_fzn_introduced_vars.size()), _random);
       }

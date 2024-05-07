@@ -1,0 +1,13 @@
+output ["Minute "++format(m)++": Position me="++format(position[m,Me])++", elephant="++format(position[m,Elephant])++", Open valves: "++format({n | n in Nodes where open[n,m]})++"\n" | m in Minutes]++["checksum: ",show(checksum),"\n"];
+set of int: Person = 1..2;
+set of int: Minutes = 1..6;
+set of int: Nodes = 1..58;
+array [1..12] of int: X_INTRODUCED_420_;
+array [Minutes,Person] of int: position = array2d(1..6,1..2,X_INTRODUCED_420_);
+int: Me = 1;
+int: Elephant = 2;
+array [1..348] of bool: X_INTRODUCED_71_;
+array [Nodes,Minutes] of bool: open = array2d(1..58,1..6,X_INTRODUCED_71_);
+array [Nodes] of int: flow = [14,0,0,0,0,13,0,0,0,24,0,0,0,0,0,0,0,22,0,0,0,9,0,0,0,0,18,0,0,0,0,10,12,23,3,0,8,0,0,5,0,0,0,0,0,0,17,0,0,0,0,15,0,4,0,0,0,0];
+array [Minutes] of int: current_flow = array1d(Minutes,[sum([bool2int(open[node,minute])*flow[node] | node in Nodes]) | minute in Minutes]);
+int: checksum = sum(current_flow);

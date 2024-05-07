@@ -326,8 +326,11 @@ class LNSAsset : public BaseAsset {
                     : control(control), fg(fg), fopt(fopt), p(p), c_d(c_d), a_d(a_d), threads(threads), bm(opposite_branching, initial_branch_by_afc), mode(mode), restart_base(restart_base), 
                       restart_scale(restart_scale), lns_type(lns_type), executor(new AssetExecutor(control, this, out, fopt, p, asset_id, true)), shaving_start(0), solve_time(0) {setupAsset();};
         ~LNSAsset() override {
+            // cerr << se << endl;
             delete se; se = nullptr;
-            delete fzs->ciglns_info; fzs->ciglns_info = nullptr;
+            if (fzs->ciglns_info != nullptr){
+                delete fzs->ciglns_info; fzs->ciglns_info = nullptr;
+            }
             delete fzs; fzs = nullptr;
             // delete executor; executor = nullptr;
         };
@@ -425,7 +428,7 @@ class ShavingAsset : public BaseAsset {
         {
             std::reverse(variables.begin(), variables.end()); setupAsset();
         };
-        ~ShavingAsset() override {delete sorter; sorter = nullptr; delete executor; executor = nullptr;};
+        ~ShavingAsset() override {delete sorter; sorter = nullptr;};
 
         void setupAsset() override;
         void run() override {Gecode::Support::Thread::run(executor);};
@@ -471,12 +474,12 @@ public:
         USER, //< First asset is the user asset.
         LNS_USER, //< Second asset is the user asset with LNS.
         PGLNS, //< Propagation guided LNS.
-
-        SHAVING, //< Shaving asset.
-
+        CIGLNS, //< Cost impact guided LNS.
+        OBJRELLNS, //< Objective relaxation LNS.
+        SVRLNS, //< Static variable relationship LNS.
         REVPGLNS, //< Reverse propagation guided LNS.
-        AFCLNS, //< AFC guided LNS.
-        
+        PB_USER, //< Prioritized branching user asset.
+        SHAVING, //< Shaving asset.
         USER_OPPOSITE  //< The user asset with opposite branching.
     };
     // Methods
@@ -515,7 +518,7 @@ private:
     // Waits for all threads to be done.
     void await_runners_completed();
     // Sets up the asset used by the portfolio.
-    void setupPortfolioAssets(int asset, FlatZinc::Printer& p, FlatZincOptions& fopt, std::ostream &out, int num_assets);
+    void setupPortfolioAssets(int asset, FlatZinc::Printer& p, FlatZincOptions& fopt, std::ostream &out);
     // Gives the statistics of the solution. (TODO: Make it possible to output from all engines and/or spaces)
     void solutionStatistics(BaseAsset* asset, std::ostream& out, Support::Timer& t_total, int finished_asset, bool allAssetStat);
 

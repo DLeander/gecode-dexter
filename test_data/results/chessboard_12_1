@@ -1,0 +1,42 @@
+x = 
+[| N, N, N, N, N, N, N, N, N, N, N, N
+ | e, e, e, e, e, e, e, e, e, e, e, e
+ | e, e, e, e, e, e, e, e, e, e, e, e
+ | N, e, e, N, N, e, e, e, e, e, e, e
+ | e, e, e, e, e, e, e, e, e, e, e, e
+ | e, e, e, e, e, e, e, e, e, e, e, e
+ | e, e, e, e, e, e, e, e, e, e, e, e
+ | e, e, e, e, e, e, e, e, e, e, e, e
+ | e, e, e, e, e, e, e, e, e, e, e, e
+ | e, e, e, e, e, e, e, e, e, e, e, e
+ | e, e, e, e, e, e, e, e, e, B, e, e
+ | e, B, B, B, B, B, B, B, e, B, e, e
+ |];
+cnt = [N: 15, B: 9, R: 0, Q: 0, e: 120];
+y = 
+[| 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+ | 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+ | 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+ | 1, 5, 5, 1, 1, 5, 5, 5, 5, 5, 5, 5
+ | 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+ | 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+ | 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+ | 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+ | 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+ | 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
+ | 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 5, 5
+ | 5, 4, 4, 4, 4, 4, 4, 4, 5, 4, 5, 5
+ |];
+obj = 309;
+----------
+%%%mzn-stat: initTime=0.00705342
+%%%mzn-stat: solveTime=600
+%%%mzn-stat: solutions=6
+%%%mzn-stat: variables=1868
+%%%mzn-stat: propagators=1941
+%%%mzn-stat: propagations=2409861367
+%%%mzn-stat: nodes=65286825
+%%%mzn-stat: failures=32643396
+%%%mzn-stat: restarts=0
+%%%mzn-stat: peakDepth=62
+%%%mzn-stat-end

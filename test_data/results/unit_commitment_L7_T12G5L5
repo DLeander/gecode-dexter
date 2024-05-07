@@ -1,0 +1,47 @@
+commitment = 
+[|  true, false, false, false, false, false, false, false, false, false, false, false
+ | false, false, false, false, false, false, false, false, false, false, false, false
+ | false, false, false, false, false, false, false, false, false, false, false, false
+ |  true, false, false, false, false, false, false, false, false, false, false, false
+ |  true,  true, false,  true,  true,  true,  true,  true,  true,  true,  true,  true
+ |];
+generation = 
+[| 250,   0, 0,   0,   0,   0,   0,   0,   0,   0,   0,   0
+ |   0,   0, 0,   0,   0,   0,   0,   0,   0,   0,   0,   0
+ |   0,   0, 0,   0,   0,   0,   0,   0,   0,   0,   0,   0
+ |   1,   0, 0,   0,   0,   0,   0,   0,   0,   0,   0,   0
+ | 384, 584, 0, 340, 240, 235, 280, 400, 600, 800, 760, 780
+ |];
+loss_of_load = 
+[| 0,  0,  10, 0, 0, 0, 0, 0,   0,  0, 0, 0
+ | 0,  0,  10, 0, 0, 0, 0, 0,   0,  0, 0, 0
+ | 0,  0,  20, 0, 0, 0, 0, 0,   0,  0, 0, 0
+ | 0,  0, 200, 0, 0, 0, 0, 0,   0,  0, 0, 0
+ | 0, 56, 200, 0, 0, 0, 0, 0, 200, 40, 0, 0
+ |];
+up = 
+[| false, false, false, false, false, false, false, false, false, false, false, false
+ | false, false, false, false, false, false, false, false, false, false, false, false
+ | false, false, false, false, false, false, false, false, false, false, false, false
+ | false, false, false, false, false, false, false, false, false, false, false, false
+ | false, false, false,  true, false, false, false, false, false, false, false, false
+ |];
+down = 
+[| false,  true, false, false, false, false, false, false, false, false, false, false
+ | false, false, false, false, false, false, false, false, false, false, false, false
+ | false, false, false, false, false, false, false, false, false, false, false, false
+ | false,  true, false, false, false, false, false, false, false, false, false, false
+ | false, false,  true, false, false, false, false, false, false, false, false, false
+ |];
+----------
+%%%mzn-stat: initTime=0.00216127
+%%%mzn-stat: solveTime=600
+%%%mzn-stat: solutions=5577
+%%%mzn-stat: variables=646
+%%%mzn-stat: propagators=448
+%%%mzn-stat: propagations=14046679263
+%%%mzn-stat: nodes=283173594
+%%%mzn-stat: failures=141581103
+%%%mzn-stat: restarts=0
+%%%mzn-stat: peakDepth=110
+%%%mzn-stat-end

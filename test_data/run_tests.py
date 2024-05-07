@@ -48,18 +48,32 @@ def run_tests(commands_file):
 
         # Run each command in commands
         for command in commands:
-            print(f"{colours.BRIGHT_YELLOW}Running command: {command}.")
+            if (command == ""):
+                continue
 
+            print(f"{colours.BRIGHT_YELLOW}Running command: {command}.")
             # Split the command by space
             sep_command = command.split(' ')
-            print(f"Solving {sep_command[4]} with data {sep_command[5]} ...")
+            if (sep_command[6] == "--fzn-flags"):
+                print(f"Solving {sep_command[9]} with data {sep_command[10]} ...")
 
-            # Execute the command (solve model)
-            subprocess.run(command, shell=True, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            print(f"Solving Finished. Saving results in {sep_command[7]}.\n")
+                # Execute the command (solve model)
+                subprocess.run(command, shell=True, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                print(f"Solving Finished. Saving results in {sep_command[12]}.\n")
 
-            # Clean up the output of minizinc.
-            clean_output(sep_command[7], sep_command[4])
+                # Clean up the output of minizinc.
+                # clean_output(sep_command[9], sep_command[12])
+            else:
+                print(f"Solving {sep_command[6]} with data {sep_command[7]} ...")
+                # Execute the command (solve model)
+                subprocess.run(command, shell=True, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                print(f"Solving Finished. Saving results in {sep_command[9]}.\n")
+
+                # Clean up the output of minizinc.
+                # clean_output(sep_command[9], sep_command[12])
+
+            
+            
 
 
     print(f"{colours.BRIGHT_CYAN}All Models Finished, done.{colours.RESET}")

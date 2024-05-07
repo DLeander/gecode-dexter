@@ -449,7 +449,7 @@ namespace Gecode { namespace FlatZinc {
       rPG, //< Reversed Propagation Guided LNS
       OBJREL, //< Objective relax LNS
       CIG, // < Cost Impact Guided LNS
-      SVD, // < Static Variable Dependency LNS
+      SVR, // < Static Variable Relationship LNS
       NONE //< No LNS used by asset in FlatZincSpace.
     };
 

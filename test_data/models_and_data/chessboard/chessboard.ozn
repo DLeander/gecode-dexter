@@ -1,0 +1,12 @@
+output ["x = \n",let {array [int] of string: X_INTRODUCED_843_ = [], array [int] of string: X_INTRODUCED_844_ = [], array [int,int] of string: X_INTRODUCED_845_ = [(X_INTRODUCED_841_, X_INTRODUCED_842_) : _toString_PIECE(x[X_INTRODUCED_841_,X_INTRODUCED_842_],true,false) | X_INTRODUCED_841_ in index_set_1of2(x), X_INTRODUCED_842_ in index_set_2of2(x)]} in (show2d_indexed(X_INTRODUCED_843_,X_INTRODUCED_844_,X_INTRODUCED_845_)),";\n","cnt = ",let {array [int] of string: X_INTRODUCED_848_ = [_toString_PIECE(X_INTRODUCED_846_,true,false) | X_INTRODUCED_846_ in index_set(cnt)], array [int] of string: X_INTRODUCED_849_ = [showDzn(cnt[X_INTRODUCED_847_]) | X_INTRODUCED_847_ in index_set(cnt)]} in (show_indexed(X_INTRODUCED_848_,X_INTRODUCED_849_)),";\n","y = \n",let {array [int] of string: X_INTRODUCED_852_ = [], array [int] of string: X_INTRODUCED_853_ = [], array [int,int] of string: X_INTRODUCED_854_ = [(X_INTRODUCED_850_, X_INTRODUCED_851_) : showDzn(y[X_INTRODUCED_850_,X_INTRODUCED_851_]) | X_INTRODUCED_850_ in index_set_1of2(y), X_INTRODUCED_851_ in index_set_2of2(y)]} in (show2d_indexed(X_INTRODUCED_852_,X_INTRODUCED_853_,X_INTRODUCED_854_)),";\n","obj = ",showDzn(obj),";\n"];
+function string : _toString_PIECE(opt int: X_INTRODUCED_0_,bool: X_INTRODUCED_1_,bool: X_INTRODUCED_2_) = if occurs(X_INTRODUCED_0_) then if X_INTRODUCED_1_ then showDznId(_enum_to_string_0_PIECE[deopt(X_INTRODUCED_0_)]) elseif X_INTRODUCED_2_ then ("{\"e\":"++show(_enum_to_string_0_PIECE[deopt(X_INTRODUCED_0_)]))++"}" else _enum_to_string_0_PIECE[deopt(X_INTRODUCED_0_)] endif else if X_INTRODUCED_2_ then "null" else "<>" endif endif;
+int: obj;
+set of int: COL = 1..7;
+set of int: ROW = 1..7;
+array [1..49] of int: X_INTRODUCED_72_;
+array [ROW,COL] of int: y = array2d(1..7,1..7,X_INTRODUCED_72_);
+set of int: PIECE = 1..5;
+array [PIECE] of int: cnt;
+array [1..5] of string: _enum_to_string_0_PIECE = ["N","B","R","Q","e"];
+array [1..49] of int: X_INTRODUCED_17_;
+array [ROW,COL] of int: x = array2d(1..7,1..7,X_INTRODUCED_17_);

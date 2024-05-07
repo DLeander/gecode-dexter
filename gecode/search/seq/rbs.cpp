@@ -39,7 +39,6 @@ namespace Gecode { namespace Search { namespace Seq {
   bool
   RestartStop::stop(const Statistics& s, const Options& o) {
     if (optimum_found != nullptr && optimum_found->load()) {
-      std::cerr << "Optimum found" << std::endl;
       return true;
     }
     // Stop if the fail limit for the engine says so

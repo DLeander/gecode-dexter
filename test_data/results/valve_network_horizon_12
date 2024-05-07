@@ -1,0 +1,25 @@
+Minute 1: Position me=AA, elephant=AA, Open valves: {}
+Minute 2: Position me=AA, elephant=AA, Open valves: {AA}
+Minute 3: Position me=AA, elephant=AA, Open valves: {AA}
+Minute 4: Position me=AA, elephant=AA, Open valves: {AA}
+Minute 5: Position me=AA, elephant=AA, Open valves: {AA}
+Minute 6: Position me=AA, elephant=JG, Open valves: {AA}
+Minute 7: Position me=AA, elephant=VT, Open valves: {AA}
+Minute 8: Position me=QC, elephant=HY, Open valves: {AA}
+Minute 9: Position me=ML, elephant=HY, Open valves: {AA, HY}
+Minute 10: Position me=LU, elephant=BR, Open valves: {AA, HY}
+Minute 11: Position me=LU, elephant=EE, Open valves: {AA, LU, HY}
+Minute 12: Position me=LU, elephant=EE, Open valves: {EE, AA, LU, HY}
+checksum: 63
+----------
+%%%mzn-stat: initTime=0.0249886
+%%%mzn-stat: solveTime=600
+%%%mzn-stat: solutions=30
+%%%mzn-stat: variables=6721
+%%%mzn-stat: propagators=8596
+%%%mzn-stat: propagations=21998175681
+%%%mzn-stat: nodes=45301200
+%%%mzn-stat: failures=22650562
+%%%mzn-stat: restarts=0
+%%%mzn-stat: peakDepth=35
+%%%mzn-stat-end

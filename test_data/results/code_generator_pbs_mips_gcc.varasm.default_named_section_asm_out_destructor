@@ -1,0 +1,68 @@
+=====UNKNOWN=====
+%%%mzn-stat: initTime=0.952289
+%%%mzn-stat: solveTime=599.431
+%%%mzn-stat: finished asset=bab asset
+%%%mzn-stat: variables=48524
+%%%mzn-stat: propagators=234609
+%%%mzn-stat: propagations=146695259
+%%%mzn-stat: nodes=167382
+%%%mzn-stat: failures=83649
+%%%mzn-stat: restarts=0
+%%%mzn-stat: peakDepth=104
+%%%mzn-stat-end
+%%%mzn-stat: unfinished asset=random lns asset
+%%%mzn-stat: propagators=-1274798880
+%%%mzn-stat: propagations=212952624
+%%%mzn-stat: nodes=130722
+%%%mzn-stat: failures=61728
+%%%mzn-stat: restarts=93
+%%%mzn-stat: peakDepth=100
+%%%mzn-stat-end
+%%%mzn-stat: unfinished asset=propagation guided lns asset
+%%%mzn-stat: propagators=-1161595088
+%%%mzn-stat: propagations=213081974
+%%%mzn-stat: nodes=130870
+%%%mzn-stat: failures=61801
+%%%mzn-stat: restarts=93
+%%%mzn-stat: peakDepth=100
+%%%mzn-stat-end
+%%%mzn-stat: unfinished asset=cost impact guided lns asset
+%%%mzn-stat: propagators=0
+%%%mzn-stat: propagations=212710059
+%%%mzn-stat: nodes=130460
+%%%mzn-stat: failures=61597
+%%%mzn-stat: restarts=93
+%%%mzn-stat: peakDepth=100
+%%%mzn-stat-end
+%%%mzn-stat: unfinished asset=objective relaxation lns asset
+%%%mzn-stat: propagators=19
+%%%mzn-stat: propagations=213152409
+%%%mzn-stat: nodes=130954
+%%%mzn-stat: failures=61844
+%%%mzn-stat: restarts=93
+%%%mzn-stat: peakDepth=100
+%%%mzn-stat-end
+%%%mzn-stat: unfinished asset=static variable dependency lns asset
+%%%mzn-stat: propagators=-887744656
+%%%mzn-stat: propagations=212605556
+%%%mzn-stat: nodes=130324
+%%%mzn-stat: failures=61527
+%%%mzn-stat: restarts=93
+%%%mzn-stat: peakDepth=100
+%%%mzn-stat-end
+%%%mzn-stat: unfinished asset=reversed propagation guided lns asset
+%%%mzn-stat: propagators=-795562808
+%%%mzn-stat: propagations=213157079
+%%%mzn-stat: nodes=130960
+%%%mzn-stat: failures=61847
+%%%mzn-stat: restarts=93
+%%%mzn-stat: peakDepth=100
+%%%mzn-stat-end
+%%%mzn-stat: unfinished asset=prioritized branching bab asset
+%%%mzn-stat: propagators=234609
+%%%mzn-stat: propagations=147424985
+%%%mzn-stat: nodes=168261
+%%%mzn-stat: failures=84089
+%%%mzn-stat: restarts=0
+%%%mzn-stat: peakDepth=104
+%%%mzn-stat-end

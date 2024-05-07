@@ -62,19 +62,19 @@ export VERSION	= 6.3.0
 
 export CXX = g++
 export CC = gcc
-export MOC = 
+export MOC = moc
 ifeq "$(top_srcdir)" "$(top_builddir)"
 CPPFLAGS=-I$(top_srcdir)
 else
 CPPFLAGS=-I$(top_builddir) -I$(top_srcdir)
 endif
 export CPPFLAGS
-export CXXFLAGS = $(CPPFLAGS) -Qunused-arguments -fno-rounding-math -ffinite-math-only -fno-math-errno -fno-strict-aliasing -O3 -fvisibility=hidden -ggdb -std=c++17 -pipe -Wno-unknown-pragmas -Wall -Wextra -fPIC -DNDEBUG $(CXXUSR)
-export CFLAGS = $(CPPFLAGS) -Qunused-arguments -fno-rounding-math -ffinite-math-only -fno-math-errno -fno-strict-aliasing -O3 -fvisibility=hidden -ggdb -pipe -Wno-unknown-pragmas -Wall -Wextra -fPIC -DNDEBUG $(CUSR)
+export CXXFLAGS = $(CPPFLAGS) -fcx-limited-range -fno-signaling-nans -fno-rounding-math -ffinite-math-only -fno-math-errno -fno-strict-aliasing -O3 -fvisibility=hidden -ggdb -std=c++17 -pipe -Wno-unknown-pragmas -Wall -Wextra -fPIC -DNDEBUG $(CXXUSR)
+export CFLAGS = $(CPPFLAGS) -fcx-limited-range -fno-signaling-nans -fno-rounding-math -ffinite-math-only -fno-math-errno -fno-strict-aliasing -O3 -fvisibility=hidden -ggdb -pipe -Wno-unknown-pragmas -Wall -Wextra -fPIC -DNDEBUG $(CUSR)
 export EXAMPLES_EXTRA_CXXFLAGS = 
 
-export QT_CPPFLAGS =  
-export LINKQT = 
+export QT_CPPFLAGS =  -DQT_NO_DEBUG -DQT_PRINTSUPPORT_LIB -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB  -I. -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtPrintSupport -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I. -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++
+export LINKQT =  $(SUBLIBS) /usr/lib/x86_64-linux-gnu/libQt5PrintSupport.so /usr/lib/x86_64-linux-gnu/libQt5Widgets.so /usr/lib/x86_64-linux-gnu/libQt5Gui.so /usr/lib/x86_64-linux-gnu/libQt5Core.so -lGL -lpthread   
 export MPFR_CPPFLAGS =  
 ifeq "yes" "yes"
 export LINKMPFR =   -lmpfr  -lgmp
@@ -89,24 +89,24 @@ export LINKSTATICQT = $(LINKQT)
 endif
 
 export GLDFLAGS = 
-export DLLFLAGS = -dynamiclib -Wl,-single_module
+export DLLFLAGS = -shared
 export DLLPATH = -L.
 
 export RANLIB = ranlib
 export TAR = tar
 
-export RUNENVIRONMENT = DYLD_LIBRARY_PATH=.
+export RUNENVIRONMENT = LD_LIBRARY_PATH=.
 
 #
 # Use suffixes to get consistent treatment of dots
 #
 export OBJSUFFIX	= .o
 export SBJSUFFIX	= .s
-export DLLSUFFIX	= .51.0.dylib
-export MANIFESTSUFFIX	= .51.0.dylib.manifest
-export RCSUFFIX		= .51.0.dylib.rc
-export RESSUFFIX	= .51.0.dylib.res
-export LIBSUFFIX	= .51.0.dylib
+export DLLSUFFIX	= .so.51.0
+export MANIFESTSUFFIX	= .so.51.0.manifest
+export RCSUFFIX		= .so.51.0.rc
+export RESSUFFIX	= .so.51.0.res
+export LIBSUFFIX	= .so.51.0
 export PDBSUFFIX	= .pdb
 export EXPSUFFIX	= .exp
 export STATICLIBSUFFIX	= .a
@@ -116,8 +116,8 @@ export LIBPREFIX 	= libgecode
 export LINKPREFIX	= -lgecode
 export LINKSUFFIX	= 
 
-export SOLINKSUFFIX     = .dylib
-export SOSUFFIX         = .51.dylib
+export SOLINKSUFFIX     = .so
+export SOSUFFIX         = .so.51
 
 #
 # Programs
@@ -167,7 +167,7 @@ export SUPPORTDLL	= $(LIBPREFIX)support$(DLLSUFFIX)
 export SUPPORTLIB	= $(LIBPREFIX)support$(LIBSUFFIX)
 ifeq "yes" "yes"
 export SUPPORTSONAME     = \
-	-compatibility_version 51.0 -current_version 51.0 -install_name ${exec_prefix}/lib/$(LIBPREFIX)support$(SOSUFFIX)
+	-Wl,-soname=$(LIBPREFIX)support$(SOSUFFIX)
 else
 export SUPPORTSONAME     =
 endif
@@ -230,7 +230,7 @@ export KERNELDLL	= $(LIBPREFIX)kernel$(DLLSUFFIX)
 export KERNELLIB	= $(LIBPREFIX)kernel$(LIBSUFFIX)
 ifeq "yes" "yes"
 export KERNELSONAME     = \
-	-compatibility_version 51.0 -current_version 51.0 -install_name ${exec_prefix}/lib/$(LIBPREFIX)kernel$(SOSUFFIX)
+	-Wl,-soname=$(LIBPREFIX)kernel$(SOSUFFIX)
 else
 export KERNELSONAME     =
 endif
@@ -289,7 +289,7 @@ export SEARCHLIB	= $(LIBPREFIX)search$(LIBSUFFIX)
 export LINKSEARCH       = $(LINKPREFIX)search$(LINKSUFFIX)
 ifeq "yes" "yes"
 export SEARCHSONAME     = \
-	-compatibility_version 51.0 -current_version 51.0 -install_name ${exec_prefix}/lib/$(LIBPREFIX)search$(SOSUFFIX)
+	-Wl,-soname=$(LIBPREFIX)search$(SOSUFFIX)
 else
 export SEARCHSONAME     =
 ifeq "no" "yes"
@@ -446,7 +446,7 @@ export INTLIB		= $(LIBPREFIX)int$(LIBSUFFIX)
 export LINKINT      	= $(LINKPREFIX)int$(LINKSUFFIX)
 ifeq "yes" "yes"
 export INTSONAME     = \
-	-compatibility_version 51.0 -current_version 51.0 -install_name ${exec_prefix}/lib/$(LIBPREFIX)int$(SOSUFFIX)
+	-Wl,-soname=$(LIBPREFIX)int$(SOSUFFIX)
 else
 export INTSONAME     =
 endif
@@ -520,7 +520,7 @@ export FLOATLIB		= $(LIBPREFIX)float$(LIBSUFFIX)
 export LINKFLOAT	= $(LINKPREFIX)float$(LINKSUFFIX)
 ifeq "yes" "yes"
 export FLOATSONAME     = \
-	-compatibility_version 51.0 -current_version 51.0 -install_name ${exec_prefix}/lib/$(LIBPREFIX)float$(SOSUFFIX)
+	-Wl,-soname=$(LIBPREFIX)float$(SOSUFFIX)
 else
 export FLOATSONAME     =
 endif
@@ -616,7 +616,7 @@ export SETLIB		= $(LIBPREFIX)set$(LIBSUFFIX)
 export LINKSET      	= $(LINKPREFIX)set$(LINKSUFFIX)
 ifeq "yes" "yes"
 export SETSONAME     = \
-	-compatibility_version 51.0 -current_version 51.0 -install_name ${exec_prefix}/lib/$(LIBPREFIX)set$(SOSUFFIX)
+	-Wl,-soname=$(LIBPREFIX)set$(SOSUFFIX)
 else
 export SETSONAME     =
 endif
@@ -669,7 +669,7 @@ export MMLIB		= $(LIBPREFIX)minimodel$(LIBSUFFIX)
 export LINKMM      	= $(LINKPREFIX)minimodel$(LINKSUFFIX)
 ifeq "yes" "yes"
 export MMSONAME     = \
-	-compatibility_version 51.0 -current_version 51.0 -install_name ${exec_prefix}/lib/$(LIBPREFIX)minimodel$(SOSUFFIX)
+	-Wl,-soname=$(LIBPREFIX)minimodel$(SOSUFFIX)
 else
 export MMSONAME     =
 endif
@@ -709,7 +709,7 @@ export DRIVERLIB	= $(LIBPREFIX)driver$(LIBSUFFIX)
 export LINKDRIVER      	= $(LINKPREFIX)driver$(LINKSUFFIX)
 ifeq "yes" "yes"
 export DRIVERSONAME     = \
-	-compatibility_version 51.0 -current_version 51.0 -install_name ${exec_prefix}/lib/$(LIBPREFIX)driver$(SOSUFFIX)
+	-Wl,-soname=$(LIBPREFIX)driver$(SOSUFFIX)
 else
 export DRIVERSONAME     =
 endif
@@ -785,14 +785,14 @@ GISTSBJ	= $(GISTSRC:%.cpp=%$(SBJSUFFIX)) $(GISTMOCSRC:%.cpp=%$(SBJSUFFIX))
 
 GISTBUILDDIRS = gist
 
-ifeq "" "yes"
+ifeq "yes" "yes"
 export GISTDLL		= $(LIBPREFIX)gist$(DLLSUFFIX)
 export GISTSTATICLIB	= $(LIBPREFIX)gist$(STATICLIBSUFFIX)
 export GISTLIB		= $(LIBPREFIX)gist$(LIBSUFFIX)
 export LINKGIST      	= $(LINKPREFIX)gist$(LINKSUFFIX)
 ifeq "yes" "yes"
 export GISTSONAME     = \
-	-compatibility_version 51.0 -current_version 51.0 -install_name ${exec_prefix}/lib/$(LIBPREFIX)gist$(SOSUFFIX)
+	-Wl,-soname=$(LIBPREFIX)gist$(SOSUFFIX)
 else
 export GISTSONAME     =
 endif
@@ -845,14 +845,14 @@ export FLATZINCSTATICLIB	= $(LIBPREFIX)flatzinc$(STATICLIBSUFFIX)
 export FLATZINCLIB		= $(LIBPREFIX)flatzinc$(LIBSUFFIX)
 export LINKFLATZINC		= $(LINKPREFIX)flatzinc$(LINKSUFFIX)
 export FLATZINCMZNLIB		= gecode/flatzinc/mznlib
-ifeq "" "yes"
+ifeq "yes" "yes"
 export FLATZINCCONFIG		= tools/flatzinc/gecode.msc tools/flatzinc/gecode-gist.msc
 else
 export FLATZINCCONFIG		= tools/flatzinc/gecode.msc
 endif
 FLATZINCEXE	= tools/flatzinc/fzn-gecode$(EXESUFFIX)
 ifeq "yes" "yes"
-export FLATZINCSONAME = -compatibility_version 51.0 -current_version 51.0 -install_name ${exec_prefix}/lib/$(LIBPREFIX)flatzinc$(SOSUFFIX)
+export FLATZINCSONAME = -Wl,-soname=$(LIBPREFIX)flatzinc$(SOSUFFIX)
 else
 export FLATZINCSONAME =
 endif
@@ -1045,7 +1045,7 @@ export ALLLIB = \
 	$(MMLIB) $(DRIVERLIB) $(GISTLIB) $(FLATZINCLIB)
 else
 DLLTARGETS=
-ifeq "no" "yes"
+ifeq "" "yes"
 export ALLLIB = gecode.framework/Versions/51/gecode
 else
 export ALLLIB = \
@@ -1533,7 +1533,7 @@ $(FLATZINC_GENSRC:%.cpp=%$(SBJSUFFIX)): gecode/flatzinc/%$(SBJSUFFIX): gecode/fl
 
 ifeq "$(DLLSUFFIX)" "$(LIBSUFFIX)"
 
-ifeq "no" "yes"
+ifeq "" "yes"
 export LINKALL = -F. -framework gecode
 else
 export LINKALL = \
@@ -1754,7 +1754,7 @@ $(FLATZINCSTATICLIB): $(FLATZINCOBJ)
 #
 
 .PHONY: framework
-ifeq "no" "yes"
+ifeq "" "yes"
 framework: gecode.framework/Versions/51/gecode
 
 gecode.framework/Versions/51/gecode: $(STATICTARGETS)
@@ -1898,7 +1898,7 @@ header.html: $(top_srcdir)/misc/doxygen/header.html doxygen.conf
 doxygen.conf.use: doxygen.conf
 	(echo "GENERATE_HTMLHELP = YES"; \
 	 echo "SEARCHENGINE = NO";\
-	 echo "HAVE_DOT = NO") | \
+	 echo "HAVE_DOT = YES") | \
 		cat $< - > $@
 
 doc: $(ALLGECODEHDR:%=$(top_srcdir)/%) $(VARIMPHDR) \
@@ -1918,7 +1918,7 @@ header.html: $(top_srcdir)/misc/doxygen/header.html doxygen.conf
 	grep -v '<form.*form>' < $< > $@
 doxygen.conf.use: doxygen.conf
 	(echo "SEARCHENGINE = NO";\
-	 echo "HAVE_DOT = NO";\
+	 echo "HAVE_DOT = YES";\
 	 echo "GENERATE_DOCSET = YES";\
 	 echo "DOCSET_BUNDLE_ID = org.gecode.6.3.0";\
 	 echo "DOCSET_FEEDNAME = Gecode") | \
@@ -1944,7 +1944,7 @@ doxygen.conf.use: doxygen.conf
 	(echo "GENERATE_HTMLHELP = NO"; \
 	 echo "SEARCHENGINE = YES"; \
 	 echo "SERVER_BASED_SEARCH = YES"; \
-	 echo "HAVE_DOT = NO") | \
+	 echo "HAVE_DOT = YES") | \
 		cat $< - > $@
 else
 
@@ -1953,7 +1953,7 @@ header.html: $(top_srcdir)/misc/doxygen/header.html doxygen.conf
 doxygen.conf.use: doxygen.conf
 	(echo "GENERATE_HTMLHELP = NO"; \
 	 echo "SEARCHENGINE = NO"; \
-	 echo "HAVE_DOT = NO") | \
+	 echo "HAVE_DOT = YES") | \
 		cat $< - > $@
 
 endif
@@ -1982,7 +1982,7 @@ endif
 
 .PHONY: install
 
-ifeq "no" "yes"
+ifeq "" "yes"
 install: installframework
 else
 

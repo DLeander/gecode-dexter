@@ -1,0 +1,73 @@
+hap = array2d(1..14, 1..20, [2, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 2, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 3, 1, 3, 1, 3, 1, 3, 3, 1, 2, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 1, 3, 1, 3, 1, 3, 1, 1, 3, 1, 2, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 3, 1, 3, 1, 3, 3, 1, 3, 1, 2, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 1, 3, 1, 3, 1, 1, 3, 1, 3, 1, 2, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 3, 1, 3, 3, 1, 3, 1, 3, 1, 2, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 1, 3, 1, 2, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 3, 3, 2, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 1, 1, 3, 2, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 2, 1, 3, 1, 3, 1, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 1, 3, 1, 3, 2, 1, 3, 1, 3, 3, 1, 3, 1, 3, 1, 3, 1, 3, 1, 3, 3, 1, 3, 1, 3, 2, 1, 3, 1, 3, 1, 1, 3, 1, 3, 1, 3, 1, 3, 1, 1, 3, 1, 3, 1, 3, 2, 1, 3, 1, 3, 3, 1, 3, 1, 3, 1, 3, 1, 3]);
+contestant = array2d(1..14, 1..20, [1, 3, 5, 7, 2, 4, 6, 14, 12, 2, 4, 6, 8, 13, 3, 10, 11, 5, 7, 9, 7, 2, 4, 6, 1, 3, 5, 5, 7, 1, 9, 12, 14, 6, 4, 13, 10, 8, 11, 3, 6, 1, 3, 5, 7, 2, 4, 4, 6, 10, 8, 11, 13, 5, 1, 9, 7, 12, 14, 2, 5, 7, 2, 4, 6, 1, 3, 3, 5, 7, 1, 14, 12, 9, 2, 8, 6, 11, 10, 13, 4, 6, 1, 3, 5, 7, 2, 2, 4, 6, 10, 13, 11, 3, 8, 7, 9, 1, 12, 14, 3, 5, 7, 2, 4, 6, 1, 13, 3, 5, 12, 1, 7, 2, 9, 14, 4, 10, 8, 11, 2, 4, 6, 1, 3, 5, 7, 8, 2, 4, 14, 10, 6, 11, 13, 5, 3, 9, 1, 12, 8, 10, 12, 14, 9, 11, 13, 7, 11, 13, 3, 9, 1, 12, 5, 4, 14, 2, 6, 10, 14, 9, 11, 13, 8, 10, 12, 12, 14, 11, 2, 8, 10, 4, 6, 3, 5, 7, 13, 1, 13, 8, 10, 12, 14, 9, 11, 11, 13, 3, 5, 7, 9, 14, 12, 1, 2, 6, 4, 8, 12, 14, 9, 11, 13, 8, 10, 10, 8, 9, 13, 3, 5, 7, 14, 12, 1, 4, 2, 6, 11, 13, 8, 10, 12, 14, 9, 9, 1, 14, 6, 2, 4, 8, 10, 11, 13, 3, 5, 7, 10, 12, 14, 9, 11, 13, 8, 6, 10, 8, 11, 5, 3, 1, 7, 2, 12, 14, 9, 4, 9, 11, 13, 8, 10, 12, 14, 1, 9, 12, 7, 4, 2, 10, 11, 6, 8, 13, 3, 5]);
+row = [9, 3, 10, 11, 1, 14, 7, 2, 6, 4, 5, 13, 8, 12];
+objective = 2;
+----------
+==========
+%%%mzn-stat: initTime=0.0204213
+%%%mzn-stat: solveTime=25.6958
+%%%mzn-stat: finished asset=prioritized branching bab asset
+%%%mzn-stat: variables=2119
+%%%mzn-stat: propagators=1839
+%%%mzn-stat: propagations=77261518
+%%%mzn-stat: nodes=401820
+%%%mzn-stat: failures=200882
+%%%mzn-stat: restarts=0
+%%%mzn-stat: peakDepth=60
+%%%mzn-stat-end
+%%%mzn-stat: unfinished asset=bab asset
+%%%mzn-stat: propagators=1839
+%%%mzn-stat: propagations=75469051
+%%%mzn-stat: nodes=393259
+%%%mzn-stat: failures=196590
+%%%mzn-stat: restarts=0
+%%%mzn-stat: peakDepth=60
+%%%mzn-stat-end
+%%%mzn-stat: unfinished asset=random lns asset
+%%%mzn-stat: propagators=21
+%%%mzn-stat: propagations=7802032
+%%%mzn-stat: nodes=59629
+%%%mzn-stat: failures=29963
+%%%mzn-stat: restarts=62543
+%%%mzn-stat: peakDepth=54
+%%%mzn-stat-end
+%%%mzn-stat: unfinished asset=propagation guided lns asset
+%%%mzn-stat: propagators=2024004832
+%%%mzn-stat: propagations=81740997
+%%%mzn-stat: nodes=325931
+%%%mzn-stat: failures=161652
+%%%mzn-stat: restarts=256
+%%%mzn-stat: peakDepth=56
+%%%mzn-stat-end
+%%%mzn-stat: unfinished asset=cost impact guided lns asset
+%%%mzn-stat: propagators=21
+%%%mzn-stat: propagations=2844982
+%%%mzn-stat: nodes=14084
+%%%mzn-stat: failures=7013
+%%%mzn-stat: restarts=6672
+%%%mzn-stat: peakDepth=54
+%%%mzn-stat-end
+%%%mzn-stat: unfinished asset=objective relaxation lns asset
+%%%mzn-stat: propagators=0
+%%%mzn-stat: propagations=20325941
+%%%mzn-stat: nodes=53690
+%%%mzn-stat: failures=26738
+%%%mzn-stat: restarts=197231
+%%%mzn-stat: peakDepth=54
+%%%mzn-stat-end
+%%%mzn-stat: unfinished asset=static variable dependency lns asset
+%%%mzn-stat: propagators=131
+%%%mzn-stat: propagations=14512265
+%%%mzn-stat: nodes=119193
+%%%mzn-stat: failures=59861
+%%%mzn-stat: restarts=8944
+%%%mzn-stat: peakDepth=54
+%%%mzn-stat-end
+%%%mzn-stat: unfinished asset=reversed propagation guided lns asset
+%%%mzn-stat: propagators=0
+%%%mzn-stat: propagations=78486732
+%%%mzn-stat: nodes=328419
+%%%mzn-stat: failures=163089
+%%%mzn-stat: restarts=257
+%%%mzn-stat: peakDepth=55
+%%%mzn-stat-end

@@ -129,19 +129,16 @@ void PBSController::solutionStatistics(BaseAsset* asset, std::ostream& out, Supp
     }
 }
 
-void PBSController::setupPortfolioAssets(int asset, FlatZinc::Printer& p, FlatZincOptions& fopt, std::ostream &out, int num_assets) {
+void PBSController::setupPortfolioAssets(int asset, FlatZinc::Printer& p, FlatZincOptions& fopt, std::ostream &out) {
     switch (AssetType(asset))
     {
     case USER:
-        assets[asset] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset, false, false, FlatZinc::FlatZincSpace::LNSType::SVD, fopt.c_d(), fopt.a_d(), fopt.threads(), RM_LUBY, 1.5, 250));
-        // assets[asset] = (std::make_unique<DFSAsset>(*this, fg, fopt, p, out, asset, false, false, fopt.c_d(), fopt.a_d(), fopt.threads()));
-        // assets[asset] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset, false, false, FlatZinc::FlatZincSpace::LNSType::SVD, fopt.c_d(), fopt.a_d(), fopt.threads(), RM_LUBY, 1.5, 250));
+        assets[asset] = (std::make_unique<DFSAsset>(*this, fg, fopt, p, out, asset, false, false, fopt.c_d(), fopt.a_d(), fopt.threads()));
         if (fopt.mode() == SM_STAT) {
             assets[asset]->setAssetTypeStr("bab asset");
         }
         break;
     case LNS_USER:
-        // assets[asset] = (std::make_unique<RRLNSAsset>(*this, fg, fopt, p, out, asset, fopt.c_d(), fopt.a_d(), fopt.threads()));
         assets[asset] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset, false, false, FlatZinc::FlatZincSpace::LNSType::RANDOM, fopt.c_d(), fopt.a_d(), fopt.threads(), RM_LUBY, 1.5, 250));
         if (fopt.mode() == SM_STAT) {
             assets[asset]->setAssetTypeStr("random lns asset");
@@ -153,14 +150,38 @@ void PBSController::setupPortfolioAssets(int asset, FlatZinc::Printer& p, FlatZi
             assets[asset]->setAssetTypeStr("propagation guided lns asset");
         }
         break;
+    case CIGLNS:
+        assets[asset] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset, false, false, FlatZinc::FlatZincSpace::LNSType::CIG, fopt.c_d(), fopt.a_d(), fopt.threads(), RM_LUBY, 1.5, 250));
+        if (fopt.mode() == SM_STAT) {
+            assets[asset]->setAssetTypeStr("cost impact guided lns asset");
+        }
+        break;
+    case OBJRELLNS:
+        assets[asset] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset, false, false, FlatZinc::FlatZincSpace::LNSType::OBJREL, fopt.c_d(), fopt.a_d(), fopt.threads(), RM_LUBY, 1.5, 250));
+        if (fopt.mode() == SM_STAT) {
+            assets[asset]->setAssetTypeStr("objective relaxation lns asset");
+        }
+        break;
+    case SVRLNS:
+        assets[asset] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset, false, false, FlatZinc::FlatZincSpace::LNSType::SVR, fopt.c_d(), fopt.a_d(), fopt.threads(), RM_LUBY, 1.5, 250));
+        if (fopt.mode() == SM_STAT) {
+            assets[asset]->setAssetTypeStr("static variable dependency lns asset");
+        }
+        break;
     case REVPGLNS:
         assets[asset] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset, false, false, FlatZinc::FlatZincSpace::LNSType::rPG, fopt.c_d(), fopt.a_d(), fopt.threads(), RM_LUBY, 1.5, 250));
         if (fopt.mode() == SM_STAT) {
             assets[asset]->setAssetTypeStr("reversed propagation guided lns asset");
         }
         break;
+    case PB_USER:
+        assets[asset] = (std::make_unique<DFSAsset>(*this, fg, fopt, p, out, asset, false, true, fopt.c_d(), fopt.a_d(), fopt.threads()));
+        if (fopt.mode() == SM_STAT) {
+            assets[asset]->setAssetTypeStr("prioritized branching bab asset");
+        }
+        break;
     case SHAVING:
-        assets[asset] = (std::make_unique<ShavingAsset>(*this, fg, p, fopt, out, asset, 20, true, new InputOrderVariableSorter()));
+        assets[asset] = (std::make_unique<ShavingAsset>(*this, fg, p, fopt, out, asset, 20, true, new LargestAFCVariableSorter()));
         if (fopt.mode() == SM_STAT) {
             assets[asset]->setAssetTypeStr("shaving asset");
         }
@@ -174,11 +195,6 @@ void PBSController::setupPortfolioAssets(int asset, FlatZinc::Printer& p, FlatZi
     default:
         break;
     }
-
-    // Set up the printer when reaching the final asset. (To not mess with the shrinking of the printer object.)
-    if (asset == num_assets){
-        assets[asset]->getFZS()->shrinkArrays(p);
-    }
 }
 
 // The controller that creates the workers and controls the searches.
@@ -189,7 +205,7 @@ void PBSController::controller(std::ostream& out, FlatZincOptions& fopt, Support
         return;
     }
     for (int asset = 0; asset < num_assets; asset++) {
-        setupPortfolioAssets(asset, p, fopt, out, num_assets);
+        setupPortfolioAssets(asset, p, fopt, out);
     }
     for (int asset = 0; asset < num_assets; asset++) {
         assets[asset]->run();
@@ -410,8 +426,8 @@ void RRLNSAsset::run(){
                 case FlatZinc::FlatZincSpace::LNSType::CIG:
                     best_asset->setAssetTypeStr("rounds robin asset cost impact guided lns");
                     break;
-                case FlatZinc::FlatZincSpace::LNSType::SVD:
-                    best_asset->setAssetTypeStr("round robin asset static variable dependency lns");
+                case FlatZinc::FlatZincSpace::LNSType::SVR:
+                    best_asset->setAssetTypeStr("round robin asset static variable relationship lns");
                     break;
                 case FlatZinc::FlatZincSpace::LNSType::NONE:
                     best_asset->setAssetTypeStr("round robin asset");
@@ -472,14 +488,6 @@ void AssetExecutor::runShaving(){
             return vd.domain_literals(s);
         });
     }
-
-    // TODO: Handle statistics and report to controller?
-
-    // if (has_reported_literal) {
-    //     return AssetResult(AssetResultCode::CanBeRestarted);
-    // } else {
-    //     return AssetResult(AssetResultCode::Done);
-    // }
 }
 
 // ########################################################################
@@ -577,11 +585,13 @@ void LNSAsset::setupAsset(){
 }
 
 void RRLNSAsset::setupAsset(){
-    // Fill the round_robin_assets vector with all types of LNS assets.
+    // Fill the round_robin_assets vector with all types of LNS assets available.
     round_robin_assets.push_back(std::make_unique<LNSAsset>(control, fg, fopt, p, out, asset_id, false, false, FlatZinc::FlatZincSpace::LNSType::RANDOM, c_d, a_d, threads, RM_LUBY, 1.5, 250));
     round_robin_assets.push_back(std::make_unique<LNSAsset>(control, fg, fopt, p, out, asset_id, false, false, FlatZinc::FlatZincSpace::LNSType::PG, c_d, a_d, threads, RM_LUBY, 1.5, 250));
     round_robin_assets.push_back(std::make_unique<LNSAsset>(control, fg, fopt, p, out, asset_id, false, false, FlatZinc::FlatZincSpace::LNSType::rPG, c_d, a_d, threads, RM_LUBY, 1.5, 250));
     round_robin_assets.push_back(std::make_unique<LNSAsset>(control, fg, fopt, p, out, asset_id, false, false, FlatZinc::FlatZincSpace::LNSType::OBJREL, c_d, a_d, threads, RM_LUBY, 1.5, 250));
+    round_robin_assets.push_back(std::make_unique<LNSAsset>(control, fg, fopt, p, out, asset_id, false, false, FlatZinc::FlatZincSpace::LNSType::CIG, c_d, a_d, threads, RM_LUBY, 1.5, 250));
+    round_robin_assets.push_back(std::make_unique<LNSAsset>(control, fg, fopt, p, out, asset_id, false, false, FlatZinc::FlatZincSpace::LNSType::SVR, c_d, a_d, threads, RM_LUBY, 1.5, 250));
 }
 
 void ShavingAsset::setupAsset(){
