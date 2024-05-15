@@ -76,7 +76,6 @@ int main(int argc, char** argv) {
       else{
         exit(EXIT_FAILURE);
       }
-      delete fg;
     }
     else {
       if (!strcmp(filename, "-")) {
@@ -101,8 +100,10 @@ int main(int argc, char** argv) {
       } else {
         exit(EXIT_FAILURE);
       }
-      delete fg;
+      
     }
+    delete fg->solveAnnotations();
+    delete fg;
   } 
   catch (FlatZinc::Error& e) {
     std::cerr << "Error: " << e.toString() << std::endl;

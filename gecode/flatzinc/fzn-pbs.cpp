@@ -28,12 +28,12 @@ PBSController::PBSController(FlatZinc::FlatZincSpace* fg, const int num_assets, 
     : fg(fg), 
       num_assets(num_assets), 
       assets(num_assets),
-      all_best_solutions(num_assets),
       p(p), 
       optimum_found(false), 
       best_sol(nullptr), 
-      finished_asset(-1)
-    {
+      finished_asset(-1),
+      asset_num_sols(num_assets){
+    
     execution_done_wait_started = false;
     running_threads = num_assets;
     // Initialize global_objective given method:
@@ -61,21 +61,48 @@ void PBSController::await_runners_completed() {
 
 // Print the statistics of the search.
 void PBSController::solutionStatistics(BaseAsset* asset, std::ostream& out, Support::Timer& t_total, int finished_asset, bool allAssetStat = false) {
-    int n_p = asset->getNP();
+    // Space failed before assets was created and search started.
     StatusStatistics sstat = asset->getSStat();
-    FlatZincSpace *fzs = asset->getFZS();
-    BaseEngine* se = asset->getSE();
+    FlatZincSpace* fzs = asset->getFZS();
     double t_solve = asset->getSolveTime();
-    Gecode::Search::Statistics stat = se->statistics();
     double totalTime = (t_total.stop() / 1000.0);
     double solveTime = (t_solve / 1000.0);
     double initTime = totalTime - solveTime;
+    if (finished_asset == -1){
+        out << std::endl
+            << "%%%mzn-stat: initTime=" << initTime
+            << std::endl;
+        out << "%%%mzn-stat: solveTime=" << solveTime
+            << std::endl;
+        out << "%%%mzn-stat: solutions=" << all_best_solutions.size()
+            << std::endl;
+        out << "%%%mzn-stat: finished asset="
+            << asset->getAssetTypeStr() << std::endl;
+        out << "%%%mzn-stat: variables="
+            << (fg->getintVarCount() + fg->getboolVarCount() + fg->getsetVarCount()) << std::endl
+            << "%%%mzn-stat: propagators=" << 0 << std::endl
+            << "%%%mzn-stat: propagations=" << sstat.propagate << std::endl
+            << "%%%mzn-stat: nodes=" << 0 << std::endl
+            << "%%%mzn-stat: failures=" << 1 << std::endl
+            << "%%%mzn-stat: restarts=" << 0 << std::endl
+            << "%%%mzn-stat: peakDepth=" << 0 << std::endl
+            << "%%%mzn-stat-end" << std::endl
+            << std::endl;
+        return;
+    }
+
+    // Search was not unsatisfiable: Print statistics.
+    int n_p = asset->getNP();
+    BaseEngine* se = asset->getSE();
+    Gecode::Search::Statistics stat = se->statistics();
 
     if (allAssetStat){
         out << std::endl
             << "%%%mzn-stat: initTime=" << initTime
             << std::endl;
         out << "%%%mzn-stat: solveTime=" << solveTime
+            << std::endl;
+        out << "%%%mzn-stat: solutions=" << all_best_solutions.size()
             << std::endl;
         out << "%%%mzn-stat: finished asset="
             << asset->getAssetTypeStr() << std::endl;
@@ -114,6 +141,8 @@ void PBSController::solutionStatistics(BaseAsset* asset, std::ostream& out, Supp
             << std::endl;
         out << "%%%mzn-stat: solveTime=" << solveTime
             << std::endl;
+        out << "%%%mzn-stat: solutions=" << all_best_solutions.size()
+            << std::endl;
         out << "%%%mzn-stat: finished asset="
             << asset->getAssetTypeStr() << std::endl;
         out << "%%%mzn-stat: variables="
@@ -132,6 +161,12 @@ void PBSController::solutionStatistics(BaseAsset* asset, std::ostream& out, Supp
 void PBSController::setupPortfolioAssets(int asset, FlatZinc::Printer& p, FlatZincOptions& fopt, std::ostream &out) {
     switch (AssetType(asset))
     {
+    case SHAVING:
+        assets[asset] = (std::make_unique<ShavingAsset>(*this, fg, p, fopt, out, asset, 20, true, new LargestAFCVariableSorter()));
+        if (fopt.mode() == SM_STAT) {
+            assets[asset]->setAssetTypeStr("shaving asset");
+        }
+        break;
     case USER:
         assets[asset] = (std::make_unique<DFSAsset>(*this, fg, fopt, p, out, asset, false, false, fopt.c_d(), fopt.a_d(), fopt.threads()));
         if (fopt.mode() == SM_STAT) {
@@ -180,12 +215,6 @@ void PBSController::setupPortfolioAssets(int asset, FlatZinc::Printer& p, FlatZi
             assets[asset]->setAssetTypeStr("prioritized branching bab asset");
         }
         break;
-    case SHAVING:
-        assets[asset] = (std::make_unique<ShavingAsset>(*this, fg, p, fopt, out, asset, 20, true, new LargestAFCVariableSorter()));
-        if (fopt.mode() == SM_STAT) {
-            assets[asset]->setAssetTypeStr("shaving asset");
-        }
-        break;
     case USER_OPPOSITE:
         assets[asset] = (std::make_unique<DFSAsset>(*this, fg, fopt, p, out, asset, true, false, fopt.c_d(), fopt.a_d(), fopt.threads()));
         if (fopt.mode() == SM_STAT) {
@@ -200,40 +229,69 @@ void PBSController::setupPortfolioAssets(int asset, FlatZinc::Printer& p, FlatZi
 // The controller that creates the workers and controls the searches.
 void PBSController::controller(std::ostream& out, FlatZincOptions& fopt, Support::Timer& t_total) {
     // Make search space clone-able by calling status on it. If it fails, then the model is unsatisfiable.
-    if (fg->status() == SS_FAILED) {
+    for (long unsigned int i = 0; i < asset_num_sols.size(); i++){
+        asset_num_sols[i] = 0;
+    }
+    StatusStatistics sstat;
+    Support::Timer propTimer;
+    propTimer.start();
+    SpaceStatus preSearchProp = fg->status(sstat);
+    double initTime = propTimer.stop();
+    // If the space is unsatisfiable before the search even starts, then finish.
+    if (preSearchProp == SS_FAILED) {
         out << "=====UNSATISFIABLE=====" << std::endl;
+        // Create dummy asset so that information about UNSAT space can be printed out:
+        assets[0] = (std::make_unique<DummyAsset>(fg, fopt));
+        assets[0].get()->setSStat(sstat);
+        assets[0].get()->increaseSolveTime(initTime);
+        if (fopt.mode() == SM_STAT) {
+            assets[0].get()->setAssetTypeStr("none");
+            solutionStatistics(assets[0].get(), out, t_total, -1);
+        }
         return;
     }
+
     for (int asset = 0; asset < num_assets; asset++) {
         setupPortfolioAssets(asset, p, fopt, out);
+        assets[asset].get()->increaseSolveTime(initTime);
+        assets[asset].get()->setSStat(sstat);
     }
     for (int asset = 0; asset < num_assets; asset++) {
         assets[asset]->run();
     }
     await_runners_completed();
 
-    // Print the best or final solution:
-    FlatZincSpace* sol = best_sol.load();
-    BaseEngine* se = assets[finished_asset]->getSE();
-    if (sol) {
-        sol->print(out, p);
-        out << "----------" << std::endl;
-    }
-
-    if (!se->stopped()) {
-        if (sol) {
-        out << "==========" << std::endl;
-        } else {
+    // If the shaving asset finished, the problem is unsatisfiable.
+    if (finished_asset == SHAVING){
         out << "=====UNSATISFIABLE=====" << std::endl;
+    }
+    else {
+        // Print the best or final solution:
+        FlatZincSpace* sol = best_sol.load();
+        BaseEngine* se = assets[finished_asset]->getSE();
+        if (sol) {
+            sol->print(out, p);
+            out << "----------" << std::endl;
+        }
+
+        if (!se->stopped()) {
+            if (sol) {
+            out << "==========" << std::endl;
+            } else {
+            out << "=====UNSATISFIABLE=====" << std::endl;
+            }
+        }
+        else if (!sol) {
+            out << "=====UNKNOWN=====" << std::endl;
         }
     }
-    else if (!sol) {
-        out << "=====UNKNOWN=====" << std::endl;
-    }
-
     // If print Statistics:
     if (fopt.mode() == SM_STAT) {
         solutionStatistics(assets[finished_asset].get(), out, t_total, finished_asset, fopt.fullStatistics());
+    }
+
+    for (long unsigned int i = 0; i < asset_num_sols.size(); i++){
+        cerr << "Asset " << i << " found " << asset_num_sols[i] << " solutions." << endl;
     }
 }
 
@@ -242,7 +300,7 @@ void PBSController::controller(std::ostream& out, FlatZincOptions& fopt, Support
 //                         AssetExecutor below.
 // ########################################################################
 
-bool updateBestSol(PBSController& control, FlatZincSpace* sol, std::ostream& out, FlatZinc::Printer& p, bool printAll){
+bool updateBestSol(PBSController& control, FlatZincSpace* sol, std::ostream& out, FlatZinc::Printer& p, bool printAll, int asset_id){
     bool solWasBestSol = false;
     int optVar = sol->optVar();
     while(true){
@@ -260,6 +318,7 @@ bool updateBestSol(PBSController& control, FlatZincSpace* sol, std::ostream& out
                     sol->print(out, p);
                     out << "----------" << std::endl;
                 }
+                control.asset_num_sols[asset_id]++;
             }
             control.best_space_mutex.unlock();
             
@@ -284,6 +343,7 @@ bool updateBestSol(PBSController& control, FlatZincSpace* sol, std::ostream& out
                             sol->print(out, p);
                             out << "----------" << std::endl;
                         }
+                        control.asset_num_sols[asset_id]++;
                     }
                     control.best_space_mutex.unlock();
                 }
@@ -303,6 +363,7 @@ bool updateBestSol(PBSController& control, FlatZincSpace* sol, std::ostream& out
                             sol->print(out, p);
                             out << "----------" << std::endl;
                         }
+                        control.asset_num_sols[asset_id]++;
                     }
                     control.best_space_mutex.unlock();
                 }
@@ -315,22 +376,23 @@ bool updateBestSol(PBSController& control, FlatZincSpace* sol, std::ostream& out
 }
 
 void AssetExecutor::runSearch(){
+    
+    bool printAll = fopt.allSolutions();
+    BaseEngine* se = asset->getSE();
+    StatusStatistics sstat = asset->getSStat();
+
     // Start the search timer.
     Support::Timer t_solve;
     t_solve.start();
-    StatusStatistics sstat;
+
     if (asset->getFZS()->status(sstat) != SS_FAILED) {
         asset->setNP(PropagatorGroup::all.size(*(asset->getFZS())));
         asset->setSStat(sstat);
     }
     else{
-        out << "=====UNSATISFIABLE=====" << std::endl;
         control.thread_done();
         return;
     }
-    bool printAll = fopt.allSolutions();
-    BaseEngine* se = asset->getSE();
-
     // Run the search
     FlatZincSpace* sol = nullptr;
     bool solWasBestSol = false;
@@ -342,7 +404,7 @@ void AssetExecutor::runSearch(){
         }
         sol = next_sol;
         // If one asset finished, stop looking for more solutions. TODO: Make sure that search did not finish due to LNS restart limit reached etc.
-        solWasBestSol = updateBestSol(control, sol, out, p, printAll);
+        solWasBestSol = updateBestSol(control, sol, out, p, printAll, asset_id);
         // Apply nq constraints to make asset take advantage of shaving.
         long unsigned int size = control.get_forbidden_literals().size();
         if (size > asset->getShavingStart()){
@@ -392,7 +454,7 @@ void RRLNSAsset::run(){
         sol = se->next();
         round_robin_assets[i]->increaseSolveTime(t_solve.stop());
         
-        solWasBestSol = updateBestSol(control, sol, out, p, printAll);
+        solWasBestSol = updateBestSol(control, sol, out, p, printAll, asset_id);
 
         curr = sol->iv[optVar].val();
         if (control.method == FlatZincSpace::MAX){
@@ -474,6 +536,14 @@ void AssetExecutor::runShaving(){
     bool has_reported_literal = false;
     
 
+    
+    Support::Timer t_solve;
+    t_solve.start();
+    if (asset->getFZS()->status(status_stat) != SS_FAILED) {
+        asset->setNP(PropagatorGroup::all.size(*(asset->getFZS())));
+        asset->setSStat(status_stat);
+    }
+
     // Shave bounds
     if (shaving_asset->doBoundsShaving()) {
         shaving_asset->run_shaving_pass(control, status_stat, clone_stat, has_reported_literal, [](VarDescription& vd, FlatZincSpace* s) {
@@ -488,6 +558,11 @@ void AssetExecutor::runShaving(){
             return vd.domain_literals(s);
         });
     }
+    
+    double t = t_solve.stop();
+    asset->increaseSolveTime(t);
+    asset->setSStat(status_stat);
+
 }
 
 // ########################################################################
@@ -495,8 +570,9 @@ void AssetExecutor::runShaving(){
 // ########################################################################
 
 void DFSAsset::setupAsset(){
-    // Set up the portfolio assets.
+    // Set up the portfolio DFS assets.
     fzs = static_cast<FlatZinc::FlatZincSpace*>(fg->clone());
+    // fzs = static_cast<FlatZinc::FlatZincSpace*>(fg->copy());
     // Set the solve annotations for the asset, as it does not follow from the clone.
     fzs->setSolveAnnotations(fg->solveAnnotations());
     // Set the shared current best solutions between assets for each asset.
@@ -508,6 +584,8 @@ void DFSAsset::setupAsset(){
     fzs->iv_introduced = fg->iv_introduced;
     fzs->bv_introduced = fg->bv_introduced;
     fzs->sv_introduced = fg->sv_introduced;
+
+    fzs->createBranchers(p, fzs->solveAnnotations(), fopt, false, bm, std::cerr);
 
     Search::Options search_options;
     search_options.stop = Driver::PBSCombinedStop::create(fopt.node(), fopt.fail(), fopt.time(), 0, true, control.optimum_found);
@@ -521,19 +599,18 @@ void DFSAsset::setupAsset(){
     search_options.threads = threads;
     search_options.nogoods_limit = fopt.nogoods() ? fopt.nogoods_limit() : 0;
 
+    search_options.cutoff = new Search::CutoffAppend(new Search::CutoffConstant(0), 1, Driver::createCutoff(fopt));
     if (fopt.interrupt()) Driver::PBSCombinedStop::installCtrlHandler(true);
 
     // If not RBS but asset is to use it:
     if (fopt.restart() != RM_NONE){
         fopt.restart(RM_NONE);
     }
-    search_options.cutoff = new Search::CutoffAppend(new Search::CutoffConstant(0), 1, Driver::createCutoff(fopt));
-    fzs->createBranchers(p, fzs->solveAnnotations(), fopt, false, bm, std::cerr);
     
     se = new BABEngine(fzs, search_options);
 }
 void LNSAsset::setupAsset(){
-    // Set up the portfolio assets.
+    // Set up the portfolio LNS assets.
     fzs = static_cast<FlatZinc::FlatZincSpace*>(fg->clone());
     // Set the solve annotations for the asset, as it does not follow from the clone.
     fzs->setSolveAnnotations(fg->solveAnnotations());
@@ -636,6 +713,10 @@ void ShavingAsset::run_shaving_pass(PBSController& control, StatusStatistics sta
                 auto root_status = root->status(status_stat);
                 // If variable can neither be equal or not equal, then the problem is unsatisfiable and we are done.
                 if (root_status == SS_FAILED) {
+                    // The only way the non-search Shaving Asset can actually finish first is iff the problem is unsatisfiable and it is found.
+                    if (!control.optimum_found.exchange(true)){
+                        control.finished_asset = asset_id;
+                    }
                     control.thread_done();
                     return;
                 }

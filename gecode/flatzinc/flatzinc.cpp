@@ -825,6 +825,7 @@ namespace Gecode { namespace FlatZinc {
       non_fzn_introduced_vars.update(*this, f.non_fzn_introduced_vars);
       variable_relations = f.variable_relations;
       ciglns_info = f.ciglns_info;
+      hasLNSann = f.hasLNSann;
       intVarCount = f.intVarCount;
 
       on_restart_iv.update(*this, f.on_restart_iv);
@@ -893,7 +894,7 @@ namespace Gecode { namespace FlatZinc {
   :  _initData(new FlatZincSpaceInitData),
     intVarCount(-1), boolVarCount(-1), floatVarCount(-1), setVarCount(-1),
     _optVar(-1), _optVarIsInt(true), _lns(0), _lnsInitialSolution(0),
-    _random(random), _solveAnnotations(nullptr), variable_relations(nullptr), ciglns_info(nullptr),
+    _random(random), _solveAnnotations(nullptr), variable_relations(nullptr), ciglns_info(nullptr), hasLNSann(false),
     pbs_current_best_sol(nullptr), optimum_found(nullptr), needAuxVars(true) {
     branchInfo.init();
   }
@@ -1143,11 +1144,13 @@ namespace Gecode { namespace FlatZinc {
           AST::Call* call = ce->ann->getArray()->a[0]->getCall("defines_var");
           AST::Node* var = call->args;
 
-          if (var->getIntVar() == _optVar){
+          if (var != nullptr && var->getIntVar() == _optVar){
             AST::Array* coef;
             AST::Array* vars;
             coef = ce->args->a[0]->getArray();
             vars = ce->args->a[1]->getArray();
+
+            cerr << vars->a.size() << endl;
 
             // Two different cases: All coefficients are similar or some coefficients are larger than other.
             // Loop starts at 1 since the first entry is the objective value itself, and freezing that variable breaks the point of the search.
@@ -1158,28 +1161,30 @@ namespace Gecode { namespace FlatZinc {
             // Case 1: coefficients are similar (a standard deviation smaller than 1)
             int num_relevant_vars = 0;
             if (stdev < 1){
-              for (unsigned long int i = 1; i < vars->a.size(); i++){
-                if (vars->a[i]->isIntVar()){
+              for (unsigned long int i = 0; i < vars->a.size(); i++){
+                if (vars->a[i]->getIntVar() != _optVar && vars->a[i]->isIntVar() && iv[vars->a[i]->getIntVar()].size() > 2){
                   num_relevant_vars++;
                 }
               }
               iv_lns_obj_relax = IntVarArray(*this, num_relevant_vars);
-              for (unsigned long int i = 1; i < vars->a.size(); i++){
-                if (vars->a[i]->isIntVar()){
+              for (unsigned long int i = 0; i < vars->a.size(); i++){
+                if (vars->a[i]->getIntVar() != _optVar && vars->a[i]->isIntVar() && iv[vars->a[i]->getIntVar()].size() > 2){
                   iv_lns_obj_relax[i-1] = iv[vars->a[i]->getIntVar()];
                 }
               }
             }
             // Case 2: Some coefficients are larger than other, keep those non-fixed and make those with smaller mean freezeable, to relax the objective.
             else{
-              for (unsigned long int i = 1; i < vars->a.size(); i++){
-                if (vars->a[i]->isIntVar() && coef->a[i]->getInt() < mean){
+              cerr << vars->a.size() << endl;
+              for (unsigned long int i = 0; i < vars->a.size(); i++){
+                if (vars->a[i]->getIntVar() != _optVar && vars->a[i]->isIntVar() && iv[vars->a[i]->getIntVar()].size() > 2 && coef->a[i]->getInt() < mean){
+                  cerr << iv[vars->a[i]->getIntVar()].varimp() << endl;
                   num_relevant_vars++;
                 }
               }
               iv_lns_obj_relax = IntVarArray(*this, num_relevant_vars);
-              for (unsigned long int i = 1; i < vars->a.size(); i++){
-                if (vars->a[i]->isIntVar() && coef->a[i]->getInt() < mean){
+              for (unsigned long int i = 0; i < vars->a.size(); i++){
+                if (vars->a[i]->getIntVar() != _optVar && vars->a[i]->isIntVar() && iv[vars->a[i]->getIntVar()].size() > 2 && coef->a[i]->getInt() < mean){
                   iv_lns_obj_relax[i-1] = iv[vars->a[i]->getIntVar()];
                 }
               }
@@ -1188,7 +1193,6 @@ namespace Gecode { namespace FlatZinc {
           }
         }
       }
-
 
       // Go through every constraint from the mzn model and gather the variable data needed for Static Variable Dependency LNS asset.
       vars_vec.clear();
@@ -1403,6 +1407,11 @@ namespace Gecode { namespace FlatZinc {
       delete ce;
       ce = nullptr;
     }
+
+    cerr << "Size: " << iv_lns_obj_relax.size() << endl;
+    if (iv_lns_obj_relax.size() == 0){
+      iv_lns_obj_relax = iv_lns_default;
+    }
   }
 
   void
@@ -1519,6 +1528,7 @@ namespace Gecode { namespace FlatZinc {
             for (unsigned int i=initial->a.size(); i--;)
               _lnsInitialSolution[i] = initial->a[i]->getInt();
           }
+          hasLNSann = true;
         } else if (flatAnn[i]->isCall("gecode_search")) {
           AST::Call* c = flatAnn[i]->getCall();
           branchWithPlugin(c->args);
@@ -1719,9 +1729,10 @@ namespace Gecode { namespace FlatZinc {
         }
       }
     }
-    // If relax and reconstruct is not set: Use default values set in storeConstraintInformation:
-    if (_lns == 0){
+    // If relax and reconstruct is not set: Use default values obtained in storeConstraintInformation:
+    if (!hasLNSann){
       iv_lns = iv_lns_default;
+      // iv_lns.update(*this, iv_lns_default);
       _lns = default_lns;
     }
 
@@ -2012,11 +2023,6 @@ namespace Gecode { namespace FlatZinc {
 
   FlatZincSpace::~FlatZincSpace(void) {
     delete _initData;
-    // The same _solveAnnotation may be used by other assets.
-    // if (_solveAnnotations != nullptr){
-    //   delete _solveAnnotations;
-    //   _solveAnnotations = nullptr;
-    // }
   }
 
 #ifdef GECODE_HAS_GIST
@@ -2378,6 +2384,7 @@ namespace Gecode { namespace FlatZinc {
   }
 
   void FlatZincSpace::runPBS(std::ostream& out, FlatZinc::Printer& p, FlatZincOptions& opt, Support::Timer& t_total, const int assets) {
+    
     storeConstraintInformation();
     PBSController pbs(this, assets, p);
     switch (_method) {
@@ -2635,7 +2642,7 @@ namespace Gecode { namespace FlatZinc {
       }
     }
 
-    if (mi.type() == MetaInfo::RESTART){
+    if (mi.type() == MetaInfo::RESTART && !hasLNSann){
       unsigned long long int sols = mi.solution();
       unsigned long long int fails = mi.fail();
 
@@ -2660,11 +2667,12 @@ namespace Gecode { namespace FlatZinc {
       }
       case PG:
       {
-        return _lnsStrategy.propagationGuided(*this, mi, non_fzn_introduced_vars, 10, _random);
+        return _lnsStrategy.propagationGuided(*this, mi, iv_lns, 10, _random);
+        // return _lnsStrategy.propagationGuided(*this, mi, non_fzn_introduced_vars, 10, _random);
       }
       case rPG:
       {
-        return _lnsStrategy.reversedPropagationGuided(*this, mi, non_fzn_introduced_vars, 10, _random);
+        return _lnsStrategy.reversedPropagationGuided(*this, mi, iv_lns, 10, _random);
       }
       case OBJREL:
       {

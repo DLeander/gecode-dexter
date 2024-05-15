@@ -269,10 +269,44 @@ class BaseAsset {
         virtual void increaseSolveTime(double time) = 0;
 };
 
+class DummyAsset : public BaseAsset {
+    public:
+        DummyAsset(FlatZincSpace* fg, FlatZincOptions& fopt)
+                : fg(fg), fopt(fopt), solve_time(0.0) {};
+        ~DummyAsset() override {};
+        void setupAsset() override {};
+        void run() override {};
+
+        FlatZincSpace* getFZS() override { return fg; }
+        BaseEngine* getSE() override { return nullptr; }
+        StatusStatistics getSStat() override { return sstat; }
+        int getNP() const override { return n_p; }
+        long unsigned int getShavingStart() const override { return 0; }
+        double getSolveTime() const override { return solve_time; }
+        FlatZinc::FlatZincSpace::LNSType getLNSType() const override { return FlatZinc::FlatZincSpace::LNSType::NONE; }
+        string getAssetTypeStr() const override { return assetstr; }
+        
+        void setNP(int /*n_p*/) override {}
+        void setSStat(StatusStatistics sstat) override { this->sstat = sstat; }
+        void setShavingStart(long unsigned int /*start*/) override {}
+        void setAssetTypeStr(string type) override { assetstr = type; }
+
+        void increaseSolveTime(double time) override {solve_time += time;};
+
+    private:
+        BABEngine* se;
+        StatusStatistics sstat;
+        int n_p;
+        FlatZincSpace* fg;
+        FlatZincOptions& fopt;
+        double solve_time;
+        string assetstr;
+};
+
 class DFSAsset : public BaseAsset {
     public:
         DFSAsset(PBSController& control, FlatZincSpace* fg, FlatZincOptions& fopt, FlatZinc::Printer& p, std::ostream &out, unsigned int asset_id, bool opposite_branching, bool initial_branch_by_afc, unsigned int c_d, unsigned int a_d, double threads)
-        : control(control), fg(fg), fopt(fopt), p(p), c_d(c_d), a_d(a_d), threads(threads), bm(opposite_branching, initial_branch_by_afc), executor(new AssetExecutor(control, this, out, fopt, p, asset_id, true)), shaving_start(0), solve_time(0) {setupAsset();};
+        : control(control), fg(fg), fopt(fopt), p(p), c_d(c_d), a_d(a_d), threads(threads), bm(opposite_branching, initial_branch_by_afc), executor(new AssetExecutor(control, this, out, fopt, p, asset_id, true)), shaving_start(0), solve_time(0.0) {setupAsset();};
 
         ~DFSAsset() override {
             delete se; se = nullptr;
@@ -324,7 +358,7 @@ class LNSAsset : public BaseAsset {
         LNSAsset(PBSController& control, FlatZincSpace* fg, FlatZincOptions& fopt, FlatZinc::Printer& p, std::ostream &out, unsigned int asset_id, bool opposite_branching, bool initial_branch_by_afc, FlatZinc::FlatZincSpace::LNSType lns_type, unsigned int c_d, unsigned int a_d,
                      double threads, RestartMode mode, double restart_base, unsigned int restart_scale) 
                     : control(control), fg(fg), fopt(fopt), p(p), c_d(c_d), a_d(a_d), threads(threads), bm(opposite_branching, initial_branch_by_afc), mode(mode), restart_base(restart_base), 
-                      restart_scale(restart_scale), lns_type(lns_type), executor(new AssetExecutor(control, this, out, fopt, p, asset_id, true)), shaving_start(0), solve_time(0) {setupAsset();};
+                      restart_scale(restart_scale), lns_type(lns_type), executor(new AssetExecutor(control, this, out, fopt, p, asset_id, true)), shaving_start(0), solve_time(0.0) {setupAsset();};
         ~LNSAsset() override {
             // cerr << se << endl;
             delete se; se = nullptr;
@@ -424,7 +458,7 @@ class RRLNSAsset : public BaseAsset {
 class ShavingAsset : public BaseAsset {
     public:
         ShavingAsset(PBSController& control, FlatZincSpace* fg, Gecode::FlatZinc::Printer &p, FlatZincOptions& fopt, std::ostream &out, unsigned int asset_id, int max_dom_shaving_size, bool do_bounds_shaving, VariableSorter* sorter) 
-        : control(control), root(fg), fopt(fopt), executor(new AssetExecutor(control, this, out, fopt, p, asset_id, false)), max_dom_shaving_size(max_dom_shaving_size), do_bounds_shaving(do_bounds_shaving), sorter(sorter)
+        : control(control), root(fg), fopt(fopt), executor(new AssetExecutor(control, this, out, fopt, p, asset_id, false)), solve_time(0.0), max_dom_shaving_size(max_dom_shaving_size), do_bounds_shaving(do_bounds_shaving), sorter(sorter), asset_id(asset_id)
         {
             std::reverse(variables.begin(), variables.end()); setupAsset();
         };
@@ -450,7 +484,7 @@ class ShavingAsset : public BaseAsset {
         void setShavingStart(long unsigned int /*start*/) override {}
         void setAssetTypeStr(string type) override { assetstr = type; }
 
-        void increaseSolveTime(double /*time*/) override {};
+        void increaseSolveTime(double time) override {solve_time += time;};
 
         PBSController& control;
 
@@ -460,17 +494,20 @@ class ShavingAsset : public BaseAsset {
         int n_p;
         FlatZincOptions& fopt;
         AssetExecutor* executor;
+        double solve_time;
 
         std::vector<VarDescription> variables;
         int max_dom_shaving_size;
         bool do_bounds_shaving;
         VariableSorter* sorter;
+        unsigned int asset_id;
         string assetstr;
 };
 
 class PBSController {
 public:
     enum AssetType {
+        // SHAVING, //< Shaving asset.
         USER, //< First asset is the user asset.
         LNS_USER, //< Second asset is the user asset with LNS.
         PGLNS, //< Propagation guided LNS.
@@ -514,6 +551,8 @@ public:
     // The asset that finished the search and found the solution.
     int finished_asset;
 
+    std::vector<int> asset_num_sols;
+
 private:
     // Waits for all threads to be done.
     void await_runners_completed();
@@ -531,6 +570,7 @@ private:
     std::atomic<int> running_threads;
     // Literals that are forbidden in the search.
     std::vector<Literal> forbidden_literals;
+    
 };
 
 // }} 

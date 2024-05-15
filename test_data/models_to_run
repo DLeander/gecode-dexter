@@ -1,6 +1,6 @@
-minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_and_data/chessboard/chessboard.mzn models_and_data/chessboard/chessboard4.dzn -o results/chessboard_pbs_n3
+minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_and_data/chessboard/chessboard.mzn models_and_data/chessboard/chessboard4.dzn -o results/chessboard_pbs_n4
 minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_and_data/chessboard/chessboard.mzn models_and_data/chessboard/chessboard12_1.dzn -o results/chessboard_pbs_12_1
-minizinc -t 600000 -s --solver dexter models_and_data/chessboard/chessboard.mzn models_and_data/chessboard/chessboard4.dzn -o results/chessboard_n3
+minizinc -t 600000 -s --solver dexter models_and_data/chessboard/chessboard.mzn models_and_data/chessboard/chessboard4.dzn -o results/chessboard_n4
 minizinc -t 600000 -s --solver dexter models_and_data/chessboard/chessboard.mzn models_and_data/chessboard/chessboard12_1.dzn -o results/chessboard_12_1
 
 minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_and_data/code-generator/unison.mzn models_and_data/code-generator/mips_gcc.flow.find_regno_partial.dzn -o results/code_generator_pbs_mips_gcc.flow.find_regno_partial
@@ -23,10 +23,10 @@ minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_an
 minizinc -t 600000 -s --solver dexter models_and_data/mrcpsp/mrcpsp.mzn models_and_data/mrcpsp/j30_25_5.dzn -o results/mrcpsp_j30_25_5
 minizinc -t 600000 -s --solver dexter models_and_data/mrcpsp/mrcpsp.mzn models_and_data/mrcpsp/j30_29_3.dzn -o results/mrcpsp_j30_29_3
 
-minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_and_data/pennies/pennies.mzn models_and_data/pennies/n8.dzn -o results/pennies_pbs_n8
-minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_and_data/pennies/pennies.mzn models_and_data/pennies/n9.dzn -o results/pennies_pbs_n9
-minizinc -t 600000 -s --solver dexter models_and_data/pennies/pennies.mzn models_and_data/pennies/n8.dzn -o results/pennies_n8
-minizinc -t 600000 -s --solver dexter models_and_data/pennies/pennies.mzn models_and_data/pennies/n9.dzn -o results/pennies_n9
+minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_and_data/pennies-opt/pennies.mzn models_and_data/pennies-opt/n8.dzn -o results/pennies_pbs_n8
+minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_and_data/pennies-opt/pennies.mzn models_and_data/pennies-opt/n9.dzn -o results/pennies_pbs_n9
+minizinc -t 600000 -s --solver dexter models_and_data/pennies-opt/pennies.mzn models_and_data/pennies-opt/n8.dzn -o results/pennies_n8
+minizinc -t 600000 -s --solver dexter models_and_data/pennies-opt/pennies.mzn models_and_data/pennies-opt/n9.dzn -o results/pennies_n9
 
 minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_and_data/roster/roster_model.mzn models_and_data/roster/chicroster_dataset_8.dzn -o results/roster_model_pbs_chicroster_dataset_8
 minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_and_data/roster/roster_model.mzn models_and_data/roster/chicroster_dataset_large_16.dzn -o results/roster_model_pbs_chicroster_dataset_large_16
@@ -38,15 +38,15 @@ minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_an
 minizinc -t 600000 -s --solver dexter models_and_data/speck-optimisation/SPECK-Optimisation.mzn models_and_data/speck-optimisation/easy_3.dzn -o results/speck_optimisation_easy_3
 minizinc -t 600000 -s --solver dexter models_and_data/speck-optimisation/SPECK-Optimisation.mzn models_and_data/speck-optimisation/medium_6.dzn -o results/speck_optimisation_medium_6
 
-minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_and_data/table-layout/ models_and_data/table-layout/p2000_m16_r1000_c200.dzn -o results/table_layout_pbs_p2000_m16_r1000_c200
-minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_and_data/table-layout/ models_and_data/table-layout/p1000_m3_r100_c10.dzn -o results/table_layout_pbs_p1000_m3_r100_c10
-minizinc -t 600000 -s --solver dexter models_and_data/table-layout/ models_and_data/table-layout/p2000_m16_r1000_c200.dzn -o results/table_layout_p2000_m16_r1000_c200
-minizinc -t 600000 -s --solver dexter models_and_data/table-layout/ models_and_data/table-layout/p1000_m3_r100_c10.dzn -o results/table_layout_p1000_m3_r100_c10
+minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_and_data/table-layout/TableLayout.mzn models_and_data/table-layout/p2000_m16_r1000_c200.dzn -o results/table_layout_pbs_p2000_m16_r1000_c200
+minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_and_data/table-layout/TableLayout.mzn models_and_data/table-layout/p1000_m3_r100_c10.dzn -o results/table_layout_pbs_p1000_m3_r100_c10
+minizinc -t 600000 -s --solver dexter models_and_data/table-layout/TableLayout.mzn models_and_data/table-layout/p2000_m16_r1000_c200.dzn -o results/table_layout_p2000_m16_r1000_c200
+minizinc -t 600000 -s --solver dexter models_and_data/table-layout/TableLayout.mzn models_and_data/table-layout/p1000_m3_r100_c10.dzn -o results/table_layout_p1000_m3_r100_c10
 
-minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_and_data/test-scheduling/test_scheduling.mzn models_and_data/test-scheduling/t50m20r10-17.dzn -o results/test_scheduling_pbs_t50m20r10_17
-minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_and_data/test-scheduling/test_scheduling.mzn models_and_data/test-scheduling/t30m20r3-20.dzn -o results/test_scheduling_pbs_t30m20r3_20
-minizinc -t 600000 -s --solver dexter models_and_data/test-scheduling/test_scheduling.mzn models_and_data/test-scheduling/t50m20r10-17.dzn -o results/test_scheduling_t50m20r10_17
-minizinc -t 600000 -s --solver dexter models_and_data/test-scheduling/test_scheduling.mzn models_and_data/test-scheduling/t30m20r3-20.dzn -o results/test_scheduling_t30m20r3_20
+minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_and_data/test-scheduling/test-scheduling.mzn models_and_data/test-scheduling/t50m20r10-17.dzn -o results/test_scheduling_pbs_t50m20r10_17
+minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_and_data/test-scheduling/test-scheduling.mzn models_and_data/test-scheduling/t30m20r3-20.dzn -o results/test_scheduling_pbs_t30m20r3_20
+minizinc -t 600000 -s --solver dexter models_and_data/test-scheduling/test-scheduling.mzn models_and_data/test-scheduling/t50m20r10-17.dzn -o results/test_scheduling_t50m20r10_17
+minizinc -t 600000 -s --solver dexter models_and_data/test-scheduling/test-scheduling.mzn models_and_data/test-scheduling/t30m20r3-20.dzn -o results/test_scheduling_t30m20r3_20
 
 minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_and_data/travelling-thief/ttp.mzn models_and_data/travelling-thief/data/n10_k3_c5000_l10000_u10100_r46.dzn -o results/travelling_thief_pbs_n10_k3_c5000_l10000_u10100_r46
 minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_and_data/travelling-thief/ttp.mzn models_and_data/travelling-thief/data/n10_k15_c5000_l10000_u11000_r49.dzm -o results/travelling_thief_pbs_n10_k15_c5000_l10000_u11000_r49

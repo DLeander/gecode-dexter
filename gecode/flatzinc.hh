@@ -530,6 +530,8 @@ namespace Gecode { namespace FlatZinc {
     double** variable_relations;
     CIGInfo* ciglns_info;
 
+    bool hasLNSann;
+
     /* === Experimental `on_restart` support === */
     class OnRestartHandle : public SharedHandle {
     protected:
