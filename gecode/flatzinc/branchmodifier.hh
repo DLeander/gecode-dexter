@@ -45,9 +45,9 @@ public:
     FloatValBranch def_float_valsel;
 #endif
 
-    bool initial_branch_by_afc;
+    bool use_pbs_branching;
 
-    AST::Node* createBranchingAnnotation(std::vector<int> vars);
+    AST::Array* pbs_variable_branchings;
 
     // Return the opposite the current branching strategy for integer (if possible)
     IntValBranch doOppositeBranchingIntVal(string id, std::string& r0, std::string& r1, Rnd rnd);
@@ -58,6 +58,18 @@ public:
     BoolValBranch doOppositeBranchingBoolVal(string id, std::string& r0, std::string& r1, Rnd rnd);
     // Return the opposite the current branching strategy for Booleans (if possible)
     TieBreak<BoolVarBranch> doOppositeBranchingBoolVar(string id, Rnd rnd, double decay);
+
+    // Predefined branching strategies for assets.
+    // Prioritsed branching asset:
+    void PBAssetBranching(std::vector<ConExpr*> constraints);
+    // Propagation guided LNS branching:
+    void PGLNSBranching(std::vector<ConExpr*> constraints);
+    // Cost Impact Guided LNS branching:
+    void CIGLNSBranching(std::vector<ConExpr*> constraints);
+    // Objective Relaxation LNS branching:
+    void OBJRELLNSBranching(std::vector<ConExpr*> constraints);
+    // Static Variable Relationship LNS branching:
+    void SVRLNSBranching(std::vector<ConExpr*> constraints);
     
     
 #ifdef GECODE_HAS_SET_VARS

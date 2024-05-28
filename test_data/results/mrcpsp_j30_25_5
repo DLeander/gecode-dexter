@@ -3,8 +3,8 @@ mrun = [true, false, false, true, false, false, false, false, true, true, false,
 objective = 27;
 ----------
 ==========
-%%%mzn-stat: initTime=0.00436796
-%%%mzn-stat: solveTime=20.9702
+%%%mzn-stat: initTime=0.00433859
+%%%mzn-stat: solveTime=21.0582
 %%%mzn-stat: solutions=10
 %%%mzn-stat: variables=870
 %%%mzn-stat: propagators=1055

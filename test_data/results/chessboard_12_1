@@ -29,14 +29,14 @@ y =
  |];
 obj = 309;
 ----------
-%%%mzn-stat: initTime=0.00705342
+%%%mzn-stat: initTime=0.00706941
 %%%mzn-stat: solveTime=600
 %%%mzn-stat: solutions=6
 %%%mzn-stat: variables=1868
 %%%mzn-stat: propagators=1941
-%%%mzn-stat: propagations=2409861367
-%%%mzn-stat: nodes=65286825
-%%%mzn-stat: failures=32643396
+%%%mzn-stat: propagations=2388191720
+%%%mzn-stat: nodes=64689130
+%%%mzn-stat: failures=32344548
 %%%mzn-stat: restarts=0
 %%%mzn-stat: peakDepth=62
 %%%mzn-stat-end

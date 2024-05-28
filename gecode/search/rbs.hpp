@@ -134,6 +134,32 @@ namespace Gecode {
     }
   }
 
+  // template<class T, template<class> class E>
+  // inline
+  // RBS<T,E>::RBS(T* s, const Search::Options& m_opt, std::atomic<bool>* optimum_found, Search::Statistics stat) {
+  //   if (m_opt.cutoff == nullptr)
+  //     throw Search::UninitializedCutoff("RBS::RBS");
+  //   Search::Options e_opt(m_opt.expand());
+  //   // Search::Statistics stat;
+  //   e_opt.clone = false;
+  //   e_opt.stop = Search::Seq::rbsstop(m_opt.stop, optimum_found);
+  //   Search::WrapTraceRecorder::engine(e_opt.tracer, SearchTracer::EngineType::RBS, 1U);
+  //   // if (s->status(stat) == SS_FAILED) {
+  //   //   stat.fail++;
+  //   //   if (!m_opt.clone)
+  //   //     delete s;
+  //   //   e = Search::Seq::dead(e_opt, stat);
+  //   // } else {
+  //     Space* master = m_opt.clone ? s->clone() : s;
+  //     Space* slave  = master->clone();
+  //     MetaInfo mi(0,MetaInfo::RR_INIT,0,0,nullptr,NoGoods::eng);
+  //     slave->slave(mi);
+  //     e = Search::Seq::rbsengine(master,e_opt.stop,
+  //                                Search::build<T,E>(slave,e_opt),
+  //                                stat,m_opt,E<T>::best);
+  //   // }
+  // }
+
 
   template<class T, template<class> class E>
   inline T*

@@ -7,7 +7,7 @@ set of int: N = 1..n;
 array[N] of var N: perm;
 
 
-constraint all_different(perm);
+constraint all_different(perm) :: domain;
 
 array[int] of var bool: inversions = [perm[i] > perm[j] | i, j in N where i < j];
 

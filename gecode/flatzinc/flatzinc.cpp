@@ -802,6 +802,18 @@ namespace Gecode { namespace FlatZinc {
       _initData(nullptr), _random(f._random),
       _solveAnnotations(nullptr),
       _lnsType(f._lnsType),
+
+      iv_lns_default_idx(f.iv_lns_default_idx),
+      iv_lns_default_size(f.iv_lns_default_size),
+      iv_lns_obj_relax_idx(f.iv_lns_obj_relax_idx),
+      iv_lns_obj_relax_size(f.iv_lns_obj_relax_size),
+      non_fzn_introduced_vars_idx(f.non_fzn_introduced_vars_idx),
+      non_fzn_introduced_vars_size(f.non_fzn_introduced_vars_size),
+
+      variable_relations(f.variable_relations),
+      ciglns_info(f.ciglns_info),
+      hasLNSann(f.hasLNSann),
+
       restart_data(f.restart_data),
       iv_boolalias(nullptr),
 #ifdef GECODE_HAS_FLOAT_VARS
@@ -809,7 +821,8 @@ namespace Gecode { namespace FlatZinc {
 #endif
       pbs_current_best_sol(f.pbs_current_best_sol),
       optimum_found(f.optimum_found),
-      needAuxVars(f.needAuxVars) {
+      needAuxVars(f.needAuxVars)
+      {
       _optVar = f._optVar;
       _optVarIsInt = f._optVarIsInt;
       _method = f._method;
@@ -818,14 +831,18 @@ namespace Gecode { namespace FlatZinc {
       _lnsInitialSolution = f._lnsInitialSolution;
       branchInfo = f.branchInfo;
       iv.update(*this, f.iv);
+
       iv_initial_branching = f.iv_initial_branching;
       iv_lns.update(*this, f.iv_lns);
-      iv_lns_default.update(*this, f.iv_lns_default);
-      iv_lns_obj_relax.update(*this, f.iv_lns_obj_relax);
-      non_fzn_introduced_vars.update(*this, f.non_fzn_introduced_vars);
-      variable_relations = f.variable_relations;
-      ciglns_info = f.ciglns_info;
-      hasLNSann = f.hasLNSann;
+
+      // iv_lns_default.update(*this, f.iv_lns_default);
+      // iv_lns_obj_relax.update(*this, f.iv_lns_obj_relax);
+      // non_fzn_introduced_vars.update(*this, f.non_fzn_introduced_vars);
+
+      // variable_relations = f.variable_relations;
+      // ciglns_info = f.ciglns_info;
+      // hasLNSann = f.hasLNSann;
+
       intVarCount = f.intVarCount;
 
       on_restart_iv.update(*this, f.on_restart_iv);
@@ -894,7 +911,7 @@ namespace Gecode { namespace FlatZinc {
   :  _initData(new FlatZincSpaceInitData),
     intVarCount(-1), boolVarCount(-1), floatVarCount(-1), setVarCount(-1),
     _optVar(-1), _optVarIsInt(true), _lns(0), _lnsInitialSolution(0),
-    _random(random), _solveAnnotations(nullptr), variable_relations(nullptr), ciglns_info(nullptr), hasLNSann(false),
+    _random(random), _solveAnnotations(nullptr), iv_lns_default_idx(nullptr), iv_lns_default_size(0), iv_lns_obj_relax_idx(nullptr), iv_lns_obj_relax_size(0), non_fzn_introduced_vars_idx(nullptr), non_fzn_introduced_vars_size(0), variable_relations(nullptr), ciglns_info(nullptr), hasLNSann(false),
     pbs_current_best_sol(nullptr), optimum_found(nullptr), needAuxVars(true) {
     branchInfo.init();
   }
@@ -1083,6 +1100,21 @@ namespace Gecode { namespace FlatZinc {
       }
   }
 
+  void FlatZincSpace::deletePBSArrays(){
+      if (iv_lns_obj_relax_idx == iv_lns_default_idx){
+        delete[] iv_lns_default_idx;
+      }
+      else{
+        delete[] iv_lns_default_idx;
+        delete[] iv_lns_obj_relax_idx;
+      }
+      delete[] non_fzn_introduced_vars_idx;
+
+      iv_lns_default_idx = nullptr;
+      iv_lns_obj_relax_idx = nullptr;
+      non_fzn_introduced_vars_idx = nullptr;
+  }
+
   void FlatZincSpace::storeConstraintInformation(){
     int num_non_introduced_vars = 0;
 
@@ -1103,13 +1135,16 @@ namespace Gecode { namespace FlatZinc {
           num_lns_vars++;
         }
       }
-      iv_lns_default = IntVarArray(*this, num_lns_vars);
+      // iv_lns_default = IntVarArray(*this, num_lns_vars);
+      iv_lns_default_idx = new int[num_lns_vars]();
+      iv_lns_default_size = num_lns_vars;
       int j = 0;
       // Change so that only a percentage of variables are actually selected.
       for (int i = 0; i < iv.size(); i++){
         if (iv[i].afc() > 0){
-          iv_lns_default[j] = iv[i];
           iv_initial_branching.push_back(i);
+          iv_lns_default_idx[j] = i;
+          // iv_lns_default[j] = iv[i];
           j++;
         }
       }
@@ -1122,12 +1157,15 @@ namespace Gecode { namespace FlatZinc {
           num_lns_vars++;
         }
       }
-      iv_lns_default = IntVarArray(*this, num_lns_vars);
+      iv_lns_default_idx = new int[num_lns_vars]();
+      iv_lns_default_size = num_lns_vars;
+      // iv_lns_default = IntVarArray(*this, num_lns_vars);
       int j = 0;
       for (int i = 0; i < iv.size(); i++){
         if (iv[i].afc() > afc_mean){
           iv_initial_branching.push_back(i);
-          iv_lns_default[j] = iv[i];
+          iv_lns_default_idx[j] = i;
+          // iv_lns_default[j] = iv[i];
           j++;
         }
       }
@@ -1150,8 +1188,6 @@ namespace Gecode { namespace FlatZinc {
             coef = ce->args->a[0]->getArray();
             vars = ce->args->a[1]->getArray();
 
-            cerr << vars->a.size() << endl;
-
             // Two different cases: All coefficients are similar or some coefficients are larger than other.
             // Loop starts at 1 since the first entry is the objective value itself, and freezing that variable breaks the point of the search.
             double mean = std::accumulate(coef->a.begin()+1, coef->a.end(), 0.0, [](double acc, AST::Node* b) { return acc + std::abs(b->getInt()); }) / (coef->a.size()-1);
@@ -1166,26 +1202,34 @@ namespace Gecode { namespace FlatZinc {
                   num_relevant_vars++;
                 }
               }
-              iv_lns_obj_relax = IntVarArray(*this, num_relevant_vars);
+              iv_lns_obj_relax_idx = new int[num_relevant_vars]();
+              iv_lns_obj_relax_size = num_relevant_vars;
+              // iv_lns_obj_relax = IntVarArray(*this, num_relevant_vars);
               for (unsigned long int i = 0; i < vars->a.size(); i++){
                 if (vars->a[i]->getIntVar() != _optVar && vars->a[i]->isIntVar() && iv[vars->a[i]->getIntVar()].size() > 2){
-                  iv_lns_obj_relax[i-1] = iv[vars->a[i]->getIntVar()];
+                  iv_lns_obj_relax_idx[i] = vars->a[i]->getIntVar();
+                  // iv_lns_obj_relax[i-1] = iv[vars->a[i]->getIntVar()];
                 }
               }
             }
             // Case 2: Some coefficients are larger than other, keep those non-fixed and make those with smaller mean freezeable, to relax the objective.
             else{
-              cerr << vars->a.size() << endl;
               for (unsigned long int i = 0; i < vars->a.size(); i++){
                 if (vars->a[i]->getIntVar() != _optVar && vars->a[i]->isIntVar() && iv[vars->a[i]->getIntVar()].size() > 2 && coef->a[i]->getInt() < mean){
-                  cerr << iv[vars->a[i]->getIntVar()].varimp() << endl;
                   num_relevant_vars++;
                 }
               }
-              iv_lns_obj_relax = IntVarArray(*this, num_relevant_vars);
-              for (unsigned long int i = 0; i < vars->a.size(); i++){
-                if (vars->a[i]->getIntVar() != _optVar && vars->a[i]->isIntVar() && iv[vars->a[i]->getIntVar()].size() > 2 && coef->a[i]->getInt() < mean){
-                  iv_lns_obj_relax[i-1] = iv[vars->a[i]->getIntVar()];
+              if (num_relevant_vars > 0){
+                iv_lns_obj_relax_idx = new int[num_relevant_vars]();
+                iv_lns_obj_relax_size = num_relevant_vars;
+                // iv_lns_obj_relax = IntVarArray(*this, num_relevant_vars);
+                int k = 0;
+                for (unsigned long int i = 0; i < vars->a.size(); i++){
+                  assert(iv_lns_obj_relax_size > i);
+                  if (vars->a[i]->getIntVar() != _optVar && vars->a[i]->isIntVar() && iv[vars->a[i]->getIntVar()].size() > 2 && coef->a[i]->getInt() < mean){
+                    iv_lns_obj_relax_idx[k++] = vars->a.at(i)->getIntVar();
+                    // iv_lns_obj_relax[i] = iv[vars->a[i]->getIntVar()];
+                  }
                 }
               }
 
@@ -1227,7 +1271,7 @@ namespace Gecode { namespace FlatZinc {
         constraint_weight = 1000 / (vars_vec[0]->a.size() + vars_vec[1]->a.size() + vars_vec[2]->a.size() + vars_vec[3]->a.size());
         num_non_introduced_vars += vars_vec[0]->a.size() + vars_vec[1]->a.size() + vars_vec[2]->a.size() + vars_vec[3]->a.size();  
       }
-      else if (ce->id == "fzn_cumulative_opt" || ce->id == "cumulative"){
+      else if (ce->id == "fzn_cumulative_opt" || ce->id == "fzn_cumulative"){
         vars_vec.push_back(ce->args->a[0]->getArray());
         vars_vec.push_back(ce->args->a[1]->getArray());
         vars_vec.push_back(ce->args->a[2]->getArray());
@@ -1379,7 +1423,10 @@ namespace Gecode { namespace FlatZinc {
         variable_relations[i] = new double[var_mapper.size()];
         std::fill_n(variable_relations[i], var_mapper.size(), 0);
       }
-      non_fzn_introduced_vars = IntVarArray(*this, var_mapper.size());
+
+      non_fzn_introduced_vars_idx = new int[var_mapper.size()]();
+      non_fzn_introduced_vars_size = var_mapper.size();
+      // non_fzn_introduced_vars = IntVarArray(*this, var_mapper.size());
 
       // The variable_relations matrix is used for Static Variable Dependency LNS asset
       // and contain the relations between the variables given the weights defined for each constraint.
@@ -1387,7 +1434,8 @@ namespace Gecode { namespace FlatZinc {
         for (long unsigned int j = 0; j < cons_info_vec[i].vars.size(); j++){
           for (long unsigned int k = 0; k < cons_info_vec[i].vars[j]->a.size(); k++){
             // For each pair of variables, add the weight to that index. The LNS will then select variables to freeze based on the weight.
-            non_fzn_introduced_vars[var_mapper[cons_info_vec[i].vars[j]->a[k]->getIntVar()]] = iv[cons_info_vec[i].vars[j]->a[k]->getIntVar()];
+            // non_fzn_introduced_vars[var_mapper[cons_info_vec[i].vars[j]->a[k]->getIntVar()]] = iv[cons_info_vec[i].vars[j]->a[k]->getIntVar()];
+            non_fzn_introduced_vars_idx[var_mapper[cons_info_vec[i].vars[j]->a[k]->getIntVar()]] = cons_info_vec[i].vars[j]->a[k]->getIntVar();
             int iv_index = cons_info_vec[i].vars[j]->a[k]->getIntVar();
             for (long unsigned int l = k; l < cons_info_vec[i].vars[j]->a.size(); l++){
               if (l != k){
@@ -1402,15 +1450,10 @@ namespace Gecode { namespace FlatZinc {
     }
 
     default_lns = 60;
-    // Delete constraint information as they are no longer needed.
-    for (ConExpr* ce : constraints){
-      delete ce;
-      ce = nullptr;
-    }
 
-    cerr << "Size: " << iv_lns_obj_relax.size() << endl;
-    if (iv_lns_obj_relax.size() == 0){
-      iv_lns_obj_relax = iv_lns_default;
+    if (iv_lns_obj_relax_idx == nullptr){
+      iv_lns_obj_relax_idx = iv_lns_default_idx;
+      iv_lns_obj_relax_size = iv_lns_default_size;
     }
   }
 
@@ -1459,22 +1502,23 @@ namespace Gecode { namespace FlatZinc {
 #endif
 
     _lns = 0;
-    if (ann || bm.initial_branch_by_afc) {
+    if (ann || bm.use_pbs_branching) {
       std::vector<AST::Node*> flatAnn;
-      if (ann){
-        if (ann->isArray()) {
-          flattenAnnotations(ann->getArray(), flatAnn);
-        } else {
-          flatAnn.push_back(ann);
-        }
-      }
-      if (bm.initial_branch_by_afc){
-        AST::Node* bm_ann = bm.createBranchingAnnotation(iv_initial_branching);
+      // Prioritise PBS branching annotations over annotations by the model, if to use PBS branching.
+      if (bm.use_pbs_branching && bm.pbs_variable_branchings){
+        AST::Node* bm_ann = bm.pbs_variable_branchings;
         if (bm_ann->isArray()){
           flattenAnnotations(bm_ann->getArray(), flatAnn);
         }
         else{
           flatAnn.push_back(bm_ann);
+        }
+      }
+      if (ann){
+        if (ann->isArray()) {
+          flattenAnnotations(ann->getArray(), flatAnn);
+        } else {
+          flatAnn.push_back(ann);
         }
       }
 
@@ -1596,7 +1640,6 @@ namespace Gecode { namespace FlatZinc {
             bv_searched[vars->a[i]->getBoolVar()] = true;
             names.push_back(vars->a[i]->getVarName());
           }
-
           std::string r0, r1;
           {
             BrancherGroup bg;
@@ -1729,10 +1772,10 @@ namespace Gecode { namespace FlatZinc {
         }
       }
     }
+
     // If relax and reconstruct is not set: Use default values obtained in storeConstraintInformation:
     if (!hasLNSann){
-      iv_lns = iv_lns_default;
-      // iv_lns.update(*this, iv_lns_default);
+      // iv_lns = iv_lns_default;
       _lns = default_lns;
     }
 
@@ -2023,6 +2066,13 @@ namespace Gecode { namespace FlatZinc {
 
   FlatZincSpace::~FlatZincSpace(void) {
     delete _initData;
+    if (constraints.size() > 0) {
+      for (ConExpr* ce : constraints){
+        delete ce;
+        ce = nullptr;
+      }
+    }
+    
   }
 
 #ifdef GECODE_HAS_GIST
@@ -2399,7 +2449,7 @@ namespace Gecode { namespace FlatZinc {
       break;
     }
     // Delete variable_relations matrix
-    for (int i = 0; i < non_fzn_introduced_vars.size(); i++){
+    for (int i = 0; i < non_fzn_introduced_vars_size; i++){
       delete[] variable_relations[i];
     }
     delete[] variable_relations;
@@ -2663,28 +2713,29 @@ namespace Gecode { namespace FlatZinc {
     switch (_lnsType) {
       case RANDOM:
       {
-        return _lnsStrategy.random(*this, mi, _lnsInitialSolution, _lns, iv_lns, _random);
+        return _lnsStrategy.random(*this, mi, _lnsInitialSolution, _lns, iv_lns_default_idx, iv_lns_default_size, iv_lns, hasLNSann, _random);
       }
       case PG:
       {
-        return _lnsStrategy.propagationGuided(*this, mi, iv_lns, 10, _random);
-        // return _lnsStrategy.propagationGuided(*this, mi, non_fzn_introduced_vars, 10, _random);
+        // return _lnsStrategy.propagationGuided(*this, mi, non_fzn_introduced_vars_idx, non_fzn_introduced_vars_size, 10, _random);
+        return _lnsStrategy.propagationGuided(*this, mi, iv_lns_default_idx, iv_lns_default_size, 10, _random);
       }
       case rPG:
       {
-        return _lnsStrategy.reversedPropagationGuided(*this, mi, iv_lns, 10, _random);
+        // return _lnsStrategy.reversedPropagationGuided(*this, mi, non_fzn_introduced_vars_idx, non_fzn_introduced_vars_size, 10, _random);
+        return _lnsStrategy.propagationGuided(*this, mi, iv_lns_default_idx, iv_lns_default_size, 10, _random);
       }
       case OBJREL:
       {
-        return _lnsStrategy.objectiveRelaxation(*this, mi, _lns, iv_lns_obj_relax, _random);
+        return _lnsStrategy.objectiveRelaxation(*this, mi, _lns, iv_lns_obj_relax_idx, iv_lns_obj_relax_size, _random);
       }
       case CIG:
       {
-        return _lnsStrategy.costImpactGuided(*this, mi, ciglns_info, maximize, 2, 0.5, ceil((_lns/100.0) * iv_lns_default.size()), _random);
+        return _lnsStrategy.costImpactGuided(*this, mi, ciglns_info, iv_lns_default_idx, maximize, 2, 0.5, ceil((_lns/100.0) * iv_lns_default_size), _random);
       }
       case SVR:
       {
-        return _lnsStrategy.staticVariableRelation(*this, mi, non_fzn_introduced_vars, floor(0.6*non_fzn_introduced_vars.size()), _random);
+        return _lnsStrategy.staticVariableRelation(*this, mi, non_fzn_introduced_vars_idx, non_fzn_introduced_vars_size, floor(0.6*non_fzn_introduced_vars_size), _random);
       }
       default:
       {

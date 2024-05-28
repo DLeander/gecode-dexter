@@ -34,14 +34,14 @@ down =
  | false, false,  true, false, false, false, false, false, false, false, false, false
  |];
 ----------
-%%%mzn-stat: initTime=0.00216127
+%%%mzn-stat: initTime=0.00242053
 %%%mzn-stat: solveTime=600
 %%%mzn-stat: solutions=5577
 %%%mzn-stat: variables=646
 %%%mzn-stat: propagators=448
-%%%mzn-stat: propagations=14046679263
-%%%mzn-stat: nodes=283173594
-%%%mzn-stat: failures=141581103
+%%%mzn-stat: propagations=13273194688
+%%%mzn-stat: nodes=266580428
+%%%mzn-stat: failures=133284518
 %%%mzn-stat: restarts=0
 %%%mzn-stat: peakDepth=110
 %%%mzn-stat-end

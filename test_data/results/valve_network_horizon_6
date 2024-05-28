@@ -7,8 +7,8 @@ Minute 6: Position me=HY, elephant=LU, Open valves: {LU, HY}
 checksum: 34
 ----------
 ==========
-%%%mzn-stat: initTime=0.0115395
-%%%mzn-stat: solveTime=21.9873
+%%%mzn-stat: initTime=0.0117994
+%%%mzn-stat: solveTime=23.9377
 %%%mzn-stat: solutions=18
 %%%mzn-stat: variables=3055
 %%%mzn-stat: propagators=3874

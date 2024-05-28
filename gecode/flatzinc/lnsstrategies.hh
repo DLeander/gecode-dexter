@@ -20,17 +20,15 @@ using namespace Gecode;
 using namespace Gecode::FlatZinc;
 
 struct PGLNSInfo {
-    IntVar intVar;
     int ivIndex;
     int domainDiff;
 };
 
 // Structs mainly used for CIG LNS.
 struct VariableShuffleInfo {
-    IntVar intVar;
     unsigned int ivIndex;
 
-    VariableShuffleInfo(IntVar var, unsigned int index) : intVar(var), ivIndex(index) {}
+    VariableShuffleInfo(unsigned int index) : ivIndex(index) {}
 };
 struct CIGInfo {
     std::vector<VariableShuffleInfo> vars;
@@ -39,9 +37,9 @@ struct CIGInfo {
     double bound_diff_sum;
     double r;
 
-    CIGInfo(IntVarArray lns_vars) : bound_differences(lns_vars.size()), scores(lns_vars.size()), bound_diff_sum(0), r(0) {
-        for (int i = 0; i < lns_vars.size(); i++){
-            vars.push_back(VariableShuffleInfo(lns_vars[i], i));
+    CIGInfo(int num_vars) : bound_differences(num_vars), scores(num_vars), bound_diff_sum(0), r(0) {
+        for (int i = 0; i < num_vars; i++){
+            vars.push_back(VariableShuffleInfo(i));
         }
     }
 };
@@ -52,17 +50,17 @@ public:
     ~LNSstrategies(); // destructor
 
     // Standard LNS
-    bool random(FlatZincSpace& fzs, MetaInfo mi, IntSharedArray& initialSolution, unsigned int lns, IntVarArgs iv_lns, Rnd random);
+    bool random(FlatZincSpace& fzs, MetaInfo mi, IntSharedArray& initialSolution, unsigned int lns, int* iv_lns_default_idx, int idx_size, IntVarArgs iv_lns, bool use_iv_lns, Rnd random);
     // Propagation guided LNS
-    bool propagationGuided(FlatZincSpace& fzs, MetaInfo mi, IntVarArray non_fzn_introduced_vars, unsigned int queue_size, Rnd random);
+    bool propagationGuided(FlatZincSpace& fzs, MetaInfo mi, int* non_fzn_introduced_vars_idx, int idx_size, unsigned int queue_size, Rnd random);
     // Reversed propagation guided LNS
-    bool reversedPropagationGuided(FlatZincSpace& fzs, MetaInfo mi, IntVarArray non_fzn_introduced_vars, unsigned int queue_size, Rnd random);
+    bool reversedPropagationGuided(FlatZincSpace& fzs, MetaInfo mi, int* non_fzn_introduced_vars_idx, int idx_size, unsigned int queue_size, Rnd random);
     // Objective relaxation LNS
-    bool objectiveRelaxation(FlatZincSpace& fzs, MetaInfo mi, unsigned int lns, IntVarArgs iv_lns_obj_relax, Rnd random);
+    bool objectiveRelaxation(FlatZincSpace& fzs, MetaInfo mi, unsigned int lns, int* iv_lns_obj_relax_idx, int idx_size, Rnd random);
     // Cost impact guided LNS
-    bool costImpactGuided(FlatZincSpace& fzs, MetaInfo mi, CIGInfo* data, bool maximize, unsigned int dives, double alpha, long unsigned int numfixedvars, Rnd random);
+    bool costImpactGuided(FlatZincSpace& fzs, MetaInfo mi, CIGInfo* data, int* iv_lns_default_idx, bool maximize, unsigned int dives, double alpha, long unsigned int numfixedvars, Rnd random);
     // Static Variable Dependency LNS
-    bool staticVariableRelation(FlatZincSpace& fzs, MetaInfo mi, IntVarArray non_fzn_introduced_vars, unsigned int vars_to_fix, Rnd random);
+    bool staticVariableRelation(FlatZincSpace& fzs, MetaInfo mi, int* non_fzn_introduced_vars_idx, int idx_size, unsigned int vars_to_fix, Rnd random);
 
 };
 

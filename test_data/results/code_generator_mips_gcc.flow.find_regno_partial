@@ -5,8 +5,8 @@ r = array1d(-1..440, [-1, 4, 5, 16, 17, 18, 19, 20, 21, 22, 23, 53, 55, 57, 59, 
 objective = 6340;
 ----------
 ==========
-%%%mzn-stat: initTime=0.214543
-%%%mzn-stat: solveTime=0.0963179
+%%%mzn-stat: initTime=0.236705
+%%%mzn-stat: solveTime=0.0923224
 %%%mzn-stat: solutions=1
 %%%mzn-stat: variables=38998
 %%%mzn-stat: propagators=148604

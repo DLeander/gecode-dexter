@@ -32,7 +32,10 @@ PBSController::PBSController(FlatZinc::FlatZincSpace* fg, const int num_assets, 
       optimum_found(false), 
       best_sol(nullptr), 
       finished_asset(-1),
-      asset_num_sols(num_assets){
+      asset_num_sols(num_assets),
+      asset_swapped_se(num_assets, false),
+      forbidden_literals(0)
+      {
     
     execution_done_wait_started = false;
     running_threads = num_assets;
@@ -47,6 +50,20 @@ PBSController::~PBSController() {
             all_best_solutions[i] = nullptr;
         }
     }
+
+    // for (long unsigned int i = 0; i < assets.size(); i++){
+    //     if (i == 0 || i == 7 || i == 9){
+    //         // cast assets[i] to be a DFSAsset.
+    //         DFSAsset* dfs_asset = dynamic_cast<DFSAsset*>(assets[i].get());
+    //         // delete dfs_asset->getExecutor();
+    //         // dfs_asset->getExecutor() = nullptr;
+    //     }
+    //     else if (i == 1 || i == 2 || i == 3 || i == 4 || i == 5 || i == 6){
+    //         LNSAsset* lns_asset = dynamic_cast<LNSAsset*>(assets[i].get());
+    //         // delete lns_asset->getExecutor();
+    //         // lns_asset->getExecutor() = nullptr;
+    //     }
+    // }
 }
 
 void PBSController::thread_done() {
@@ -119,6 +136,17 @@ void PBSController::solutionStatistics(BaseAsset* asset, std::ostream& out, Supp
 
         for (int asset = 0; asset < num_assets; asset++){
             if (asset == finished_asset){
+                continue;
+            }
+            n_p = assets[asset]->getNP();
+            if (AssetType(asset) == SHAVING){
+                out << "%%%mzn-stat: unfinished asset="
+                    << assets[asset]->getAssetTypeStr() << std::endl;
+                out << "%%%mzn-stat: propagators=" << n_p << std::endl
+                    << "%%%mzn-stat: propagations=" << sstat.propagate+stat.propagate << std::endl
+                    << "%%%mzn-stat: foundFailures=" << forbidden_literals.size() << std::endl
+                    << "%%%mzn-stat-end" << std::endl
+                    << std::endl;
                 continue;
             }
             stat = assets[asset]->getSE()->statistics();
@@ -256,6 +284,7 @@ void PBSController::controller(std::ostream& out, FlatZincOptions& fopt, Support
         assets[asset].get()->increaseSolveTime(initTime);
         assets[asset].get()->setSStat(sstat);
     }
+
     for (int asset = 0; asset < num_assets; asset++) {
         assets[asset]->run();
     }
@@ -293,6 +322,9 @@ void PBSController::controller(std::ostream& out, FlatZincOptions& fopt, Support
     for (long unsigned int i = 0; i < asset_num_sols.size(); i++){
         cerr << "Asset " << i << " found " << asset_num_sols[i] << " solutions." << endl;
     }
+
+    // Delete allocated arrays in fzs.
+    fg->deletePBSArrays();
 }
 
 
@@ -384,7 +416,6 @@ void AssetExecutor::runSearch(){
     // Start the search timer.
     Support::Timer t_solve;
     t_solve.start();
-
     if (asset->getFZS()->status(sstat) != SS_FAILED) {
         asset->setNP(PropagatorGroup::all.size(*(asset->getFZS())));
         asset->setSStat(sstat);
@@ -403,7 +434,8 @@ void AssetExecutor::runSearch(){
             sol = nullptr;
         }
         sol = next_sol;
-        // If one asset finished, stop looking for more solutions. TODO: Make sure that search did not finish due to LNS restart limit reached etc.
+        // TODO: Make sure that search did not finish due to LNS restart limit reached etc.
+        // If one asset finished, stop looking for more solutions. 
         solWasBestSol = updateBestSol(control, sol, out, p, printAll, asset_id);
         // Apply nq constraints to make asset take advantage of shaving.
         long unsigned int size = control.get_forbidden_literals().size();
@@ -412,6 +444,31 @@ void AssetExecutor::runSearch(){
                 control.get_forbidden_literals()[i].var.nq(asset->getFZS(), control.get_forbidden_literals()[i].value);
             }
         }
+
+        // Change the search engine to update cd and ad.
+        if (!control.asset_swapped_se[asset_id] && se->statistics().depth > 50 && !control.optimum_found.load()){
+            Search::Options so = asset->getSO();
+            so.c_d = so.c_d * se->statistics().depth;
+            so.a_d = so.a_d / 2;
+
+            delete se;
+            if (asset->getLNSType() != Gecode::FlatZinc::FlatZincSpace::LNSType::NONE){
+                fopt.restart(RM_LUBY);
+                fopt.restart_base(1.5);
+                fopt.restart_scale(250);
+                so.cutoff = new Search::CutoffAppend(new Search::CutoffConstant(0), 1, Driver::createCutoff(fopt));
+                RBSEngine* upd_se = new RBSEngine(asset->getFZS(), so);
+                asset->setSE(dynamic_cast<BaseEngine*>(upd_se));
+                se = upd_se;
+            }
+            else{
+                BABEngine* upd_se = new BABEngine(asset->getFZS(), so);
+                asset->setSE(dynamic_cast<BaseEngine*>(upd_se));
+                se = upd_se;
+            }
+            control.asset_swapped_se[asset_id] = true;
+        }
+        
     }
     // Stop the search timer.
     double t = t_solve.stop();
@@ -584,6 +641,15 @@ void DFSAsset::setupAsset(){
     fzs->iv_introduced = fg->iv_introduced;
     fzs->bv_introduced = fg->bv_introduced;
     fzs->sv_introduced = fg->sv_introduced;
+    
+    switch (asset_id)
+    {
+    case 7:
+        bm.PBAssetBranching(fg->constraints);
+        break;
+    default:
+        break;
+    }
 
     fzs->createBranchers(p, fzs->solveAnnotations(), fopt, false, bm, std::cerr);
 
@@ -599,14 +665,18 @@ void DFSAsset::setupAsset(){
     search_options.threads = threads;
     search_options.nogoods_limit = fopt.nogoods() ? fopt.nogoods_limit() : 0;
 
-    search_options.cutoff = new Search::CutoffAppend(new Search::CutoffConstant(0), 1, Driver::createCutoff(fopt));
-    if (fopt.interrupt()) Driver::PBSCombinedStop::installCtrlHandler(true);
-
-    // If not RBS but asset is to use it:
     if (fopt.restart() != RM_NONE){
         fopt.restart(RM_NONE);
     }
+
+    search_options.cutoff = new Search::CutoffAppend(new Search::CutoffConstant(0), 1, Driver::createCutoff(fopt));
+    if (fopt.interrupt()) Driver::PBSCombinedStop::installCtrlHandler(true);
+
+    // if (fopt.restart() != RM_NONE){
+    //     fopt.restart(RM_NONE);
+    // }
     
+    so = search_options;
     se = new BABEngine(fzs, search_options);
 }
 void LNSAsset::setupAsset(){
@@ -638,10 +708,32 @@ void LNSAsset::setupAsset(){
 
     fzs->setLNSType(lns_type);
     if (lns_type == FlatZinc::FlatZincSpace::LNSType::CIG){
-        fzs->ciglns_info = new CIGInfo(fzs->iv_lns_default);
+        fzs->ciglns_info = new CIGInfo(fzs->iv_lns_default_size);
     }
 
     if (fopt.interrupt()) Driver::PBSCombinedStop::installCtrlHandler(true);
+    
+    // Setup branching strategies for the asset before creating the branchers.
+    switch (asset_id)
+    {
+    case 2:
+        bm.PGLNSBranching(fg->constraints);
+        break;
+    case 3:
+        bm.CIGLNSBranching(fg->constraints);
+        break;
+    case 4:
+        bm.OBJRELLNSBranching(fg->constraints);
+        break;
+    case 5:
+        bm.SVRLNSBranching(fg->constraints);
+        break;
+    case 6:
+        bm.PGLNSBranching(fg->constraints);
+        break;
+    default:
+        break;
+    }
 
     // If not RBS but asset is to use it:
     if (fopt.restart() == RM_NONE){
@@ -649,16 +741,15 @@ void LNSAsset::setupAsset(){
         fopt.restart_base(restart_base);
         fopt.restart_scale(restart_scale);
         search_options.cutoff = new Search::CutoffAppend(new Search::CutoffConstant(0), 1, Driver::createCutoff(fopt));
-        // Create the branchers. (Needs to be here due to non-rbs options and assets that may utilize rbs.)
-        fzs->createBranchers(p, fzs->solveAnnotations(), fopt, false, bm, std::cerr);
-        // fopt.restart(RM_NONE);
     }
     else{
         search_options.cutoff = new Search::CutoffAppend(new Search::CutoffConstant(0), 1, Driver::createCutoff(fopt));
-        fzs->createBranchers(p, fzs->solveAnnotations(), fopt, false, bm, std::cerr);
+        
     }
+    fzs->createBranchers(p, fzs->solveAnnotations(), fopt, false, bm, std::cerr);
     
-    se = new RBSEngine(fzs, search_options, &control.optimum_found);
+    so = search_options;
+    se = new RBSEngine(fzs, search_options);
 }
 
 void RRLNSAsset::setupAsset(){

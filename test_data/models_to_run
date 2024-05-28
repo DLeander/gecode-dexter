@@ -34,7 +34,7 @@ minizinc -t 600000 -s --solver dexter models_and_data/roster/roster_model.mzn mo
 minizinc -t 600000 -s --solver dexter models_and_data/roster/roster_model.mzn models_and_data/roster/chicroster_dataset_large_16.dzn -o results/roster_model_chicroster_dataset_large_16
 
 minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_and_data/speck-optimisation/SPECK-Optimisation.mzn models_and_data/speck-optimisation/easy_3.dzn -o results/speck_optimisation_pbs_easy_3
-minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_and_data/speck-optimisation/SPECK-Optimisation.mzn models_and_data/speck-optimisation/medium_6.dzn -o results/speck_optimisation_medium_6
+minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_and_data/speck-optimisation/SPECK-Optimisation.mzn models_and_data/speck-optimisation/medium_6.dzn -o results/speck_optimisation_pbs_medium_6
 minizinc -t 600000 -s --solver dexter models_and_data/speck-optimisation/SPECK-Optimisation.mzn models_and_data/speck-optimisation/easy_3.dzn -o results/speck_optimisation_easy_3
 minizinc -t 600000 -s --solver dexter models_and_data/speck-optimisation/SPECK-Optimisation.mzn models_and_data/speck-optimisation/medium_6.dzn -o results/speck_optimisation_medium_6
 
@@ -49,7 +49,7 @@ minizinc -t 600000 -s --solver dexter models_and_data/test-scheduling/test-sched
 minizinc -t 600000 -s --solver dexter models_and_data/test-scheduling/test-scheduling.mzn models_and_data/test-scheduling/t30m20r3-20.dzn -o results/test_scheduling_t30m20r3_20
 
 minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_and_data/travelling-thief/ttp.mzn models_and_data/travelling-thief/data/n10_k3_c5000_l10000_u10100_r46.dzn -o results/travelling_thief_pbs_n10_k3_c5000_l10000_u10100_r46
-minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_and_data/travelling-thief/ttp.mzn models_and_data/travelling-thief/data/n10_k15_c5000_l10000_u11000_r49.dzm -o results/travelling_thief_pbs_n10_k15_c5000_l10000_u11000_r49
+minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_and_data/travelling-thief/ttp.mzn models_and_data/travelling-thief/data/n10_k15_c5000_l10000_u11000_r49.dzn -o results/travelling_thief_pbs_n10_k15_c5000_l10000_u11000_r49
 minizinc -t 600000 -s --solver dexter models_and_data/travelling-thief/ttp.mzn models_and_data/travelling-thief/data/n10_k3_c5000_l10000_u10100_r46.dzn -o results/travelling_thief_n10_k3_c5000_l10000_u10100_r46
 minizinc -t 600000 -s --solver dexter models_and_data/travelling-thief/ttp.mzn models_and_data/travelling-thief/data/n10_k15_c5000_l10000_u11000_r49.dzn -o results/travelling_thief_n10_k15_c5000_l10000_u11000_r49
 

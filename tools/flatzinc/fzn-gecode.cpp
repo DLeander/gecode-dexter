@@ -59,6 +59,7 @@ int main(int argc, char** argv) {
   FlatZinc::FlatZincSpace* fg = nullptr;
   Rnd rnd(opt.seed());
   FlatZinc::Printer p;
+  // p.iv_names(0);
   try {
     if (opt.usePBS()) {
       // TODO : Make this a parameter or depend on the number of threads.

@@ -1,12 +1,12 @@
 =====UNKNOWN=====
-%%%mzn-stat: initTime=0.00650661
+%%%mzn-stat: initTime=0.00680109
 %%%mzn-stat: solveTime=600
 %%%mzn-stat: solutions=0
 %%%mzn-stat: variables=1849
 %%%mzn-stat: propagators=1883
-%%%mzn-stat: propagations=5190045646
-%%%mzn-stat: nodes=59635077
-%%%mzn-stat: failures=29817453
+%%%mzn-stat: propagations=5029943079
+%%%mzn-stat: nodes=57688849
+%%%mzn-stat: failures=28844340
 %%%mzn-stat: restarts=0
 %%%mzn-stat: peakDepth=193
 %%%mzn-stat-end

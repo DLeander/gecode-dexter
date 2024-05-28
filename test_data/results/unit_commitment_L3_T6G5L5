@@ -35,8 +35,8 @@ down =
  |];
 ----------
 ==========
-%%%mzn-stat: initTime=0.00117829
-%%%mzn-stat: solveTime=0.583348
+%%%mzn-stat: initTime=0.00131538
+%%%mzn-stat: solveTime=0.606219
 %%%mzn-stat: solutions=3706
 %%%mzn-stat: variables=328
 %%%mzn-stat: propagators=232

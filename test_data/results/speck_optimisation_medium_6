@@ -19,14 +19,14 @@ R =
 p = [0: 1, 1: 0, 2: 2, 3: 4, 4: 8];
 objective = 15;
 ----------
-%%%mzn-stat: initTime=0.0271801
+%%%mzn-stat: initTime=0.025824
 %%%mzn-stat: solveTime=600
 %%%mzn-stat: solutions=2
 %%%mzn-stat: variables=7788
 %%%mzn-stat: propagators=7661
-%%%mzn-stat: propagations=3601691521
-%%%mzn-stat: nodes=8209950
-%%%mzn-stat: failures=4104932
+%%%mzn-stat: propagations=3590070477
+%%%mzn-stat: nodes=8183737
+%%%mzn-stat: failures=4091824
 %%%mzn-stat: restarts=0
 %%%mzn-stat: peakDepth=139
 %%%mzn-stat-end

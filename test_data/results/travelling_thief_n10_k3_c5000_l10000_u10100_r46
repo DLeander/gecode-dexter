@@ -7,8 +7,8 @@ rental = 0;
 distAtTime = [Time(1): 4524, Time(2): 4474, Time(3): 3879, Time(4): 3327, Time(5): 2747, Time(6): 2572, Time(7): 2009, Time(8): 1139, Time(9): 777, Time(10): 361];
 ----------
 ==========
-%%%mzn-stat: initTime=0.00209351
-%%%mzn-stat: solveTime=25.205
+%%%mzn-stat: initTime=0.00201275
+%%%mzn-stat: solveTime=26.7323
 %%%mzn-stat: solutions=2
 %%%mzn-stat: variables=384
 %%%mzn-stat: propagators=383

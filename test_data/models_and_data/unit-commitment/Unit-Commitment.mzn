@@ -138,3 +138,6 @@ solve :: seq_search([
              ])
 minimize obj; 
 
+% output [
+%   show(obj)
+% ];

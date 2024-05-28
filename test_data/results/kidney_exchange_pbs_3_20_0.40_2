@@ -3,70 +3,84 @@ cycle = array1d(1..20, [1, 2, 2, 3, 3, 4, 1, 3, 4, 4, 5, 6, 5, 2, 1, 6, 7, 7, 5,
 objective = 1386;
 ----------
 ==========
-%%%mzn-stat: initTime=0.00195075
-%%%mzn-stat: solveTime=78.7348
-%%%mzn-stat: finished asset=prioritized branching bab asset
+%%%mzn-stat: initTime=0.00131418
+%%%mzn-stat: solveTime=77.6015
+%%%mzn-stat: solutions=33
+%%%mzn-stat: finished asset=bab asset
 %%%mzn-stat: variables=100
 %%%mzn-stat: propagators=80
-%%%mzn-stat: propagations=375485988
-%%%mzn-stat: nodes=4951651
-%%%mzn-stat: failures=2475812
+%%%mzn-stat: propagations=346075727
+%%%mzn-stat: nodes=4578919
+%%%mzn-stat: failures=2289442
 %%%mzn-stat: restarts=0
-%%%mzn-stat: peakDepth=35
-%%%mzn-stat-end
-%%%mzn-stat: unfinished asset=bab asset
-%%%mzn-stat: propagators=80
-%%%mzn-stat: propagations=346196675
-%%%mzn-stat: nodes=4576123
-%%%mzn-stat: failures=2288037
-%%%mzn-stat: restarts=0
-%%%mzn-stat: peakDepth=35
+%%%mzn-stat: peakDepth=36
 %%%mzn-stat-end
 %%%mzn-stat: unfinished asset=random lns asset
 %%%mzn-stat: propagators=0
-%%%mzn-stat: propagations=289441767
-%%%mzn-stat: nodes=3561938
-%%%mzn-stat: failures=1806152
-%%%mzn-stat: restarts=133920
+%%%mzn-stat: propagations=268803647
+%%%mzn-stat: nodes=3282598
+%%%mzn-stat: failures=1666341
+%%%mzn-stat: restarts=134212
 %%%mzn-stat: peakDepth=31
 %%%mzn-stat-end
 %%%mzn-stat: unfinished asset=propagation guided lns asset
 %%%mzn-stat: propagators=0
-%%%mzn-stat: propagations=362462068
-%%%mzn-stat: nodes=4217847
-%%%mzn-stat: failures=2102481
-%%%mzn-stat: restarts=2808
-%%%mzn-stat: peakDepth=31
+%%%mzn-stat: propagations=347674754
+%%%mzn-stat: nodes=4156784
+%%%mzn-stat: failures=2072718
+%%%mzn-stat: restarts=1824
+%%%mzn-stat: peakDepth=35
 %%%mzn-stat-end
 %%%mzn-stat: unfinished asset=cost impact guided lns asset
 %%%mzn-stat: propagators=0
-%%%mzn-stat: propagations=87272371
-%%%mzn-stat: nodes=1348293
-%%%mzn-stat: failures=712401
-%%%mzn-stat: restarts=169166
+%%%mzn-stat: propagations=78891195
+%%%mzn-stat: nodes=1222497
+%%%mzn-stat: failures=647697
+%%%mzn-stat: restarts=166433
 %%%mzn-stat: peakDepth=31
 %%%mzn-stat-end
 %%%mzn-stat: unfinished asset=objective relaxation lns asset
 %%%mzn-stat: propagators=0
-%%%mzn-stat: propagations=337442472
-%%%mzn-stat: nodes=4192976
-%%%mzn-stat: failures=2142271
-%%%mzn-stat: restarts=169804
+%%%mzn-stat: propagations=341397935
+%%%mzn-stat: nodes=4419910
+%%%mzn-stat: failures=2264859
+%%%mzn-stat: restarts=182895
 %%%mzn-stat: peakDepth=31
 %%%mzn-stat-end
 %%%mzn-stat: unfinished asset=static variable dependency lns asset
 %%%mzn-stat: propagators=0
-%%%mzn-stat: propagations=305723
-%%%mzn-stat: nodes=5211
-%%%mzn-stat: failures=2555
-%%%mzn-stat: restarts=2052526
+%%%mzn-stat: propagations=309519
+%%%mzn-stat: nodes=5273
+%%%mzn-stat: failures=2590
+%%%mzn-stat: restarts=2084914
 %%%mzn-stat: peakDepth=31
 %%%mzn-stat-end
 %%%mzn-stat: unfinished asset=reversed propagation guided lns asset
 %%%mzn-stat: propagators=0
-%%%mzn-stat: propagations=388080933
-%%%mzn-stat: nodes=4511119
-%%%mzn-stat: failures=2248655
-%%%mzn-stat: restarts=3030
-%%%mzn-stat: peakDepth=31
+%%%mzn-stat: propagations=326560382
+%%%mzn-stat: nodes=4054800
+%%%mzn-stat: failures=2021498
+%%%mzn-stat: restarts=1869
+%%%mzn-stat: peakDepth=32
+%%%mzn-stat-end
+%%%mzn-stat: unfinished asset=prioritized branching bab asset
+%%%mzn-stat: propagators=80
+%%%mzn-stat: propagations=404214791
+%%%mzn-stat: nodes=6270355
+%%%mzn-stat: failures=3135170
+%%%mzn-stat: restarts=0
+%%%mzn-stat: peakDepth=33
+%%%mzn-stat-end
+%%%mzn-stat: unfinished asset=shaving asset
+%%%mzn-stat: propagators=1
+%%%mzn-stat: propagations=404214791
+%%%mzn-stat: foundFailures=24
+%%%mzn-stat-end
+%%%mzn-stat: unfinished asset=bab opposite branching asset
+%%%mzn-stat: propagators=80
+%%%mzn-stat: propagations=173352639
+%%%mzn-stat: nodes=8910039
+%%%mzn-stat: failures=4455010
+%%%mzn-stat: restarts=0
+%%%mzn-stat: peakDepth=46
 %%%mzn-stat-end

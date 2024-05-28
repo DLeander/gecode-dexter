@@ -4,8 +4,8 @@ row = [9, 3, 10, 11, 1, 14, 7, 2, 6, 4, 5, 13, 8, 12];
 objective = 2;
 ----------
 ==========
-%%%mzn-stat: initTime=0.00843371
-%%%mzn-stat: solveTime=18.2563
+%%%mzn-stat: initTime=0.00821627
+%%%mzn-stat: solveTime=18.4689
 %%%mzn-stat: solutions=12
 %%%mzn-stat: variables=2119
 %%%mzn-stat: propagators=1839

@@ -113,9 +113,11 @@ namespace Gecode { namespace FlatZinc {
    *
    */
   class GECODE_FLATZINC_EXPORT Printer {
+  public:
+    std::vector<std::string> iv_names;
   private:
     /// Names of integer variables
-    std::vector<std::string> iv_names;
+    // std::vector<std::string> iv_names;
     /// Names of Boolean variables
     std::vector<std::string> bv_names;
 #ifdef GECODE_HAS_FLOAT_VARS
@@ -192,16 +194,16 @@ namespace Gecode { namespace FlatZinc {
     ~Printer(void);
 
     void addIntVarName(const std::string& n);
-    const std::string& intVarName(int i) const { return iv_names[i]; }
+    const std::string& intVarName(int i) const { return iv_names.at(i); }
     void addBoolVarName(const std::string& n);
-    const std::string& boolVarName(int i) const { return bv_names[i]; }
+    const std::string& boolVarName(int i) const { return bv_names.at(i); }
 #ifdef GECODE_HAS_FLOAT_VARS
     void addFloatVarName(const std::string& n);
-    const std::string& floatVarName(int i) const { return fv_names[i]; }
+    const std::string& floatVarName(int i) const { return fv_names.at(i); }
 #endif
 #ifdef GECODE_HAS_SET_VARS
     void addSetVarName(const std::string& n);
-    const std::string& setVarName(int i) const { return sv_names[i]; }
+    const std::string& setVarName(int i) const { return sv_names.at(i); }
 #endif
 
     void shrinkElement(AST::Node* node,
@@ -457,6 +459,8 @@ namespace Gecode { namespace FlatZinc {
     int getboolVarCount() const { return boolVarCount; }
     int getsetVarCount() const { return setVarCount; }
     void setLNSType(LNSType lns_type) { _lnsType = lns_type; }
+
+    std::vector<ConExpr*> constraints;
   protected:
     /// Initialisation data (only used for posting constraints)
     FlatZincSpaceInitData* _initData;
@@ -494,8 +498,6 @@ namespace Gecode { namespace FlatZinc {
 
     LNSstrategies _lnsStrategy;
 
-    std::vector<ConExpr*> constraints;
-
     /// Copy constructor
     FlatZincSpace(FlatZincSpace&);
   private:
@@ -523,10 +525,19 @@ namespace Gecode { namespace FlatZinc {
     std::vector<int> iv_initial_branching;
 
     /// The integer variables used in LNS
+    int* iv_lns_default_idx;
+    int iv_lns_default_size;
+
+    int* iv_lns_obj_relax_idx;
+    int iv_lns_obj_relax_size;
+
+    int* non_fzn_introduced_vars_idx;
+    int non_fzn_introduced_vars_size;
+
     Gecode::IntVarArray iv_lns;
-    Gecode::IntVarArray iv_lns_default;
-    Gecode::IntVarArray iv_lns_obj_relax;
-    Gecode::IntVarArray non_fzn_introduced_vars;
+    // Gecode::IntVarArray iv_lns_default;
+    // Gecode::IntVarArray iv_lns_obj_relax;
+    // Gecode::IntVarArray non_fzn_introduced_vars;
     double** variable_relations;
     CIGInfo* ciglns_info;
 
@@ -710,9 +721,7 @@ namespace Gecode { namespace FlatZinc {
      */
     void createBranchers(Printer& p, AST::Node* ann, FlatZincOptions& opt, bool ignoreUnknown, BranchModifier& bm, std::ostream& err = std::cerr);
 
-    /// @brief If relax and reconstruct is not set and asset in PBS is to use LNS, then select candidate variables to use in LNS given constraints of the model.
-    /// @return arguments for createBranchers method if LNS is to be used without relax and reconstruct. 
-    void getPBSLNSBestArgs();
+    void deletePBSArrays();
     void storeConstraintInformation();
 
     /// Return the solve item annotations
