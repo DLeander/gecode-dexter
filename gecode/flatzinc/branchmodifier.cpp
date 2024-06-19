@@ -20,7 +20,7 @@ using namespace Gecode;
 using namespace Gecode::FlatZinc;
 
 // Constructor
-BranchModifier::BranchModifier(bool do_opposite_branching, bool use_pbs_branching) 
+BranchModifier::BranchModifier(bool do_opposite_branching, bool use_pbs_branching, bool sort_flat_ann, FlatAnnSortBy sortBy) 
     : do_opposite_branching(do_opposite_branching),
       def_int_varsel(do_opposite_branching ? INT_VAR_AFC_SIZE_MIN(0.99) : INT_VAR_AFC_SIZE_MAX(0.99)),
       def_int_valsel(do_opposite_branching ? INT_VAL_MAX() : INT_VAL_MIN()),
@@ -36,10 +36,109 @@ BranchModifier::BranchModifier(bool do_opposite_branching, bool use_pbs_branchin
       def_float_valsel(do_opposite_branching ? FLOAT_VAL_SPLIT_MAX() : FLOAT_VAL_SPLIT_MIN()),
 #endif
       use_pbs_branching(use_pbs_branching),
-      pbs_variable_branchings(nullptr) {}
+      sort_flat_ann(sort_flat_ann),
+      pbs_variable_branchings(nullptr),
+      sortBy(sortBy) {}
 
 // Destructor
 BranchModifier::~BranchModifier() {}
+
+void BranchModifier::sortFlatAnn(std::vector<AST::Node*>& flatAnn, Gecode::IntVarArray iv){
+    // Add args and variables in struct.
+    // Sort struct given sorting method.
+    // Recreate the annotation with sorted variables.
+    std::vector<flatAnnSortingInfo> flatAnnSortingInfoVec(flatAnn.size());
+    double avg_unit;
+    sortBy = FlatAnnSortBy::AFC;
+    for (unsigned long int i = 0; i < flatAnn.size(); i++){
+        avg_unit = 0;
+        if (flatAnn[i]->isCall("int_search")){
+            AST::Call *call = flatAnn[i]->getCall("int_search");
+            AST::Array *args = call->getArgs(4);
+            std::vector<Gecode::FlatZinc::AST::Node*> vars = args->a[0]->getArray()->a;
+            switch (sortBy){
+                case FlatAnnSortBy::AFC:
+                    for (unsigned long int j = 0; j < vars.size(); j++){
+                        if (!vars[j]->isInt()) avg_unit += iv[vars[j]->getIntVar()].afc();
+                    }
+                    avg_unit /= vars.size();
+                    break;
+                case FlatAnnSortBy::SMALLEST:
+                    for (unsigned long int j = 0; j < vars.size(); j++){
+                        if (!vars[j]->isInt()) avg_unit += iv[vars[j]->getIntVar()].size();
+                    }
+                    avg_unit /= vars.size();
+                    break;
+                default:
+                    break;
+            }
+
+        }
+        flatAnnSortingInfoVec[i] = flatAnnSortingInfo(flatAnn[i], avg_unit);
+    }
+
+    // Place sorted flatAnn vector into flatAnn vector so they are sorted given the sorting method.
+    // No nodes will be left out as the size of the flatAnn vector is the same as the flatAnnSortingInfoVec vector and the same nodes are used.
+    std::sort(flatAnnSortingInfoVec.begin(), flatAnnSortingInfoVec.end(), [](flatAnnSortingInfo a, flatAnnSortingInfo b) {
+        return a.avg_unit > b.avg_unit;
+    });
+
+    for (unsigned long int i = 0; i < flatAnn.size(); i++){
+        flatAnn[i] = flatAnnSortingInfoVec[i].node;
+    }
+
+
+    // Sort variables in each int_search annotation given sorting method.
+    for (unsigned long int i = 0; i < flatAnn.size(); i++){
+        if (flatAnn[i]->isCall("int_search")){
+            AST::Call *call = flatAnn[i]->getCall("int_search");
+            AST::Array *args = call->getArgs(4);
+            std::vector<Gecode::FlatZinc::AST::Node*> vars = args->a[0]->getArray()->a;
+            
+            switch (sortBy){
+                case FlatAnnSortBy::AFC:
+                    std::sort(vars.begin(), vars.end(), [iv](AST::Node* a, AST::Node* b) {
+                    // Both a and b are IntVar, compare their afc values
+                        if (!a->isInt() && !b->isInt())
+                            return iv[a->getIntVar()].afc() > iv[b->getIntVar()].afc();
+
+                        // Only a is IntVar, a comes first
+                        if (!a->isInt())
+                            return true;
+
+                        // Only b is IntVar, b comes first
+                        if (!b->isInt())
+                            return false;
+
+                        // Neither a nor b is IntVar, doesn't matter which comes first
+                        return false;
+                    });
+                    break;
+                case FlatAnnSortBy::SMALLEST:
+                    std::sort(vars.begin(), vars.end(), [iv](AST::Node* a, AST::Node* b) {
+                        // Both a and b are IntVar, compare their domain sizes
+                            if (!a->isInt() && !b->isInt())
+                                return iv[a->getIntVar()].size() < iv[b->getIntVar()].size();
+
+                            // Only a is IntVar, a comes first
+                            if (!a->isInt())
+                                return true;
+
+                            // Only b is IntVar, b comes first
+                            if (!b->isInt())
+                                return false;
+
+                            // Neither a nor b is IntVar, doesn't matter which comes first
+                            return false;
+                    });
+                    break;
+                default:
+                    break;
+            }
+
+        }
+    }
+}
 
 void addBranchAnnotation(AST::Array* pbs_variable_branchings, AST::Array* vars, std::string variable_selection, std::string value_selection) {
     AST::Array* args = new AST::Array(4);
@@ -277,6 +376,7 @@ SetVarBranch BranchModifier::doOppositeBranchingSetVar(string id, Rnd rnd, doubl
 
     return SET_VAR_NONE();
 }
+
 SetValBranch BranchModifier::doOppositeBranchingSetVal(string id, std::string& r0, std::string& r1) {
     if (id == "indomain_min") {
         r0 = "in"; r1 = "not in";

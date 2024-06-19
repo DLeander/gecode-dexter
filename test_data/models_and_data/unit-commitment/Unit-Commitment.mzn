@@ -138,6 +138,12 @@ solve :: seq_search([
              ])
 minimize obj; 
 
-% output [
-%   show(obj)
-% ];
+output [
+  "obj = \(obj);\n",
+  "commitment = \(commitment);\n",
+  "generation = \(generation);\n",
+  "loss_of_load = \(loss_of_load);\n",
+  "generation = \(generation);\n",
+  "up = \(up);\n",
+  "down = \(down);\n"
+];

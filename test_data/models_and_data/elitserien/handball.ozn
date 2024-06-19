@@ -1,0 +1,9 @@
+output ["hap = array2d(",show(teams),", ",show(period),", ",show(hap),");\n","contestant = array2d(",show(teams),", ",show(period),", ",show(contestant),");\n","row = ",show(row),";\n","objective = ",show(objective),";\n"];
+int: objective;
+set of int: teams = 1..14;
+array [teams] of int: row;
+set of int: period = 1..20;
+array [1..280] of int: X_INTRODUCED_281_;
+array [teams,period] of int: contestant = array2d(1..14,1..20,X_INTRODUCED_281_);
+array [1..280] of int: X_INTRODUCED_0_;
+array [teams,period] of int: hap = array2d(1..14,1..20,X_INTRODUCED_0_);

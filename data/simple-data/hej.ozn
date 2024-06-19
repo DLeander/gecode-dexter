@@ -1,6 +1,6 @@
 output ["x = ",showDzn(x),";\n","y = ",showDzn(y),";\n","z = ",showDzn(z),";\n","obj = ",showDzn(obj),";\n"];
 int: obj;
-int: n = 7;
+int: n = 2;
 array [1..n] of int: z;
 array [1..n] of int: y;
 array [1..n] of int: x;

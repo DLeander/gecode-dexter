@@ -20,7 +20,7 @@ using namespace Gecode;
 using namespace Gecode::FlatZinc;
 
 struct PGLNSInfo {
-    int ivIndex;
+    unsigned long int ivIndex;
     int domainDiff;
 };
 
@@ -50,17 +50,17 @@ public:
     ~LNSstrategies(); // destructor
 
     // Standard LNS
-    bool random(FlatZincSpace& fzs, MetaInfo mi, IntSharedArray& initialSolution, unsigned int lns, int* iv_lns_default_idx, int idx_size, IntVarArgs iv_lns, bool use_iv_lns, Rnd random);
+    bool random(FlatZincSpace& fzs, MetaInfo mi, std::atomic<FlatZincSpace*>* global_best_sol, IntSharedArray& initialSolution, unsigned int lns, int* iv_lns_default_idx, int idx_size, IntVarArgs iv_lns, bool use_iv_lns, Rnd random);
     // Propagation guided LNS
-    bool propagationGuided(FlatZincSpace& fzs, MetaInfo mi, int* non_fzn_introduced_vars_idx, int idx_size, unsigned int queue_size, Rnd random);
+    bool propagationGuided(FlatZincSpace& fzs, MetaInfo mi, std::atomic<FlatZincSpace*>* global_best_sol, int* non_fzn_introduced_vars_idx, int idx_size, double lns, unsigned int queue_size, Rnd random);
     // Reversed propagation guided LNS
-    bool reversedPropagationGuided(FlatZincSpace& fzs, MetaInfo mi, int* non_fzn_introduced_vars_idx, int idx_size, unsigned int queue_size, Rnd random);
+    bool reversedPropagationGuided(FlatZincSpace& fzs, MetaInfo mi, std::atomic<FlatZincSpace*>* global_best_sol, int* non_fzn_introduced_vars_idx, int idx_size, double lns, unsigned int queue_size, Rnd random);
     // Objective relaxation LNS
-    bool objectiveRelaxation(FlatZincSpace& fzs, MetaInfo mi, unsigned int lns, int* iv_lns_obj_relax_idx, int idx_size, Rnd random);
+    bool objectiveRelaxation(FlatZincSpace& fzs, MetaInfo mi, std::atomic<FlatZincSpace*>* global_best_sol, unsigned int lns, int* iv_lns_obj_relax_idx, int idx_size, Rnd random);
     // Cost impact guided LNS
-    bool costImpactGuided(FlatZincSpace& fzs, MetaInfo mi, CIGInfo* data, int* iv_lns_default_idx, bool maximize, unsigned int dives, double alpha, long unsigned int numfixedvars, Rnd random);
+    bool costImpactGuided(FlatZincSpace& fzs, MetaInfo mi, std::atomic<FlatZincSpace*>* global_best_sol, CIGInfo* data, int* iv_lns_default_idx, bool maximize, unsigned int dives, double alpha, long unsigned int numfixedvars, Rnd random);
     // Static Variable Dependency LNS
-    bool staticVariableRelation(FlatZincSpace& fzs, MetaInfo mi, int* non_fzn_introduced_vars_idx, int idx_size, unsigned int vars_to_fix, Rnd random);
+    bool staticVariableRelation(FlatZincSpace& fzs, MetaInfo mi, std::atomic<FlatZincSpace*>* global_best_sol, int* non_fzn_introduced_vars_idx, int idx_size, unsigned int vars_to_fix, Rnd random);
 
 };
 

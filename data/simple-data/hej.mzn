@@ -1,5 +1,5 @@
 include "globals.mzn";
-int: n = 7;
+int: n = 2;
 array[1..n] of var 1..n+1: x;
 array[1..n] of var 1..n+1: y;
 array[1..n] of var 1..n+1: z;

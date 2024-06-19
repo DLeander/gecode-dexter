@@ -1,0 +1,4 @@
+minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_and_data/pennies-opt/pennies.mzn models_and_data/pennies-opt/n8.dzn -o results/pennies_pbs_n8
+minizinc -t 600000 -s --solver dexter --fzn-flags "--use-pbs --full-s" models_and_data/pennies-opt/pennies.mzn models_and_data/pennies-opt/n9.dzn -o results/pennies_pbs_n9
+minizinc -t 600000 -s --solver dexter models_and_data/pennies-opt/pennies.mzn models_and_data/pennies-opt/n8.dzn -o results/pennies_n8
+minizinc -t 600000 -s --solver dexter models_and_data/pennies-opt/pennies.mzn models_and_data/pennies-opt/n9.dzn -o results/pennies_n9

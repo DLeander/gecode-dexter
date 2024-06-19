@@ -1176,7 +1176,7 @@ namespace Gecode {
   public:
     /// Initialize engine for space \a s and options \a o
     RBS(T* s, const Search::Options& o);
-    RBS(T* s, const Search::Options& o, std::atomic<bool>* optimum_found);
+    RBS(T* s, const Search::Options& o, std::atomic<bool>* optimum_found, std::vector<Space*>* all_best_solutions);
     
     /// Whether engine does best solution search
     static const bool best = E<T>::best;

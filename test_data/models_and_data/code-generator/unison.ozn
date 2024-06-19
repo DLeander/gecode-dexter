@@ -1,0 +1,13 @@
+output ["c = array1d(0.."++format(MAXO)++", "++format(c)++");\n","ii = array1d(0.."++format(MAXO)++", "++format(ii)++");\n","y = array1d(0.."++format(MAXP)++", "++format(y)++");\n","r = array1d(-1.."++format(MAXT)++", "++format(r)++");\n","objective = "++format(objective)++";\n"];
+int: objective;
+int: MAXT = 386;
+array [1..388] of int: X_INTRODUCED_3929_;
+array [-1..MAXT] of int: r = array1d(-1..386,X_INTRODUCED_3929_);
+int: MAXP = 799;
+array [1..800] of int: X_INTRODUCED_3128_;
+array [0..MAXP] of int: y = array1d(0..799,X_INTRODUCED_3128_);
+int: MAXO = 225;
+array [1..226] of int: X_INTRODUCED_271_;
+array [0..MAXO] of int: ii = array1d(0..225,X_INTRODUCED_271_);
+array [1..226] of int: X_INTRODUCED_498_;
+array [0..MAXO] of int: c = array1d(0..225,X_INTRODUCED_498_);

@@ -83,6 +83,9 @@ class RBSEngine : public BaseEngine {
 public:
     // RBSEngine(FlatZincSpace* space, const Search::Options& options, std::atomic<bool>* optimum_found)
         // : engine(space, options, optimum_found) {}
+    RBSEngine(FlatZincSpace* space, const Search::Options& options, std::atomic_bool *optimum_found, std::vector<Space*>& all_best_solutions)
+        : engine(space, options, optimum_found, &all_best_solutions) {}
+
     RBSEngine(FlatZincSpace* space, const Search::Options& options)
         : engine(space, options) {}
 

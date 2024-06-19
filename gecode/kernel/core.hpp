@@ -1657,6 +1657,8 @@ namespace Gecode {
     /// Number of asset in portfolio
     const unsigned int a;
     //@}
+    // The best solutions found so far during PBS.
+    std::vector<Space*>* all_best_solutions;
   public:
     /// \name Constructors depending on type of engine
     //@{
@@ -1667,6 +1669,14 @@ namespace Gecode {
              unsigned long long int f,
              const Space* l,
              NoGoods& ng);
+
+    MetaInfo(unsigned long int r,
+             RestartReason rr,
+             unsigned long long int s,
+             unsigned long long int f,
+             const Space* l,
+             NoGoods& ng,
+             std::vector<Space*>* all_best_solutions);
     /// Constructor for portfolio-based engine
     MetaInfo(unsigned int a);
     //@}
@@ -1684,6 +1694,7 @@ namespace Gecode {
     unsigned long long int fail(void) const;
     /// Return last solution found (possibly nullptr)
     const Space* last(void) const;
+    const std::vector<Space*>* best_solutions(void) const;
     /// Return no-goods recorded from restart
     const NoGoods& nogoods(void) const;
     //@}
@@ -3102,11 +3113,21 @@ namespace Gecode {
                      unsigned long long int f0,
                      const Space* l0,
                      NoGoods& ng0)
-    : t(RESTART), r(r0), rr(rr0), s(s0), f(f0), l(l0), ng(ng0), a(0) {}
+    : t(RESTART), r(r0), rr(rr0), s(s0), f(f0), l(l0), ng(ng0), a(0), all_best_solutions(nullptr) {}
+
+  forceinline
+  MetaInfo::MetaInfo(unsigned long int r0,
+                     RestartReason rr0,
+                     unsigned long long int s0,
+                     unsigned long long int f0,
+                     const Space* l0,
+                     NoGoods& ng0,
+                     std::vector<Space*>* all_best_solutions)
+    : t(RESTART), r(r0), rr(rr0), s(s0), f(f0), l(l0), ng(ng0), a(0), all_best_solutions(all_best_solutions) {}
 
   forceinline
   MetaInfo::MetaInfo(unsigned int a0)
-    : t(PORTFOLIO), r(0), rr(RR_NO), s(0), f(0), l(nullptr), ng(NoGoods::eng), a(a0) {}
+    : t(PORTFOLIO), r(0), rr(RR_NO), s(0), f(0), l(nullptr), ng(NoGoods::eng), a(a0), all_best_solutions(nullptr) {}
 
   forceinline MetaInfo::Type
   MetaInfo::type(void) const {
@@ -3135,6 +3156,11 @@ namespace Gecode {
   MetaInfo::last(void) const {
     assert(type() == RESTART);
     return l;
+  }
+  forceinline const std::vector<Space*>*
+  MetaInfo::best_solutions(void) const {
+    assert(type() == RESTART);
+    return all_best_solutions;
   }
   forceinline const NoGoods&
   MetaInfo::nogoods(void) const {

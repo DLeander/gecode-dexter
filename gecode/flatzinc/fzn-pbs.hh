@@ -176,7 +176,8 @@ inline auto VarDescription::domain_literals(FlatZincSpace* s) const {
             result.reserve(v.size());
             auto values = IntVarValues(v);
             while (values()) {
-                result.emplace_back(Literal(*this, values.val()));
+                result.push_back(Literal(*this, values.val()));
+                // result.emplace_back(Literal(*this, values.val()));
                 ++values;
             }
             return result;
@@ -314,8 +315,8 @@ class DummyAsset : public BaseAsset {
 
 class DFSAsset : public BaseAsset {
     public:
-        DFSAsset(PBSController& control, FlatZincSpace* fg, FlatZincOptions& fopt, FlatZinc::Printer& p, std::ostream &out, unsigned int asset_id, bool opposite_branching, bool pbs_branching, unsigned int c_d, unsigned int a_d, double threads)
-        : control(control), fg(fg), fopt(fopt), p(p), c_d(c_d), a_d(a_d), threads(threads), bm(opposite_branching, pbs_branching), executor(new AssetExecutor(control, this, out, fopt, p, asset_id, true)), shaving_start(0), solve_time(0.0), asset_id(asset_id) {setupAsset();};
+        DFSAsset(PBSController& control, FlatZincSpace* fg, FlatZincOptions& fopt, FlatZinc::Printer& p, std::ostream &out, unsigned int asset_id, bool opposite_branching, bool pbs_branching, bool sort_flatann, unsigned int c_d, unsigned int a_d, double threads)
+        : control(control), fg(fg), fopt(fopt), p(p), c_d(c_d), a_d(a_d), threads(threads), bm(opposite_branching, pbs_branching, sort_flatann), executor(new AssetExecutor(control, this, out, fopt, p, asset_id, true)), shaving_start(0), solve_time(0.0), asset_id(asset_id) {setupAsset();};
 
         ~DFSAsset() override {
             delete se; se = nullptr;
@@ -375,9 +376,9 @@ class DFSAsset : public BaseAsset {
 
 class LNSAsset : public BaseAsset {
     public:
-        LNSAsset(PBSController& control, FlatZincSpace* fg, FlatZincOptions& fopt, FlatZinc::Printer& p, std::ostream &out, unsigned int asset_id, bool opposite_branching, bool pbs_branching, FlatZinc::FlatZincSpace::LNSType lns_type, unsigned int c_d, unsigned int a_d,
+        LNSAsset(PBSController& control, FlatZincSpace* fg, FlatZincOptions& fopt, FlatZinc::Printer& p, std::ostream &out, unsigned int asset_id, bool opposite_branching, bool pbs_branching, bool sort_flatann, FlatZinc::FlatZincSpace::LNSType lns_type, unsigned int c_d, unsigned int a_d,
                      double threads, RestartMode mode, double restart_base, unsigned int restart_scale) 
-                    : control(control), fg(fg), fopt(fopt), p(p), c_d(c_d), a_d(a_d), threads(threads), bm(opposite_branching, pbs_branching), mode(mode), restart_base(restart_base), 
+                    : control(control), fg(fg), fopt(fopt), p(p), c_d(c_d), a_d(a_d), threads(threads), bm(opposite_branching, pbs_branching, sort_flatann), mode(mode), restart_base(restart_base), 
                       restart_scale(restart_scale), lns_type(lns_type), executor(new AssetExecutor(control, this, out, fopt, p, asset_id, true)), shaving_start(0), solve_time(0.0), asset_id(asset_id) {setupAsset();};
         ~LNSAsset() override {
             delete se; se = nullptr;
@@ -491,7 +492,7 @@ class RRLNSAsset : public BaseAsset {
 class ShavingAsset : public BaseAsset {
     public:
         ShavingAsset(PBSController& control, FlatZincSpace* fg, Gecode::FlatZinc::Printer &p, FlatZincOptions& fopt, std::ostream &out, unsigned int asset_id, int max_dom_shaving_size, bool do_bounds_shaving, VariableSorter* sorter) 
-        : control(control), root(fg), fopt(fopt), executor(new AssetExecutor(control, this, out, fopt, p, asset_id, false)), solve_time(0.0), max_dom_shaving_size(max_dom_shaving_size), do_bounds_shaving(do_bounds_shaving), sorter(sorter), asset_id(asset_id)
+        : control(control), fg(fg), fopt(fopt), executor(new AssetExecutor(control, this, out, fopt, p, asset_id, false)), solve_time(0.0), max_dom_shaving_size(max_dom_shaving_size), do_bounds_shaving(do_bounds_shaving), sorter(sorter), asset_id(asset_id)
         {
             std::reverse(variables.begin(), variables.end()); setupAsset();
         };
@@ -525,6 +526,7 @@ class ShavingAsset : public BaseAsset {
         PBSController& control;
 
     private:
+        FlatZincSpace* fg;
         FlatZincSpace* root;
         StatusStatistics sstat;
         int n_p;
@@ -552,15 +554,16 @@ public:
         SVRLNS, //< Static variable relationship LNS.
         REVPGLNS, //< Reverse propagation guided LNS.
         PB_USER, //< Prioritized branching user asset.
-        SHAVING, //< Shaving asset.
-        USER_OPPOSITE  //< The user asset with opposite branching.
+        USER_OPPOSITE,  //< The user asset with opposite branching.
+        SHAVING //< Shaving asset.
     };
     // Methods
     PBSController(FlatZinc::FlatZincSpace* fg, const int num_assets, Printer& p); // constructor
     ~PBSController(); // destructor
     void controller(std::ostream& out, FlatZincOptions& fopt, Support::Timer& t_total);
     // Emplace forbidden literal.
-    void report_forbidden_literal(Literal forbidden) { forbidden_literals.emplace_back(forbidden); }
+    // void report_forbidden_literal(Literal forbidden) { forbidden_literals.emplace_back(forbidden); }
+    void report_forbidden_literal(Literal forbidden) { forbidden_literals.push_back(forbidden); }
     std::vector<Literal> get_forbidden_literals() { return forbidden_literals; }
     // Signals that a search for a thread is finished.
     void thread_done();
@@ -573,7 +576,7 @@ public:
     // Each asset controller by the controller.
     std::vector<std::unique_ptr<BaseAsset>> assets;
     // The best solutions found during search.
-    std::vector<FlatZincSpace*> all_best_solutions; 
+    std::vector<Space*> all_best_solutions; 
     // The printer for each asset.
     FlatZinc::Printer& p;
     /// Flag indicating that the final best solution has been found.
@@ -595,7 +598,7 @@ private:
     // Waits for all threads to be done.
     void await_runners_completed();
     // Sets up the asset used by the portfolio.
-    void setupPortfolioAssets(int asset, FlatZinc::Printer& p, FlatZincOptions& fopt, std::ostream &out);
+    void setupPortfolioAssets(int asset, FlatZinc::Printer& p, FlatZincOptions& fopt, std::ostream &out, int threads);
     // Gives the statistics of the solution. (TODO: Make it possible to output from all engines and/or spaces)
     void solutionStatistics(BaseAsset* asset, std::ostream& out, Support::Timer& t_total, int finished_asset, bool allAssetStat);
 

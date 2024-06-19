@@ -908,7 +908,7 @@ namespace Gecode { namespace FlatZinc {
     }
 
   FlatZincSpace::FlatZincSpace(Rnd& random)
-  :  _initData(new FlatZincSpaceInitData),
+  : _initData(new FlatZincSpaceInitData),
     intVarCount(-1), boolVarCount(-1), floatVarCount(-1), setVarCount(-1),
     _optVar(-1), _optVarIsInt(true), _lns(0), _lnsInitialSolution(0),
     _random(random), _solveAnnotations(nullptr), iv_lns_default_idx(nullptr), iv_lns_default_size(0), iv_lns_obj_relax_idx(nullptr), iv_lns_obj_relax_size(0), non_fzn_introduced_vars_idx(nullptr), non_fzn_introduced_vars_size(0), variable_relations(nullptr), ciglns_info(nullptr), hasLNSann(false),
@@ -1064,15 +1064,51 @@ namespace Gecode { namespace FlatZinc {
     };
   }
 
+  void FlatZincSpace::addConstraintInformation(ConExpr* ce){
+    if (ce->ann != nullptr && ce->ann->a.size() > 0){
+      if ((ce->id == "fzn_all_different_int" && !ce->ann->hasAtom("domain"))){
+        // create atom node with id "domain"
+        AST::Atom* a = new AST::Atom("domain");
+        // append the atom node to ce.ann
+        ce->ann->a.push_back(a);
+      }
+    }
+  }
+
+  void FlatZincSpace::postConstraints(std::vector<ConExpr*> constraints, bool addAnnotations){
+    // for (unsigned int i=0; i<constraints.size(); i++) {
+    //   if (addAnnotations){
+    //     addConstraintInformation(constraints[i]);
+    //   }
+    //   const ConExpr& ce = *constraints[i];
+    //   try {
+    //     registry().post(*this, ce);
+    //   } catch (Gecode::Exception& e) {
+    //       throw FlatZinc::Error("Gecode", e.what(), ce.ann);
+    //   } catch (AST::TypeError& e) {
+    //       throw FlatZinc::Error("Type error", e.what(), ce.ann);
+    //   }    
+    // }
+  }
+
   void
   FlatZincSpace::postConstraints(std::vector<ConExpr*>& ces) {
-    constraints = ces;
-
     ConExprOrder ceo;
     std::sort(ces.begin(), ces.end(), ceo);
+    // postConstraints is called twice from parser for domain constraints and non-domain constraints
+    constraints.insert(constraints.end(), ces.begin(), ces.end());
 
     for (unsigned int i=0; i<ces.size(); i++) {
       const ConExpr& ce = *ces[i];
+      if (ce.ann != nullptr && ce.ann->a.size() > 0){
+        // cerr << ce.ann->hasAtom("domain") << endl;
+        if ((ce.id == "fzn_all_different_int" && !ce.ann->hasAtom("domain"))){
+          // create atom node with id "domain"
+          AST::Atom* a = new AST::Atom("domain");
+          // append the atom node to ce.ann
+          ce.ann->a.push_back(a);
+        }
+      }
       try {
         registry().post(*this, ce);
       } catch (Gecode::Exception& e) {
@@ -1080,8 +1116,6 @@ namespace Gecode { namespace FlatZinc {
       } catch (AST::TypeError& e) {
           throw FlatZinc::Error("Type error", e.what(), ce.ann);
       }
-      // delete ces[i];
-      // ces[i] = nullptr;
     }
 
   }
@@ -1417,7 +1451,6 @@ namespace Gecode { namespace FlatZinc {
           }
         }
       }
-
       variable_relations = new double*[var_mapper.size()];
       for (long unsigned int i = 0; i < var_mapper.size(); i++){
         variable_relations[i] = new double[var_mapper.size()];
@@ -1520,6 +1553,10 @@ namespace Gecode { namespace FlatZinc {
         } else {
           flatAnn.push_back(ann);
         }
+      }
+
+      if (bm.sort_flat_ann){
+        bm.sortFlatAnn(flatAnn, iv);
       }
 
       for (unsigned int i=0; i<flatAnn.size(); i++) {
@@ -2418,7 +2455,8 @@ namespace Gecode { namespace FlatZinc {
   FlatZincSpace::run(std::ostream& out, Printer& p,
                       FlatZincOptions& opt, Support::Timer& t_total) {
     
-    BranchModifier bm(false, false);
+    BranchModifier bm(false, false, false);
+    this->postConstraints(constraints, false);
     this->createBranchers(p, this->solveAnnotations(), opt, false, bm);
     this->shrinkArrays(p);
 
@@ -2695,8 +2733,6 @@ namespace Gecode { namespace FlatZinc {
     if (mi.type() == MetaInfo::RESTART && !hasLNSann){
       unsigned long long int sols = mi.solution();
       unsigned long long int fails = mi.fail();
-
-
       // Update the LNS keep percentage: If more sols than fails, lower the keep percentage, otherwise increase it.
       // THINKING: Many solutions will lead to a increase in keep percentage, making it possible to explore the neighbourhood more exhaustivly.
       //           Few solutions will lead to an decrease in keep percentage, making it possible to explore more of the search space, and get out of failing branchers.
@@ -2713,29 +2749,27 @@ namespace Gecode { namespace FlatZinc {
     switch (_lnsType) {
       case RANDOM:
       {
-        return _lnsStrategy.random(*this, mi, _lnsInitialSolution, _lns, iv_lns_default_idx, iv_lns_default_size, iv_lns, hasLNSann, _random);
+        return _lnsStrategy.random(*this, mi, pbs_current_best_sol, _lnsInitialSolution, _lns, iv_lns_default_idx, iv_lns_default_size, iv_lns, hasLNSann, _random);
       }
       case PG:
       {
-        // return _lnsStrategy.propagationGuided(*this, mi, non_fzn_introduced_vars_idx, non_fzn_introduced_vars_size, 10, _random);
-        return _lnsStrategy.propagationGuided(*this, mi, iv_lns_default_idx, iv_lns_default_size, 10, _random);
+        return _lnsStrategy.propagationGuided(*this, mi, pbs_current_best_sol, non_fzn_introduced_vars_idx, non_fzn_introduced_vars_size, _lns / 100.0, 10, _random);
       }
       case rPG:
       {
-        // return _lnsStrategy.reversedPropagationGuided(*this, mi, non_fzn_introduced_vars_idx, non_fzn_introduced_vars_size, 10, _random);
-        return _lnsStrategy.propagationGuided(*this, mi, iv_lns_default_idx, iv_lns_default_size, 10, _random);
+        return _lnsStrategy.reversedPropagationGuided(*this, mi, pbs_current_best_sol, non_fzn_introduced_vars_idx, non_fzn_introduced_vars_size, _lns / 100.0, 10, _random);
       }
       case OBJREL:
       {
-        return _lnsStrategy.objectiveRelaxation(*this, mi, _lns, iv_lns_obj_relax_idx, iv_lns_obj_relax_size, _random);
+        return _lnsStrategy.objectiveRelaxation(*this, mi, pbs_current_best_sol, _lns, iv_lns_obj_relax_idx, iv_lns_obj_relax_size, _random);
       }
       case CIG:
       {
-        return _lnsStrategy.costImpactGuided(*this, mi, ciglns_info, iv_lns_default_idx, maximize, 2, 0.5, ceil((_lns/100.0) * iv_lns_default_size), _random);
+        return _lnsStrategy.costImpactGuided(*this, mi, pbs_current_best_sol, ciglns_info, iv_lns_default_idx, maximize, 2, 0.5, ceil((_lns / 100.0) * iv_lns_default_size), _random);
       }
       case SVR:
       {
-        return _lnsStrategy.staticVariableRelation(*this, mi, non_fzn_introduced_vars_idx, non_fzn_introduced_vars_size, floor(0.6*non_fzn_introduced_vars_size), _random);
+        return _lnsStrategy.staticVariableRelation(*this, mi, pbs_current_best_sol, non_fzn_introduced_vars_idx, non_fzn_introduced_vars_size, ceil((_lns / 100.0) * iv_lns_default_size), _random);
       }
       default:
       {

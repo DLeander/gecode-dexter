@@ -1,0 +1,6 @@
+output ["start = "++format(start)++";\n","mrun = "++format(mrun)++";\n","objective = "++format(objective)++";\n"];
+int: objective;
+set of int: Mod = 1..90;
+array [Mod] of bool: mrun;
+set of int: Act = 1..30;
+array [Act] of int: start;

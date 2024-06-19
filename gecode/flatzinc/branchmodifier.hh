@@ -20,9 +20,22 @@ using namespace std;
 using namespace Gecode;
 using namespace Gecode::FlatZinc;
 
+enum class FlatAnnSortBy { AFC, SMALLEST, NONE };
+
+struct flatAnnSortingInfo {
+    AST::Node* node;
+    double avg_unit;
+    flatAnnSortingInfo(AST::Node* node, double avg_unit)
+        : node(node),avg_unit(avg_unit) {}
+    flatAnnSortingInfo() = default;
+
+};
+
+
+
 class BranchModifier {
 public:
-    BranchModifier(bool do_opposite_branching, bool initial_branch_by_afc);  // Constructor
+    BranchModifier(bool do_opposite_branching, bool use_pbs_branching, bool sort_flat_ann, FlatAnnSortBy sortBy = FlatAnnSortBy::NONE);  // Constructor
     ~BranchModifier(); // Destructor
 
     bool do_opposite_branching;  // Flag to indicate if opposite branching is enabled.
@@ -46,7 +59,7 @@ public:
 #endif
 
     bool use_pbs_branching;
-
+    bool sort_flat_ann;
     AST::Array* pbs_variable_branchings;
 
     // Return the opposite the current branching strategy for integer (if possible)
@@ -71,6 +84,9 @@ public:
     // Static Variable Relationship LNS branching:
     void SVRLNSBranching(std::vector<ConExpr*> constraints);
     
+    // Sort the flat annotation based on the selected sorting method.
+    void sortFlatAnn(std::vector<AST::Node*>& flatAnn, Gecode::IntVarArray iv);
+    
     
 #ifdef GECODE_HAS_SET_VARS
     // Return the opposite the current branching strategy for sets (if possible)
@@ -87,6 +103,7 @@ public:
 #endif
     
 private:
+    FlatAnnSortBy sortBy;
 };
 
 #endif // BRANCHMODIFIER_HH
