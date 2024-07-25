@@ -188,7 +188,7 @@ void PBSController::setupPortfolioAssets(int asset, FlatZinc::Printer& p, FlatZi
             assets[asset] = (std::make_unique<DFSAsset>(*this, fg, fopt, p, out, asset, false, false, false, fopt.c_d(), fopt.a_d(), fopt.threads()-9));
         }
         else{
-            assets[asset] = (std::make_unique<DFSAsset>(*this, fg, fopt, p, out, asset, false, false, false, fopt.c_d(), fopt.a_d(), 1));
+            assets[asset] = (std::make_unique<DFSAsset>(*this, fg, fopt, p, out, asset, false, false, false, fopt.c_d(), fopt.a_d(), threads));
         }
         
         if (fopt.mode() == SM_STAT) {
@@ -196,11 +196,6 @@ void PBSController::setupPortfolioAssets(int asset, FlatZinc::Printer& p, FlatZi
         }
         break;
     case LNS_USER:
-        // assets[asset] = (std::make_unique<ShavingAsset>(*this, fg, p, fopt, out, asset, 20, true, new LargestAFCVariableSorter()));
-        // if (fopt.mode() == SM_STAT) {
-        //     assets[asset]->setAssetTypeStr("shaving asset");
-        // }
-        // break;
         assets[asset] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset, false, false, false, FlatZinc::FlatZincSpace::LNSType::RANDOM, fopt.c_d(), fopt.a_d(), threads, RM_LUBY, 1.5, 250));
         if (fopt.mode() == SM_STAT) {
             assets[asset]->setAssetTypeStr("random lns asset");
@@ -289,7 +284,6 @@ void PBSController::controller(std::ostream& out, FlatZincOptions& fopt, Support
     }
     await_runners_completed();
 
-    cerr << "Forbidden literals: " << forbidden_literals.size() << endl;
     // If the shaving asset finished, the problem is unsatisfiable.
     if (finished_asset == SHAVING){
         out << "=====UNSATISFIABLE=====" << std::endl;

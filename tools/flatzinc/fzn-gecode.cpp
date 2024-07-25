@@ -61,9 +61,14 @@ int main(int argc, char** argv) {
   FlatZinc::Printer p;
   try {
     if (opt.usePBS()) {
-      // TODO : Make this a parameter or depend on the number of threads.
+      int assets;
+      if (opt.threads() > 10){
+        assets = 10;
+      }
+      else{
+        assets = opt.threads();
+      }
       // const int assets = opt.threads();
-      const int assets = 10;
       if (!strcmp(filename, "-")) {
         fg = FlatZinc::parse(cin, p, std::cerr, nullptr, rnd);
       } 
