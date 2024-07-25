@@ -2486,6 +2486,7 @@ namespace Gecode { namespace FlatZinc {
       runEngine<DFS>(out,p,opt,t_total);
       break;
     }
+    
     // Delete variable_relations matrix
     if (variable_relations != nullptr){
       for (int i = 0; i < non_fzn_introduced_vars_size; i++){
