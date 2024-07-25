@@ -2483,7 +2483,7 @@ namespace Gecode { namespace FlatZinc {
       pbs.controller(out, opt, t_total);
       break;
     case SAT:
-      // runEngine<DFS>(out,p,opt,t_total);
+      runEngine<DFS>(out,p,opt,t_total);
       break;
     }
     // Delete variable_relations matrix
