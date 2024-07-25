@@ -2487,10 +2487,12 @@ namespace Gecode { namespace FlatZinc {
       break;
     }
     // Delete variable_relations matrix
-    for (int i = 0; i < non_fzn_introduced_vars_size; i++){
-      delete[] variable_relations[i];
+    if (variable_relations != nullptr){
+      for (int i = 0; i < non_fzn_introduced_vars_size; i++){
+        delete[] variable_relations[i];
+      }
+      delete[] variable_relations;
     }
-    delete[] variable_relations;
   }
 
   void
