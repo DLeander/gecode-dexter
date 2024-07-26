@@ -1,10 +1,10 @@
 {
   "id": "dexter",
   "name": "Dexter",
-  "description": "Gecode FlatZinc executable",
+  "description": "Gecode Dexter Portfolio FlatZinc executable",
   "version": "6.3.0",
   "mznlib": "../gecode",
-  "executable": "../../../bin/fzn-gecode",
+  "executable": ["../../../bin/fzn-gecode", "--use-pbs"],
   "tags": ["cp", "int", "float", "set", "restart", "portfolio search"],
   "stdFlags": ["-a", "-f", "-n", "-p", "-r", "-s", "-t", "--cp-profiler"],
   "extraFlags": [
