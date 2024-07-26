@@ -3,8 +3,8 @@
   "name": "Dexter",
   "description": "Gecode Dexter Portfolio FlatZinc executable",
   "version": "6.3.0",
-  "mznlib": "/usr/local/share/minizinc/gecode",
-  "executable": ["/usr/local/bin/fzn-gecode", "--use-pbs"],
+  "mznlib": "../gecode",
+  "executable": ["../../../bin/fzn-gecode", "--use-pbs"],
   "tags": ["cp", "int", "float", "set", "restart", "portfolio search"],
   "stdFlags": ["-a", "-f", "-n", "-p", "-r", "-s", "-t", "--cp-profiler"],
   "extraFlags": [
