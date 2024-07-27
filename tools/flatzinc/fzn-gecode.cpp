@@ -60,20 +60,20 @@ int main(int argc, char** argv) {
   Rnd rnd(opt.seed());
   FlatZinc::Printer p;
   try {
-    if (opt.usePBS()) {
+    if (!strcmp(filename, "-")) {
+        fg = FlatZinc::parse(cin, p, std::cerr, nullptr, rnd);
+      } 
+      else {
+        fg = FlatZinc::parse(filename, p, std::cerr, nullptr, rnd);
+    }
+    // Force the use of regular Gecode if satisfaction problem (as the portfolio is only implemented for optimisation problems)
+    if (opt.usePBS() && opt.threads() > 1 && fg->method() != FlatZinc::FlatZincSpace::SAT){
       int assets;
       if (opt.threads() > 10){
         assets = 10;
       }
       else{
         assets = opt.threads();
-      }
-      // const int assets = opt.threads();
-      if (!strcmp(filename, "-")) {
-        fg = FlatZinc::parse(cin, p, std::cerr, nullptr, rnd);
-      } 
-      else {
-        fg = FlatZinc::parse(filename, p, std::cerr, nullptr, rnd);
       }
 
       if (fg){

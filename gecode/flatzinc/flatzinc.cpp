@@ -2472,14 +2472,11 @@ namespace Gecode { namespace FlatZinc {
   }
 
   void FlatZincSpace::runPBS(std::ostream& out, FlatZinc::Printer& p, FlatZincOptions& opt, Support::Timer& t_total, const int assets) {
-    
-    storeConstraintInformation();
     PBSController pbs(this, assets, p);
     switch (_method) {
     case MIN:
-      pbs.controller(out, opt, t_total);
-      break;
     case MAX:
+      storeConstraintInformation();
       pbs.controller(out, opt, t_total);
       break;
     case SAT:
