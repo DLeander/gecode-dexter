@@ -678,7 +678,7 @@ namespace Gecode { namespace FlatZinc {
     void run(std::ostream& out, Printer& p,
              FlatZincOptions& opt, Gecode::Support::Timer& t_total);
 
-    void runPBS(std::ostream& out, FlatZinc::Printer& p, FlatZincOptions& opt, Gecode::Support::Timer& t_total, const int assets);
+    void runPBS(std::ostream& out, FlatZinc::Printer& p, FlatZincOptions& opt, Gecode::Support::Timer& t_total);
 
     /// Produce output on \a out using \a p
     void print(std::ostream& out, const Printer& p) const;

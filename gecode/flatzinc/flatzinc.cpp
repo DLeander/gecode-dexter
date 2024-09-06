@@ -1076,6 +1076,10 @@ namespace Gecode { namespace FlatZinc {
   }
 
   void FlatZincSpace::postConstraints(std::vector<ConExpr*> constraints, bool addAnnotations){
+    // The point of this method is to add be able to add annotations
+    // to the constraints before posting them to the space (Domain propagation etc.) for certain assets.
+    // Cloning a flatzincspace and posting constraints will not work. Therefore this is put aside for now.
+
     // for (unsigned int i=0; i<constraints.size(); i++) {
     //   if (addAnnotations){
     //     addConstraintInformation(constraints[i]);
@@ -1091,24 +1095,16 @@ namespace Gecode { namespace FlatZinc {
     // }
   }
 
-  void
-  FlatZincSpace::postConstraints(std::vector<ConExpr*>& ces) {
+  // Store all the constraints if its an optimization problem. Otherwise, post the constraints to the space.
+  void FlatZincSpace::postConstraints(std::vector<ConExpr*>& ces) {
     ConExprOrder ceo;
     std::sort(ces.begin(), ces.end(), ceo);
     // postConstraints is called twice from parser for domain constraints and non-domain constraints
-    constraints.insert(constraints.end(), ces.begin(), ces.end());
-
+    if (_method != Meth::SAT){
+      constraints.insert(constraints.end(), ces.begin(), ces.end());
+    }
     for (unsigned int i=0; i<ces.size(); i++) {
       const ConExpr& ce = *ces[i];
-      if (ce.ann != nullptr && ce.ann->a.size() > 0){
-        // cerr << ce.ann->hasAtom("domain") << endl;
-        if ((ce.id == "fzn_all_different_int" && !ce.ann->hasAtom("domain"))){
-          // create atom node with id "domain"
-          AST::Atom* a = new AST::Atom("domain");
-          // append the atom node to ce.ann
-          ce.ann->a.push_back(a);
-        }
-      }
       try {
         registry().post(*this, ce);
       } catch (Gecode::Exception& e) {
@@ -1117,7 +1113,6 @@ namespace Gecode { namespace FlatZinc {
           throw FlatZinc::Error("Type error", e.what(), ce.ann);
       }
     }
-
   }
 
   void flattenAnnotations(AST::Array* ann, std::vector<AST::Node*>& out) {
@@ -2471,17 +2466,18 @@ namespace Gecode { namespace FlatZinc {
     }
   }
 
-  void FlatZincSpace::runPBS(std::ostream& out, FlatZinc::Printer& p, FlatZincOptions& opt, Support::Timer& t_total, const int assets) {
-    PBSController pbs(this, assets, p);
+  void FlatZincSpace::runPBS(std::ostream& out, FlatZinc::Printer& p, FlatZincOptions& opt, Support::Timer& t_total) {
+    PBSController pbs(this, p);
     switch (_method) {
     case MIN:
     case MAX:
+    case SAT:
       storeConstraintInformation();
       pbs.controller(out, opt, t_total);
       break;
-    case SAT:
-      runEngine<DFS>(out,p,opt,t_total);
-      break;
+    // case SAT:
+    //   runEngine<DFS>(out,p,opt,t_total);
+    //   break;
     }
     
     // Delete variable_relations matrix

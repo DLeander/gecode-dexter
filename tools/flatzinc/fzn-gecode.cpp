@@ -67,17 +67,9 @@ int main(int argc, char** argv) {
         fg = FlatZinc::parse(filename, p, std::cerr, nullptr, rnd);
     }
     // Force the use of regular Gecode if satisfaction problem (as the portfolio is only implemented for optimisation problems)
-    if (opt.usePBS() && opt.threads() > 1 && fg->method() != FlatZinc::FlatZincSpace::SAT){
-      int assets;
-      if (opt.threads() > 10){
-        assets = 10;
-      }
-      else{
-        assets = opt.threads();
-      }
-
+    if (opt.usePBS() && opt.threads() > 1){
       if (fg){
-        fg->runPBS(std::cout, p, opt, t_total, assets);
+        fg->runPBS(std::cout, p, opt, t_total);
       }
       else{
         exit(EXIT_FAILURE);

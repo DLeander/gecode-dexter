@@ -24,21 +24,16 @@ using namespace std;
 using namespace Gecode;
 using namespace Gecode::FlatZinc;
 
-PBSController::PBSController(FlatZinc::FlatZincSpace* fg, const int num_assets, FlatZinc::Printer& p)
+PBSController::PBSController(FlatZinc::FlatZincSpace* fg, FlatZinc::Printer& p)
     : fg(fg), 
-      num_assets(num_assets), 
-      assets(num_assets),
       p(p), 
       optimum_found(false), 
       best_sol(nullptr), 
       finished_asset(-1),
-      asset_num_sols(num_assets),
-      asset_swapped_se(num_assets, false),
       forbidden_literals(0)
       {
     
     execution_done_wait_started = false;
-    running_threads = num_assets;
     // Initialize global_objective given method:
     method = fg->method();
 }
@@ -119,12 +114,12 @@ void PBSController::solutionStatistics(BaseAsset* asset, std::ostream& out, Supp
             << "%%%mzn-stat-end" << std::endl
             << std::endl;
 
-        for (int asset = 0; asset < num_assets; asset++){
-            if (asset == finished_asset){
+        for (long unsigned int asset = 0; asset < assets.size(); asset++){
+            if ((int)asset == finished_asset){
                 continue;
             }
             n_p = assets[asset]->getNP();
-            if (AssetType(asset) == SHAVING){
+            if (assets[asset]->getAssetType() == AssetType::SHAVING){
                 out << "%%%mzn-stat: unfinished asset="
                     << assets[asset]->getAssetTypeStr() << std::endl;
                 out << "%%%mzn-stat: propagators=" << n_p << std::endl
@@ -174,77 +169,120 @@ void PBSController::solutionStatistics(BaseAsset* asset, std::ostream& out, Supp
     }
 }
 
-void PBSController::setupPortfolioAssets(int asset, FlatZinc::Printer& p, FlatZincOptions& fopt, std::ostream &out, int threads = 1) {
-    switch (AssetType(asset))
+void PBSController::createPortfolioAssets(AssetType asset, int asset_id, FlatZinc::Printer& p, FlatZincOptions& fopt, std::ostream &out, int threads) {
+    switch (asset)
     {
-    case SHAVING:
-        assets[asset] = (std::make_unique<ShavingAsset>(*this, fg, p, fopt, out, asset, 20, true, new LargestAFCVariableSorter()));
+    case AssetType::SHAVING:
+        assets[asset_id] = (std::make_unique<ShavingAsset>(*this, fg, p, fopt, out, asset_id, asset, 20, true, new LargestAFCVariableSorter()));
         if (fopt.mode() == SM_STAT) {
-            assets[asset]->setAssetTypeStr("shaving asset");
+            assets[asset_id]->setAssetTypeStr("shaving asset");
         }
         break;
-    case USER:
-        if (fopt.threads() > 10){
-            assets[asset] = (std::make_unique<DFSAsset>(*this, fg, fopt, p, out, asset, false, false, false, fopt.c_d(), fopt.a_d(), fopt.threads()-9));
-        }
-        else{
-            assets[asset] = (std::make_unique<DFSAsset>(*this, fg, fopt, p, out, asset, false, false, false, fopt.c_d(), fopt.a_d(), threads));
-        }
-        
+    case AssetType::USER:
+        assets[asset_id] = (std::make_unique<DFSAsset>(*this, fg, fopt, p, out, asset_id, asset, false, false, false, fopt.c_d(), fopt.a_d(), threads));
         if (fopt.mode() == SM_STAT) {
-            assets[asset]->setAssetTypeStr("bab asset");
+            assets[asset_id]->setAssetTypeStr("bab asset");
         }
         break;
-    case LNS_USER:
-        assets[asset] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset, false, false, false, FlatZinc::FlatZincSpace::LNSType::RANDOM, fopt.c_d(), fopt.a_d(), threads, RM_LUBY, 1.5, 250));
+    case AssetType::LNS_USER:
+        assets[asset_id] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset_id, asset, false, false, false, FlatZinc::FlatZincSpace::LNSType::RANDOM, fopt.c_d(), fopt.a_d(), threads, RM_LUBY, 1.5, 250));
         if (fopt.mode() == SM_STAT) {
-            assets[asset]->setAssetTypeStr("random lns asset");
+            assets[asset_id]->setAssetTypeStr("random lns asset");
         }
         break;
-    case PGLNS:
-        assets[asset] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset, false, false, false, FlatZinc::FlatZincSpace::LNSType::PG, fopt.c_d(), fopt.a_d(), threads, RM_LUBY, 1.5, 250));
+    case AssetType::PGLNS:
+        assets[asset_id] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset_id, asset, false, false, false, FlatZinc::FlatZincSpace::LNSType::PG, fopt.c_d(), fopt.a_d(), threads, RM_LUBY, 1.5, 250));
         if (fopt.mode() == SM_STAT) {
-            assets[asset]->setAssetTypeStr("propagation guided lns asset");
+            assets[asset_id]->setAssetTypeStr("propagation guided lns asset");
         }
         break;
-    case CIGLNS:
-        assets[asset] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset, false, true, false, FlatZinc::FlatZincSpace::LNSType::CIG, fopt.c_d(), fopt.a_d(), threads, RM_LUBY, 1.5, 250));
+    case AssetType::CIGLNS:
+        assets[asset_id] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset_id, asset, false, true, false, FlatZinc::FlatZincSpace::LNSType::CIG, fopt.c_d(), fopt.a_d(), threads, RM_LUBY, 1.5, 250));
         if (fopt.mode() == SM_STAT) {
-            assets[asset]->setAssetTypeStr("cost impact guided lns asset");
+            assets[asset_id]->setAssetTypeStr("cost impact guided lns asset");
         }
         break;
-    case OBJRELLNS:
-        assets[asset] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset, false, false, false, FlatZinc::FlatZincSpace::LNSType::OBJREL, fopt.c_d(), fopt.a_d(), threads, RM_LUBY, 1.5, 250));
+    case AssetType::OBJRELLNS:
+        assets[asset_id] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset_id, asset, false, false, false, FlatZinc::FlatZincSpace::LNSType::OBJREL, fopt.c_d(), fopt.a_d(), threads, RM_LUBY, 1.5, 250));
         if (fopt.mode() == SM_STAT) {
-            assets[asset]->setAssetTypeStr("objective relaxation lns asset");
+            assets[asset_id]->setAssetTypeStr("objective relaxation lns asset");
         }
         break;
-    case SVRLNS:
-        assets[asset] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset, false, false, false, FlatZinc::FlatZincSpace::LNSType::SVR, fopt.c_d(), fopt.a_d(), threads, RM_LUBY, 1.5, 250));
+    case AssetType::SVRLNS:
+        assets[asset_id] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset_id, asset, false, false, false, FlatZinc::FlatZincSpace::LNSType::SVR, fopt.c_d(), fopt.a_d(), threads, RM_LUBY, 1.5, 250));
         if (fopt.mode() == SM_STAT) {
-            assets[asset]->setAssetTypeStr("static variable dependency lns asset");
+            assets[asset_id]->setAssetTypeStr("static variable dependency lns asset");
         }
         break;
-    case REVPGLNS:
-        assets[asset] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset, false, false, false, FlatZinc::FlatZincSpace::LNSType::rPG, fopt.c_d(), fopt.a_d(), threads, RM_LUBY, 1.5, 250));
+    case AssetType::REVPGLNS:
+        assets[asset_id] = (std::make_unique<LNSAsset>(*this, fg, fopt, p, out, asset_id, asset, false, false, false, FlatZinc::FlatZincSpace::LNSType::rPG, fopt.c_d(), fopt.a_d(), threads, RM_LUBY, 1.5, 250));
         if (fopt.mode() == SM_STAT) {
-            assets[asset]->setAssetTypeStr("reversed propagation guided lns asset");
+            assets[asset_id]->setAssetTypeStr("reversed propagation guided lns asset");
         }
         break;
-    case PB_USER:
-        assets[asset] = (std::make_unique<DFSAsset>(*this, fg, fopt, p, out, asset, false, false, true, fopt.c_d(), fopt.a_d(), fopt.threads()));
+    case AssetType::PB_USER:
+        assets[asset_id] = (std::make_unique<DFSAsset>(*this, fg, fopt, p, out, asset_id, asset, false, false, true, fopt.c_d(), fopt.a_d(), fopt.threads()));
         if (fopt.mode() == SM_STAT) {
-            assets[asset]->setAssetTypeStr("prioritized branching bab asset");
+            assets[asset_id]->setAssetTypeStr("prioritized branching bab asset");
         }
         break;
-    case USER_OPPOSITE:
-        assets[asset] = (std::make_unique<DFSAsset>(*this, fg, fopt, p, out, asset, true, false, false, fopt.c_d(), fopt.a_d(), fopt.threads()));
+    case AssetType::USER_OPPOSITE:
+        assets[asset_id] = (std::make_unique<DFSAsset>(*this, fg, fopt, p, out, asset_id, asset, true, false, false, fopt.c_d(), fopt.a_d(), fopt.threads()));
         if (fopt.mode() == SM_STAT) {
-            assets[asset]->setAssetTypeStr("bab opposite branching asset");
+            assets[asset_id]->setAssetTypeStr("bab opposite branching asset");
         }
         break;
     default:
         break;
+    }
+}
+
+void PBSController::setupPortfolioAssets(FlatZinc::Printer& p, FlatZincOptions& fopt, std::ostream &out, double initTime, StatusStatistics sstat) {
+    // Vector of asset type and the number of threads to use for that asset type.
+    vector<pair<AssetType,int>> asset_types;
+    int assets_to_create;
+
+    // Select the assets to use depending on method, number of solutions required and number of threads available.
+    // The order of the assets in the vector is the order of priority (Given from the results of the thesis).
+    // It also makes sense not to use LNS as the first assets to be created, as they need a solution to function properly (even though the time difference is extremely small).
+    if (fg->method() == FlatZincSpace::SAT){
+        asset_types = {pair(AssetType::USER, 1), pair(AssetType::PB_USER, 1), pair(AssetType::USER_OPPOSITE, 1), pair(AssetType::SHAVING, 1)};
+
+        // If the ability to add more than one solution is to be added, then these asset orders should be used:
+        // if (fopt.solutions() > 1){
+        //     // If more solutions than one is requested, then use the best performing LNS asset according to the statistics seen in thesis (Cost Impact Guided).
+        //     asset_types = {pair(USER, 1), pair(PB_USER, 1), pair(USER_OPPOSITE, 1), pair(CIGLNS,1), pair(SHAVING, 1)};
+        // }
+        // else{
+        //     // LNS is not used for single solution search.
+        //     asset_types = {pair(USER, 1), pair(PB_USER, 1), pair(USER_OPPOSITE, 1), pair(SHAVING, 1)};
+        // }
+    }
+    else{
+        // If optimization problem, then use all available search assets.
+        asset_types = {pair(AssetType::USER, 1), pair(AssetType::PB_USER, 1), pair(AssetType::USER_OPPOSITE, 1), pair(AssetType::CIGLNS, 1), pair(AssetType::OBJRELLNS, 1), pair(AssetType::SVRLNS, 1), pair(AssetType::PGLNS, 1), pair(AssetType::REVPGLNS, 1), pair(AssetType::LNS_USER, 1), pair(AssetType::SHAVING, 1)};
+    }
+
+    // Choose the number of assets to create based on the number of threads available.
+    if (fopt.threads() > asset_types.size()){
+        assets_to_create = asset_types.size();
+        asset_types[0] = pair(AssetType::USER, fopt.threads() - assets_to_create + 1);
+    }
+    else{
+        assets_to_create = fopt.threads();
+    }
+
+    // Set array sizes indexed by the assets id.
+    assets.resize(assets_to_create);
+    asset_num_sols.resize(assets_to_create);
+    asset_swapped_se.resize(assets_to_create, false);
+    running_threads = assets_to_create;
+
+    // Create the assets.
+    for (int asset = 0; asset < assets_to_create; asset++) {
+        createPortfolioAssets(asset_types[asset].first, asset, p, fopt, out, asset_types[asset].second);
+        assets[asset]->increaseSolveTime(initTime);
+        assets[asset]->setSStat(sstat);
     }
 }
 
@@ -254,12 +292,13 @@ void PBSController::controller(std::ostream& out, FlatZincOptions& fopt, Support
     for (long unsigned int i = 0; i < asset_num_sols.size(); i++){
         asset_num_sols[i] = 0;
     }
+
     StatusStatistics sstat;
     Support::Timer propTimer;
     propTimer.start();
     SpaceStatus preSearchProp = fg->status(sstat);
     double initTime = propTimer.stop();
-    // If the space is unsatisfiable before the search even starts, then finish.
+    // If the space is unsatisfiable before the search even starts, then finish and print statistics through dummy asset.
     if (preSearchProp == SS_FAILED) {
         out << "=====UNSATISFIABLE=====" << std::endl;
         // Create dummy asset so that information about UNSAT space can be printed out:
@@ -273,19 +312,16 @@ void PBSController::controller(std::ostream& out, FlatZincOptions& fopt, Support
         return;
     }
 
-    for (int asset = 0; asset < num_assets; asset++) {
-        setupPortfolioAssets(asset, p, fopt, out);
-        assets[asset].get()->increaseSolveTime(initTime);
-        assets[asset].get()->setSStat(sstat);
-    }
-
-    for (int asset = 0; asset < num_assets; asset++) {
-        assets[asset]->run();
+    // setup and create the assets.
+    setupPortfolioAssets(p, fopt, out, initTime, sstat);
+    // run the assets.
+    for (auto &asset : assets) {
+        asset->run();
     }
     await_runners_completed();
 
     // If the shaving asset finished, the problem is unsatisfiable.
-    if (finished_asset == SHAVING){
+    if (assets[finished_asset]->getAssetType() == AssetType::SHAVING){
         out << "=====UNSATISFIABLE=====" << std::endl;
     }
     else {
@@ -331,15 +367,18 @@ void PBSController::controller(std::ostream& out, FlatZincOptions& fopt, Support
 // ########################################################################
 //                         AssetExecutor below.
 // ########################################################################
-
 bool updateBestSol(PBSController& control, FlatZincSpace* sol, std::ostream& out, FlatZinc::Printer& p, bool printAll, int asset_id){
     bool solWasBestSol = false;
     int optVar = sol->optVar();
     while(true){
-        FlatZincSpace* control_best_sol = control.best_sol.load();
+        // If the optimum was found, then stop there is no need to update the best solution.
+        if (control.optimum_found.load()){
+            break;
+        }
 
+        FlatZincSpace* control_best_sol = control.best_sol.load();
         if (control_best_sol == nullptr){
-            control.best_space_mutex.lock();
+            control.sol_mutex.lock();
             // Critical Section
             FlatZincSpace* expected = nullptr;
             bool success = control.best_sol.compare_exchange_strong(expected, sol);
@@ -353,7 +392,7 @@ bool updateBestSol(PBSController& control, FlatZincSpace* sol, std::ostream& out
                 control.asset_num_sols[asset_id]++;
                 control.finished_asset = asset_id;
             }
-            control.best_space_mutex.unlock();
+            control.sol_mutex.unlock();
             
             if (success){
                 break;
@@ -363,7 +402,7 @@ bool updateBestSol(PBSController& control, FlatZincSpace* sol, std::ostream& out
             // TODO: Does not handle float yet.
             if (control.method == FlatZincSpace::MAX){
                 if (control_best_sol->iv[optVar].val() < sol->iv[optVar].val()){
-                    control.best_space_mutex.lock();
+                    control.sol_mutex.lock();
                     // Critical Section
                     FlatZincSpace* expected = control.best_sol.load();
                     if (expected->iv[optVar].val() < sol->iv[optVar].val()){
@@ -380,21 +419,13 @@ bool updateBestSol(PBSController& control, FlatZincSpace* sol, std::ostream& out
                             control.asset_num_sols[asset_id]++;
                             control.finished_asset = asset_id;
                         }
-                        // solWasBestSol = true;
-                        // control.all_best_solutions.push_back(sol);
-                        // if (printAll){
-                        //     sol->print(out, p);
-                        //     out << "----------" << std::endl;
-                        // }
-                        // control.asset_num_sols[asset_id]++;
-                        // control.finished_asset = asset_id;
                     }
-                    control.best_space_mutex.unlock();
+                    control.sol_mutex.unlock();
                 }
             }
             else if (control.method == FlatZincSpace::MIN){
                 if (control_best_sol->iv[optVar].val() > sol->iv[optVar].val()){
-                    control.best_space_mutex.lock();
+                    control.sol_mutex.lock();
                     // Critical Section
                     FlatZincSpace* expected = control.best_sol.load();
                     if (expected->iv[optVar].val() > sol->iv[optVar].val()){
@@ -410,16 +441,8 @@ bool updateBestSol(PBSController& control, FlatZincSpace* sol, std::ostream& out
                             control.asset_num_sols[asset_id]++;
                             control.finished_asset = asset_id;
                         }
-                        // solWasBestSol = true;
-                        // control.all_best_solutions.push_back(sol);
-                        // if (printAll){
-                        //     sol->print(out, p);
-                        //     out << "----------" << std::endl;
-                        // }
-                        // control.asset_num_sols[asset_id]++;
-                        // control.finished_asset = asset_id;
                     }
-                    control.best_space_mutex.unlock();
+                    control.sol_mutex.unlock();
                 }
             }
 
@@ -449,22 +472,44 @@ void AssetExecutor::runSearch(){
     // Run the search
     FlatZincSpace* sol = nullptr;
     bool solWasBestSol = false;
+
+    // Run the search engine.
     while (FlatZincSpace* next_sol = se->next()) {
         if (control.optimum_found.load()){
             delete next_sol;
             next_sol = nullptr;
             break;
         }
-    // while (true) {
         // If last solution was not the current best solution, delete it.
         if (!solWasBestSol && sol != nullptr){
             delete sol;
             sol = nullptr;
         }
         sol = next_sol;
-        // TODO: Make sure that search did not finish due to LNS restart limit reached etc.
-        // If one asset finished, stop looking for more solutions. 
-        solWasBestSol = updateBestSol(control, sol, out, p, printAll, asset_id);
+        
+        // If a solution is found, then all assets can stop their search
+        // As the problem has been satisfied.
+        if (control.method == FlatZincSpace::SAT){
+            control.sol_mutex.lock();
+            if (control.optimum_found.load()){
+                control.sol_mutex.unlock();
+                break;
+            }
+            control.optimum_found.store(true);
+            control.best_sol.store(sol);
+            control.asset_num_sols[asset_id]++;
+            control.finished_asset = asset_id;
+            solWasBestSol = true;
+            control.sol_mutex.unlock();
+            break;
+        }
+        else{
+            // TODO: Make sure that search did not finish due to LNS restart limit reached etc.
+            // If one asset finished, stop looking for more solutions. 
+            solWasBestSol = updateBestSol(control, sol, out, p, printAll, asset_id);
+        }
+        
+
         // Apply nq constraints to make asset take advantage of shaving.
         local_forbidden_literals = control.get_forbidden_literals();
         long unsigned int size = local_forbidden_literals.size();
@@ -509,14 +554,6 @@ void AssetExecutor::runSearch(){
             sol = nullptr;
         }
     }
-    // if (!control.optimum_found.exchange(true)){
-    //     control.finished_asset = asset_id;
-    // }
-    // else if (!solWasBestSol){
-    //     delete sol;
-    //     sol = nullptr;
-    // }
-
     control.thread_done();
 }
 
@@ -679,6 +716,9 @@ void DFSAsset::setupAsset(){
     fzs->sv_introduced = fg->sv_introduced;
     switch (asset_id)
     {
+    case 0:
+        fzs->postConstraints(fg->constraints, false);
+        break;
     case 7:
         fzs->postConstraints(fg->constraints, true);
         if (!fg->solveAnnotations()){
@@ -687,6 +727,9 @@ void DFSAsset::setupAsset(){
         else{
             bm.use_pbs_branching = false;
         }
+        break;
+    case 8:
+        fzs->postConstraints(fg->constraints, true);
         break;
     default:
         fzs->postConstraints(fg->constraints, false);
@@ -758,6 +801,9 @@ void LNSAsset::setupAsset(){
     // Setup branching strategies for the asset before creating the branchers.
     switch (asset_id)
     {
+    case 1:
+        fzs->postConstraints(fg->constraints, true);
+        break;
     case 2:
         fzs->postConstraints(fg->constraints, true);
         bm.PGLNSBranching(fg->constraints);
@@ -802,12 +848,13 @@ void LNSAsset::setupAsset(){
 
 void RRLNSAsset::setupAsset(){
     // Fill the round_robin_assets vector with all types of LNS assets available.
-    round_robin_assets.push_back(std::make_unique<LNSAsset>(control, fg, fopt, p, out, asset_id, false, false, false, FlatZinc::FlatZincSpace::LNSType::RANDOM, c_d, a_d, threads, RM_LUBY, 1.5, 250));
-    round_robin_assets.push_back(std::make_unique<LNSAsset>(control, fg, fopt, p, out, asset_id, false, false, true, FlatZinc::FlatZincSpace::LNSType::PG, c_d, a_d, threads, RM_LUBY, 1.5, 250));
-    round_robin_assets.push_back(std::make_unique<LNSAsset>(control, fg, fopt, p, out, asset_id, false, false, true, FlatZinc::FlatZincSpace::LNSType::rPG, c_d, a_d, threads, RM_LUBY, 1.5, 250));
-    round_robin_assets.push_back(std::make_unique<LNSAsset>(control, fg, fopt, p, out, asset_id, false, false, true, FlatZinc::FlatZincSpace::LNSType::OBJREL, c_d, a_d, threads, RM_LUBY, 1.5, 250));
-    round_robin_assets.push_back(std::make_unique<LNSAsset>(control, fg, fopt, p, out, asset_id, false, false, true, FlatZinc::FlatZincSpace::LNSType::CIG, c_d, a_d, threads, RM_LUBY, 1.5, 250));
-    round_robin_assets.push_back(std::make_unique<LNSAsset>(control, fg, fopt, p, out, asset_id, false, false, true, FlatZinc::FlatZincSpace::LNSType::SVR, c_d, a_d, threads, RM_LUBY, 1.5, 250));
+    // Ordering of assets can help (Now following thesis results).
+    round_robin_assets.push_back(std::make_unique<LNSAsset>(control, fg, fopt, p, out, asset_id, AssetType::CIGLNS, false, false, true, FlatZinc::FlatZincSpace::LNSType::OBJREL, c_d, a_d, threads, RM_LUBY, 1.5, 250));
+    round_robin_assets.push_back(std::make_unique<LNSAsset>(control, fg, fopt, p, out, asset_id, AssetType::OBJRELLNS, false, false, true, FlatZinc::FlatZincSpace::LNSType::CIG, c_d, a_d, threads, RM_LUBY, 1.5, 250));
+    round_robin_assets.push_back(std::make_unique<LNSAsset>(control, fg, fopt, p, out, asset_id, AssetType::SVRLNS, false, false, true, FlatZinc::FlatZincSpace::LNSType::SVR, c_d, a_d, threads, RM_LUBY, 1.5, 250));
+    round_robin_assets.push_back(std::make_unique<LNSAsset>(control, fg, fopt, p, out, asset_id, AssetType::LNS_USER, false, false, false, FlatZinc::FlatZincSpace::LNSType::RANDOM, c_d, a_d, threads, RM_LUBY, 1.5, 250));
+    round_robin_assets.push_back(std::make_unique<LNSAsset>(control, fg, fopt, p, out, asset_id, AssetType::PGLNS, false, false, true, FlatZinc::FlatZincSpace::LNSType::PG, c_d, a_d, threads, RM_LUBY, 1.5, 250));
+    round_robin_assets.push_back(std::make_unique<LNSAsset>(control, fg, fopt, p, out, asset_id, AssetType::REVPGLNS, false, false, true, FlatZinc::FlatZincSpace::LNSType::rPG, c_d, a_d, threads, RM_LUBY, 1.5, 250));
 }
 
 void ShavingAsset::setupAsset(){
