@@ -1575,7 +1575,12 @@ namespace Gecode { namespace FlatZinc {
           opt.restart_scale(call->args->getInt());
         } else if (flatAnn[i]->isCall("restart_none")) {
           opt.restart(RM_NONE);
-        } else if (flatAnn[i]->isCall("relax_and_reconstruct") && _lnsType == RANDOM) {
+        } else if (flatAnn[i]->isCall("relax_and_reconstruct")) {
+          // Make all LNS assets use the fix percentage given by the modeller
+          // Or -1 which will use the fix percentage heuristic defined on line 2744.
+          // if (_lnsType != RANDOM){
+          //   continue;
+          // }
           if (_lns != 0)
             throw FlatZinc::Error("FlatZinc", "Only one relax_and_reconstruct annotation allowed");
           AST::Call *call = flatAnn[i]->getCall("relax_and_reconstruct");
@@ -1605,6 +1610,10 @@ namespace Gecode { namespace FlatZinc {
               _lnsInitialSolution[i] = initial->a[i]->getInt();
           }
           hasLNSann = true;
+          if (_lns == -1){
+            _lns = default_lns;
+            hasLNSann = false;
+          }
         } else if (flatAnn[i]->isCall("gecode_search")) {
           AST::Call* c = flatAnn[i]->getCall();
           branchWithPlugin(c->args);
@@ -2733,7 +2742,7 @@ namespace Gecode { namespace FlatZinc {
       // THINKING: Many solutions will lead to a increase in keep percentage, making it possible to explore the neighbourhood more exhaustivly.
       //           Few solutions will lead to an decrease in keep percentage, making it possible to explore more of the search space, and get out of failing branchers.
       if (fails > sols && fails > 0 && sols > 0){
-        _lns = std::max(10.0, ceil(_lns - sols/fails));
+        _lns = std::max(10.0, floor(_lns - sols/fails));
       }
       else if (fails > 0 && sols > 0){
         _lns = std::min(90.0, ceil(_lns + sols/fails));
