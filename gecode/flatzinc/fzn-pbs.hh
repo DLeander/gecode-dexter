@@ -375,7 +375,7 @@ class DFSAsset : public BaseAsset {
 
     private:
         FlatZincSpace* fzs;
-        BABEngine* se;
+        BaseEngine* se;
         StatusStatistics sstat;
         int n_p;
         FlatZincSpace* fg;

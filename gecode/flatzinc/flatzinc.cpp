@@ -1099,10 +1099,7 @@ namespace Gecode { namespace FlatZinc {
   void FlatZincSpace::postConstraints(std::vector<ConExpr*>& ces) {
     ConExprOrder ceo;
     std::sort(ces.begin(), ces.end(), ceo);
-    // postConstraints is called twice from parser for domain constraints and non-domain constraints
-    if (_method != Meth::SAT){
-      constraints.insert(constraints.end(), ces.begin(), ces.end());
-    }
+    constraints.insert(constraints.end(), ces.begin(), ces.end());
     for (unsigned int i=0; i<ces.size(); i++) {
       const ConExpr& ce = *ces[i];
       try {
@@ -2517,7 +2514,7 @@ namespace Gecode { namespace FlatZinc {
         else if (_method == MAX){
           best_sol = local_sol > global_sol->iv[global_sol->optVar()].val() ? local_sol : global_sol->iv[global_sol->optVar()].val();
           rel(*this, iv[_optVar], IRT_GR, best_sol);
-        } 
+        }
       }
       // If not PBS or no solution has been found, update local bounds.
       else{

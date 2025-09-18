@@ -536,9 +536,19 @@ void AssetExecutor::runSearch(){
                 se = upd_se;
             }
             else{
-                BABEngine* upd_se = new BABEngine(asset->getFZS(), so);
-                asset->setSE(dynamic_cast<BaseEngine*>(upd_se));
-                se = upd_se;
+
+                if (control.method == FlatZincSpace::SAT)
+                {
+                    DFSEngine* upd_se = new DFSEngine(asset->getFZS(), so);
+                    asset->setSE(dynamic_cast<BaseEngine*>(upd_se));
+                    se = upd_se;
+                }
+                else
+                {
+                    BABEngine* upd_se = new BABEngine(asset->getFZS(), so);
+                    asset->setSE(dynamic_cast<BaseEngine*>(upd_se));
+                    se = upd_se;
+                }
             }
             control.asset_swapped_se[asset_id] = true;
         }
@@ -756,14 +766,19 @@ void DFSAsset::setupAsset(){
 
     search_options.cutoff = new Search::CutoffAppend(new Search::CutoffConstant(0), 1, Driver::createCutoff(fopt));
     if (fopt.interrupt()) Driver::PBSCombinedStop::installCtrlHandler(true);
-
-    // if (fopt.restart() != RM_NONE){
-    //     fopt.restart(RM_NONE);
-    // }
     
     so = search_options;
-    se = new BABEngine(fzs, search_options);
+
+    if (control.method == FlatZincSpace::SAT)
+    {
+        se = new DFSEngine(fzs, search_options);
+    }
+    else
+    {
+        se = new BABEngine(fzs, search_options);
+    }
 }
+
 void LNSAsset::setupAsset(){
     // Set up the portfolio LNS assets.
     fzs = static_cast<FlatZinc::FlatZincSpace*>(fg->clone());
