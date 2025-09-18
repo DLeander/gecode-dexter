@@ -2735,11 +2735,11 @@ namespace Gecode { namespace FlatZinc {
     if (mi.type() == MetaInfo::RESTART && !hasLNSann){
       unsigned long long int sols = mi.solution();
       unsigned long long int fails = mi.fail();
-      // Update the LNS keep percentage: If more sols than fails, lower the keep percentage, otherwise increase it.
-      // THINKING: Many solutions will lead to a increase in keep percentage, making it possible to explore the neighbourhood more exhaustivly.
-      //           Few solutions will lead to an decrease in keep percentage, making it possible to explore more of the search space, and get out of failing branchers.
+      // Update the LNS keep percentage: If more fails than sols, lower the keep percentage, otherwise increase it.
+      // THINKING: Many solutions will lead to an increase in keep percentage, making it possible to explore the neighbourhood more exhaustivly.
+      //           Few solutions will lead to a decrease in keep percentage, making it possible to explore more of the search space, and get out of failing branchers.
       if (fails > sols && fails > 0 && sols > 0){
-        _lns = std::max(10.0, floor(_lns - sols/fails));
+        _lns = std::max(10.0, ceil(_lns - sols/fails));
       }
       else if (fails > 0 && sols > 0){
         _lns = std::min(90.0, ceil(_lns + sols/fails));
