@@ -811,6 +811,7 @@ namespace Gecode { namespace FlatZinc {
       non_fzn_introduced_vars_size(f.non_fzn_introduced_vars_size),
 
       variable_relations(f.variable_relations),
+
       ciglns_info(f.ciglns_info),
       hasLNSann(f.hasLNSann),
 
@@ -834,14 +835,6 @@ namespace Gecode { namespace FlatZinc {
 
       iv_initial_branching = f.iv_initial_branching;
       iv_lns.update(*this, f.iv_lns);
-
-      // iv_lns_default.update(*this, f.iv_lns_default);
-      // iv_lns_obj_relax.update(*this, f.iv_lns_obj_relax);
-      // non_fzn_introduced_vars.update(*this, f.non_fzn_introduced_vars);
-
-      // variable_relations = f.variable_relations;
-      // ciglns_info = f.ciglns_info;
-      // hasLNSann = f.hasLNSann;
 
       intVarCount = f.intVarCount;
 
@@ -1127,18 +1120,26 @@ namespace Gecode { namespace FlatZinc {
   }
 
   void FlatZincSpace::deletePBSArrays(){
-      if (iv_lns_obj_relax_idx == iv_lns_default_idx){
-        delete[] iv_lns_default_idx;
+    if (iv_lns_obj_relax_idx == iv_lns_default_idx){
+      delete[] iv_lns_default_idx;
+    }
+    else{
+      delete[] iv_lns_default_idx;
+      delete[] iv_lns_obj_relax_idx;
+    }
+    delete[] non_fzn_introduced_vars_idx;
+    
+    if (variable_relations != nullptr){
+      for (int i = 0; i < non_fzn_introduced_vars_size; i++){
+        delete[] variable_relations[i];
       }
-      else{
-        delete[] iv_lns_default_idx;
-        delete[] iv_lns_obj_relax_idx;
-      }
-      delete[] non_fzn_introduced_vars_idx;
+      delete[] variable_relations;
+    }
 
-      iv_lns_default_idx = nullptr;
-      iv_lns_obj_relax_idx = nullptr;
-      non_fzn_introduced_vars_idx = nullptr;
+    iv_lns_default_idx = nullptr;
+    iv_lns_obj_relax_idx = nullptr;
+    non_fzn_introduced_vars_idx = nullptr;
+    variable_relations = nullptr;
   }
 
   void FlatZincSpace::storeConstraintInformation(){
@@ -1251,7 +1252,6 @@ namespace Gecode { namespace FlatZinc {
                 // iv_lns_obj_relax = IntVarArray(*this, num_relevant_vars);
                 int k = 0;
                 for (unsigned long int i = 0; i < vars->a.size(); i++){
-                  assert(iv_lns_obj_relax_size > i);
                   if (vars->a[i]->getIntVar() != _optVar && vars->a[i]->isIntVar() && iv[vars->a[i]->getIntVar()].size() > 2 && coef->a[i]->getInt() < mean){
                     iv_lns_obj_relax_idx[k++] = vars->a.at(i)->getIntVar();
                     // iv_lns_obj_relax[i] = iv[vars->a[i]->getIntVar()];
@@ -2474,25 +2474,8 @@ namespace Gecode { namespace FlatZinc {
 
   void FlatZincSpace::runPBS(std::ostream& out, FlatZinc::Printer& p, FlatZincOptions& opt, Support::Timer& t_total) {
     PBSController pbs(this, p);
-    switch (_method) {
-    case MIN:
-    case MAX:
-    case SAT:
-      storeConstraintInformation();
-      pbs.controller(out, opt, t_total);
-      break;
-    // case SAT:
-    //   runEngine<DFS>(out,p,opt,t_total);
-    //   break;
-    }
-    
-    // Delete variable_relations matrix
-    if (variable_relations != nullptr){
-      for (int i = 0; i < non_fzn_introduced_vars_size; i++){
-        delete[] variable_relations[i];
-      }
-      delete[] variable_relations;
-    }
+    storeConstraintInformation();
+    pbs.controller(out, opt, t_total);
   }
 
   void
@@ -2505,7 +2488,8 @@ namespace Gecode { namespace FlatZinc {
     
     if (_optVarIsInt) {
       int local_sol = static_cast<const FlatZincSpace*>(&s)->iv[_optVar].val();
-      if (global_sol != nullptr){
+      // Make sure the global solution exists and that it is assigned.
+      if (global_sol != nullptr && global_sol->iv[global_sol->optVar()].assigned()){
         int best_sol;
         if (_method == MIN){
           best_sol = local_sol < global_sol->iv[global_sol->optVar()].val() ? local_sol : global_sol->iv[global_sol->optVar()].val();
@@ -2738,11 +2722,14 @@ namespace Gecode { namespace FlatZinc {
       // Update the LNS keep percentage: If more fails than sols, lower the keep percentage, otherwise increase it.
       // THINKING: Many solutions will lead to an increase in keep percentage, making it possible to explore the neighbourhood more exhaustivly.
       //           Few solutions will lead to a decrease in keep percentage, making it possible to explore more of the search space, and get out of failing branchers.
-      if (fails > sols && fails > 0 && sols > 0){
-        _lns = std::max(10.0, ceil(_lns - sols/fails));
+      int prev_lns = _lns;
+      if (fails > sols  && fails > 0 && sols > 0){
+        _lns = std::max(20.0, ceil(_lns - sols/fails));
       }
       else if (fails > 0 && sols > 0){
-        _lns = std::min(90.0, ceil(_lns + sols/fails));
+        _lns = std::min(80.0, ceil(_lns + sols/fails));
+      }
+      if (prev_lns != _lns){
       }
     }
 

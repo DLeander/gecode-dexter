@@ -288,14 +288,10 @@ void PBSController::setupPortfolioAssets(FlatZinc::Printer& p, FlatZincOptions& 
 
 // The controller that creates the workers and controls the searches.
 void PBSController::controller(std::ostream& out, FlatZincOptions& fopt, Support::Timer& t_total) {
-    // Make search space clone-able by calling status on it. If it fails, then the model is unsatisfiable.
-    for (long unsigned int i = 0; i < asset_num_sols.size(); i++){
-        asset_num_sols[i] = 0;
-    }
-
     StatusStatistics sstat;
     Support::Timer propTimer;
     propTimer.start();
+    // Make search space clone-able by calling status on it. If it fails, then the model is unsatisfiable.
     SpaceStatus preSearchProp = fg->status(sstat);
     double initTime = propTimer.stop();
     // If the space is unsatisfiable before the search even starts, then finish and print statistics through dummy asset.
@@ -312,6 +308,7 @@ void PBSController::controller(std::ostream& out, FlatZincOptions& fopt, Support
         return;
     }
 
+    asset_num_sols.assign(asset_num_sols.size(), 0);
     // setup and create the assets.
     setupPortfolioAssets(p, fopt, out, initTime, sstat);
     // run the assets.
@@ -321,15 +318,14 @@ void PBSController::controller(std::ostream& out, FlatZincOptions& fopt, Support
     await_runners_completed();
 
     // If the shaving asset finished, the problem is unsatisfiable.
-    if (assets[finished_asset]->getAssetType() == AssetType::SHAVING){
+    if (finished_asset >= 0 && assets[finished_asset]->getAssetType() == AssetType::SHAVING){
         out << "=====UNSATISFIABLE=====" << std::endl;
     }
     else {
         // Print the best or final solution:
         FlatZincSpace* sol = best_sol.load();
         BaseEngine* se;
-
-        // Not a guarantee that a solution is found and finished asset it set.
+        // Not a guarantee that a solution is found and finished asset is set.
         // Use default user asset in case no solution was found.
         if (finished_asset == -1){
             se = assets[0]->getSE();
@@ -342,7 +338,6 @@ void PBSController::controller(std::ostream& out, FlatZincOptions& fopt, Support
             sol->print(out, p);
             out << "----------" << std::endl;
         }
-
         if (!se->stopped()) {
             if (sol) {
             out << "==========" << std::endl;
@@ -358,9 +353,6 @@ void PBSController::controller(std::ostream& out, FlatZincOptions& fopt, Support
     if (fopt.mode() == SM_STAT) {
         solutionStatistics(assets[finished_asset].get(), out, t_total, finished_asset, fopt.fullStatistics());
     }
-
-    // Delete allocated arrays in fzs.
-    fg->deletePBSArrays();
 }
 
 
@@ -371,11 +363,6 @@ bool updateBestSol(PBSController& control, FlatZincSpace* sol, std::ostream& out
     bool solWasBestSol = false;
     int optVar = sol->optVar();
     while(true){
-        // If the optimum was found, then stop there is no need to update the best solution.
-        if (control.optimum_found.load()){
-            break;
-        }
-
         FlatZincSpace* control_best_sol = control.best_sol.load();
         if (control_best_sol == nullptr){
             control.sol_mutex.lock();
@@ -685,12 +672,12 @@ void AssetExecutor::runShaving(){
 
     // Shave bounds
     if (shaving_asset->doBoundsShaving()) {
-        shaving_asset->run_shaving_pass(control, status_stat, clone_stat, has_reported_literal, [](VarDescription& vd, FlatZincSpace* s) {
+        shaving_asset->runShavingPass(control, status_stat, clone_stat, has_reported_literal, [](VarDescription& vd, FlatZincSpace* s) {
             return vd.bounds_literals(s);
         });
     }
     else {
-        shaving_asset->run_shaving_pass(control, status_stat, clone_stat, has_reported_literal, [shaving_asset](VarDescription& vd, FlatZincSpace* s) {
+        shaving_asset->runShavingPass(control, status_stat, clone_stat, has_reported_literal, [shaving_asset](VarDescription& vd, FlatZincSpace* s) {
             if (vd.size(s) > static_cast<unsigned int>(shaving_asset->getMaxDomShavingSize())) {
                 return std::vector<Literal>{};
             }
@@ -873,9 +860,7 @@ void RRLNSAsset::setupAsset(){
 }
 
 void ShavingAsset::setupAsset(){
-    // root = static_cast<FlatZinc::FlatZincSpace*>(fg->clone());
     root = fg;
-    // root->postConstraints(fg->constraints, false);
     for (int i = 0; i < root->iv.size(); i++) {
         if (root->iv[i].assigned()) {
             continue;
@@ -890,7 +875,7 @@ void ShavingAsset::setupAsset(){
     }
 }
 
-void ShavingAsset::run_shaving_pass(PBSController& control, StatusStatistics status_stat, CloneStatistics clone_stat, bool& has_reported_literal, const std::function<std::vector<Literal> (VarDescription&, FlatZincSpace*)> literal_extractor) {
+void ShavingAsset::runShavingPass(PBSController& control, StatusStatistics status_stat, CloneStatistics clone_stat, bool& has_reported_literal, const std::function<std::vector<Literal> (VarDescription&, FlatZincSpace*)> literal_extractor) {
     std::vector queue(variables);
     sorter->sort_variables(queue, root);
     while (!queue.empty()) {

@@ -523,7 +523,7 @@ class ShavingAsset : public BaseAsset {
 
         void setupAsset() override;
         void run() override {Gecode::Support::Thread::run(executor);};
-        void run_shaving_pass(PBSController& control, StatusStatistics status_stat, CloneStatistics clone_stat, bool& has_reported_literal, const std::function<std::vector<Literal> (VarDescription&, FlatZincSpace*)> literal_extractor);
+        void runShavingPass(PBSController& control, StatusStatistics status_stat, CloneStatistics clone_stat, bool& has_reported_literal, const std::function<std::vector<Literal> (VarDescription&, FlatZincSpace*)> literal_extractor);
         
         FlatZincSpace* getFZS() const override { return root; }
         BaseEngine* getSE() const override { return nullptr; }

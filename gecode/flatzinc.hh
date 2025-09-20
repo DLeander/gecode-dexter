@@ -535,9 +535,7 @@ namespace Gecode { namespace FlatZinc {
     int non_fzn_introduced_vars_size;
 
     Gecode::IntVarArray iv_lns;
-    // Gecode::IntVarArray iv_lns_default;
-    // Gecode::IntVarArray iv_lns_obj_relax;
-    // Gecode::IntVarArray non_fzn_introduced_vars;
+    // Has the size of non_fzn_introduced_vars_size.
     double** variable_relations;
     CIGInfo* ciglns_info;
 
@@ -636,7 +634,7 @@ namespace Gecode { namespace FlatZinc {
     /// Step by which a next solution has to have lower cost
     Gecode::FloatNum step;
 #endif
-    // The current best solution, used in constrain between all assets in pbs. ADDED
+    // The current best solution, used in constrain between all assets in pbs.
     std::atomic<FlatZincSpace*>* pbs_current_best_sol;
     std::atomic<bool>* optimum_found;
     /// Whether the introduced variables still need to be copied

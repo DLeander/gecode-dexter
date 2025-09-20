@@ -70,6 +70,8 @@ int main(int argc, char** argv) {
     if (opt.usePBS() && opt.threads() > 1){
       if (fg){
         fg->runPBS(std::cout, p, opt, t_total);
+        // Delete arrays used in portfolio.
+        fg->deletePBSArrays();
       }
       else{
         exit(EXIT_FAILURE);
