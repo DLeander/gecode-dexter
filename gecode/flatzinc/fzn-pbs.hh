@@ -336,14 +336,14 @@ class DFSAsset : public BaseAsset {
         : control(control), fg(fg), fopt(fopt), p(p), c_d(c_d), a_d(a_d), threads(threads), bm(opposite_branching, pbs_branching, sort_flatann), executor(new AssetExecutor(control, this, out, fopt, p, asset_id, true)), shaving_start(0), solve_time(0.0), asset_id(asset_id), asset_type(asset_type) {setupAsset();};
 
         ~DFSAsset() override {
-            delete se; se = nullptr;
-            delete fzs; fzs = nullptr;
             if (bm.pbs_variable_branchings != nullptr){
                 delete bm.pbs_variable_branchings; bm.pbs_variable_branchings = nullptr;
             }
+            delete se; se = nullptr;
             delete so.stop;
             delete so.tracer;
             delete so.cutoff;
+            delete fzs; fzs = nullptr;
         };
 
         void setupAsset() override;
@@ -401,17 +401,16 @@ class LNSAsset : public BaseAsset {
                     : control(control), fg(fg), fopt(fopt), p(p), c_d(c_d), a_d(a_d), threads(threads), bm(opposite_branching, pbs_branching, sort_flatann), mode(mode), restart_base(restart_base), 
                       restart_scale(restart_scale), lns_type(lns_type), executor(new AssetExecutor(control, this, out, fopt, p, asset_id, true)), shaving_start(0), solve_time(0.0), asset_id(asset_id), asset_type(asset_type) {setupAsset();};
         ~LNSAsset() override {
-            delete se; se = nullptr;
             if (fzs->ciglns_info != nullptr){
                 delete fzs->ciglns_info; fzs->ciglns_info = nullptr;
             }
-            delete fzs; fzs = nullptr;
             if (bm.pbs_variable_branchings != nullptr){
                 delete bm.pbs_variable_branchings; bm.pbs_variable_branchings = nullptr;
             }
-            // delete executor; executor = nullptr;
+            delete se; se = nullptr;
             delete so.stop;
             delete so.tracer;
+            delete fzs; fzs = nullptr;
         };
 
         void setupAsset() override;
@@ -574,7 +573,6 @@ public:
     ~PBSController(); // destructor
     void controller(std::ostream& out, FlatZincOptions& fopt, Support::Timer& t_total);
     // Emplace forbidden literal.
-    // void report_forbidden_literal(Literal forbidden) { forbidden_literals.emplace_back(forbidden); }
     void report_forbidden_literal(Literal forbidden) { forbidden_literals.push_back(forbidden); }
     std::vector<Literal> get_forbidden_literals() { return forbidden_literals; }
     // Signals that a search for a thread is finished.

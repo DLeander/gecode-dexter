@@ -89,7 +89,7 @@ void PBSController::solutionStatistics(BaseAsset* asset, std::ostream& out, Supp
         return;
     }
 
-    // Search was not unsatisfiable: Print statistics.
+    // Search was not unsatisfiable. Print statistics.
     int n_p = asset->getNP();
     BaseEngine* se = asset->getSE();
     Gecode::Search::Statistics stat = se->statistics();
@@ -338,7 +338,7 @@ void PBSController::controller(std::ostream& out, FlatZincOptions& fopt, Support
             sol->print(out, p);
             out << "----------" << std::endl;
         }
-        if (!se->stopped()) {
+        if (se && !se->stopped()) {
             if (sol) {
             out << "==========" << std::endl;
             } else {
@@ -350,7 +350,7 @@ void PBSController::controller(std::ostream& out, FlatZincOptions& fopt, Support
         }
     }
     // If print Statistics:
-    if (fopt.mode() == SM_STAT) {
+    if (fopt.mode() == SM_STAT && finished_asset >= 0) {
         solutionStatistics(assets[finished_asset].get(), out, t_total, finished_asset, fopt.fullStatistics());
     }
 }

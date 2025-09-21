@@ -2722,14 +2722,11 @@ namespace Gecode { namespace FlatZinc {
       // Update the LNS keep percentage: If more fails than sols, lower the keep percentage, otherwise increase it.
       // THINKING: Many solutions will lead to an increase in keep percentage, making it possible to explore the neighbourhood more exhaustivly.
       //           Few solutions will lead to a decrease in keep percentage, making it possible to explore more of the search space, and get out of failing branchers.
-      int prev_lns = _lns;
       if (fails > sols  && fails > 0 && sols > 0){
         _lns = std::max(20.0, ceil(_lns - sols/fails));
       }
       else if (fails > 0 && sols > 0){
         _lns = std::min(80.0, ceil(_lns + sols/fails));
-      }
-      if (prev_lns != _lns){
       }
     }
 
